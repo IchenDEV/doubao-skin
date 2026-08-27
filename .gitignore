@@ -3,3 +3,6 @@ work/
 __pycache__/
 *.pyc
 .DS_Store
+
+# rust build artifacts
+app/target/

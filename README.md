@@ -53,6 +53,22 @@ python3 -m doubao_skin remove               # 删除皮肤版应用
 
 首次启动时 macOS 会请求钥匙串访问（“DoubaoWork Safe Storage”）：输入开机密码并选择 **始终允许**。这是重签名改变应用身份所致；每次重新构建（换主题）会再弹一次。
 
+### C. Rust + GPUI 桌面应用（`app/`）
+
+`app/` 是一个 Rust workspace，把 Python 实现完整移植为原生 GUI（同一套主题文件、同一套注入逻辑）：
+
+- `skin-core`（库）：主题加载、pak v5 解析/重建、离线构建流水线、CDP live 注入（std-only 的 WebSocket/CDP 客户端，无 tokio）。
+- `skin-ui`（GPUI 界面）：主题列表 +「Live 应用」「离线构建」「移除皮肤版」按钮 + 日志区。
+
+```bash
+cd app
+cargo run -p skin-ui                     # 打开窗口（首次编译较久）
+cargo run -p skin-ui -- --live violet-night   # 启动后立即对该主题执行 Live 应用
+cargo test -p skin-core                  # 核心逻辑测试（含对真实 resources.pak 的往返重建）
+```
+
+依赖：[GPUI](https://github.com/zed-industries/zed)（pin 在 zed `v1.15.1`，需 stable Rust ≥ 1.95）；macOS 上 `gpui_platform` 必须开 `font-kit` feature，否则文字不渲染；`runtime_shaders` feature 可免去对 Xcode metal 工具链的依赖。主题目录默认定位在仓库 `themes/`，可用环境变量 `DOUBAO_SKIN_THEMES_DIR` 覆盖。
+
 ## 原理
 
 live 模式和离线构建共用同一套主题（CSS 变量覆写），只是送达方式不同：
