@@ -18,8 +18,7 @@ fn rand_bytes(n: usize) -> std::io::Result<Vec<u8>> {
     Ok(buf)
 }
 
-fn base64_encode(data: &[u8]) -> String {
-    const ALPHABET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+pub(crate) fn base64_encode(data: &[u8]) -> String {    const ALPHABET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut out = String::new();
     for chunk in data.chunks(3) {
         let b0 = chunk[0] as u32;
@@ -30,6 +29,36 @@ fn base64_encode(data: &[u8]) -> String {
         out.push(ALPHABET[(n >> 12) as usize & 63] as char);
         out.push(if chunk.len() > 1 { ALPHABET[(n >> 6) as usize & 63] as char } else { '=' });
         out.push(if chunk.len() > 2 { ALPHABET[n as usize & 63] as char } else { '=' });
+    }
+    out
+}
+
+#[cfg(test)]
+pub(crate) fn base64_decode(s: &str) -> Vec<u8> {
+    fn val(b: u8) -> u32 {
+        match b {
+            b'A'..=b'Z' => (b - b'A') as u32,
+            b'a'..=b'z' => (b - b'a' + 26) as u32,
+            b'0'..=b'9' => (b - b'0' + 52) as u32,
+            b'+' => 62,
+            b'/' => 63,
+            _ => 0,
+        }
+    }
+    let bytes: Vec<u8> = s.bytes().filter(|b| !b"=\r\n ".contains(b)).collect();
+    let mut out = Vec::new();
+    for chunk in bytes.chunks(4) {
+        let mut n = 0u32;
+        for (i, b) in chunk.iter().enumerate() {
+            n |= val(*b) << (18 - 6 * i);
+        }
+        out.push((n >> 16) as u8);
+        if chunk.len() > 2 {
+            out.push((n >> 8) as u8);
+        }
+        if chunk.len() > 3 {
+            out.push(n as u8);
+        }
     }
     out
 }

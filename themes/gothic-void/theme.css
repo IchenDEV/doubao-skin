@@ -1,0 +1,77 @@
+/* Atmosphere theme: translucent surfaces let --skin-bg-image show through
+   (veil alpha tuned against the live app: image ~40-60% visible in open
+   areas, near-solid where text sits).
+   Must target body too: the app defines some tokens on `html, body` directly,
+   which beats html-level inheritance. */
+html[data-skin][data-theme=dark],
+html[data-skin][data-theme=dark] body {
+  --N00:#0c0a14;--N00-raw:12,10,20;
+  --N50:#121020;--N50-raw:18,16,32;
+  --N100:#1b1730;--N100-raw:27,23,48;
+  --N200:#282245;--N200-raw:40,34,69;
+  --N300:#352d5c;--N300-raw:53,45,92;
+  --N350:#423a72;--N350-raw:66,58,114;
+  --N400:#534a8c;--N400-raw:83,74,140;
+  --N500:#766dab;--N500-raw:118,109,171;
+  --N600:#9b90c9;--N600-raw:155,144,201;
+  --N650:#bdb4de;--N650-raw:189,180,222;
+  --N700:#d2ccec;--N700-raw:210,204,236;
+  --N800:#e0dbf4;--N800-raw:224,219,244;
+  --N900:#e9e5f8;--N900-raw:233,229,248;
+  --N950:#f5f3fb;--N950-raw:245,243,251;
+  --B50:#221740;--B50-raw:34,23,64;
+  --B100:#2c1d58;--B100-raw:44,29,88;
+  --B200:#3a2578;--B200-raw:58,37,120;
+  --B300:#4a2e9e;--B300-raw:74,46,158;
+  --B350:#5a38bd;--B350-raw:90,56,189;
+  --B400:#7a52dd;--B400-raw:122,82,221;
+  --B500:#a06be8;--B500-raw:160,107,232;
+  --B600:#b78ef2;--B600-raw:183,142,242;
+  --B700:#ccadf7;--B700-raw:204,173,247;
+  --B800:#e0ccfb;--B800-raw:224,204,251;
+  --B900:#efe6fd;--B900-raw:239,230,253;
+  --s-color-bg-body:rgba(18,14,28,0.4);--s-color-bg-body-raw:18,14,28;
+  --s-color-bg-dialogs:rgba(18,14,28,0.85);--s-color-bg-dialogs-raw:18,14,28;
+  --s-color-bg-secondary:rgba(18,14,28,0.65);--s-color-bg-secondary-raw:18,14,28;
+  --s-color-bg-invert-secondary:rgba(18,14,28,0.85);--s-color-bg-invert-secondary-raw:18,14,28;
+  --s-color-bg-static-black-secondary:rgba(18,14,28,0.85);--s-color-bg-static-black-secondary-raw:18,14,28;
+  --s-color-bg-base:rgba(14,11,22,0.38);--s-color-bg-base-raw:14,11,22;
+  --s-color-bg-tertiary:rgba(14,11,22,0.42);--s-color-bg-tertiary-raw:14,11,22;
+  --s-color-bg-invert-tertiary:rgba(14,11,22,0.85);--s-color-bg-invert-tertiary-raw:14,11,22;
+  --s-color-bg-static-black-tertiary:rgba(14,11,22,0.85);--s-color-bg-static-black-tertiary-raw:14,11,22;
+  --s-color-bg-quaternary:rgba(11,9,16,0.6);--s-color-bg-quaternary-raw:11,9,16;
+  --s-color-bg-invert-quaternary:rgba(11,9,16,0.85);--s-color-bg-invert-quaternary-raw:11,9,16;
+  --s-color-bg-static-black-quaternary:rgba(11,9,16,0.85);--s-color-bg-static-black-quaternary-raw:11,9,16;
+  --s-color-bg-primary:rgba(35,28,51,0.58);--s-color-bg-primary-raw:35,28,51;
+  --s-color-bg-invert-primary:rgba(35,28,51,0.85);--s-color-bg-invert-primary-raw:35,28,51;
+  --s-color-bg-static-black-primary:rgba(35,28,51,0.85);--s-color-bg-static-black-primary-raw:35,28,51;
+  --s-color-bg-content-base:rgba(26,21,38,0.58);--s-color-bg-content-base-raw:26,21,38;
+  --s-color-bg-float:rgba(32,26,46,0.9);--s-color-bg-float-raw:32,26,46;
+  --dbx-bg-base-web:rgba(27,22,40,0.48);--dbx-bg-base-web-raw:27,22,40;
+  --dbx-bg-base-2:rgba(23,19,32,0.42);--dbx-bg-base-2-raw:23,19,32;
+  --dbx-bg-base-5:rgba(23,19,32,0.42);--dbx-bg-base-5-raw:23,19,32;
+  --dbx-bg-body-web:rgba(29,24,48,0.52);--dbx-bg-body-web-raw:29,24,48;
+  --dbx-bg-body-white:rgba(29,24,48,0.52);--dbx-bg-body-white-raw:29,24,48;
+  --dbx-bg-body-mac:rgba(29,24,48,0.5);
+  --dbx-bg-browser-mac:rgba(36,28,61,0.48);
+  --dbx-bg-browser-win:#241c3d;--dbx-bg-browser-win-raw:36,28,61;
+  --dbx-bg-float:rgba(51,43,71,0.9);--dbx-bg-float-raw:51,43,71;
+  --semi-color-primary:rgba(160,107,232,1);
+  --semi-color-primary-hover:rgba(183,142,242,1);
+  --semi-color-primary-active:rgba(122,82,221,1);
+  --semi-color-primary-light-default:rgba(160,107,232,0.18);
+  --semi-color-primary-disabled:rgba(160,107,232,0.35);
+}
+
+/* Atmosphere background layer (image comes from --skin-bg-image, injected by
+   the engine). A mild vertical veil keeps the center/bottom text readable. */
+html[data-skin][data-theme=dark] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(12,10,20,0.10) 0%, rgba(12,10,20,0.22) 55%, rgba(12,10,20,0.62) 100%),
+    var(--skin-bg-image) center/cover no-repeat;
+}

@@ -1,0 +1,77 @@
+/* Atmosphere theme: translucent surfaces let --skin-bg-image show through
+   (veil alpha tuned against the live app: image ~40-60% visible in open
+   areas, near-solid where text sits).
+   Must target body too: the app defines some tokens on `html, body` directly,
+   which beats html-level inheritance. */
+html[data-skin][data-theme=dark],
+html[data-skin][data-theme=dark] body {
+  --N00:#060b10;--N00-raw:6,11,16;
+  --N50:#0a1018;--N50-raw:10,16,24;
+  --N100:#0f1a24;--N100-raw:15,26,36;
+  --N200:#16273a;--N200-raw:22,39,58;
+  --N300:#1d3450;--N300-raw:29,52,80;
+  --N350:#254266;--N350-raw:37,66,102;
+  --N400:#2f5580;--N400-raw:47,85,128;
+  --N500:#4a74a5;--N500-raw:74,116,165;
+  --N600:#6f97c4;--N600-raw:111,151,196;
+  --N650:#9cbcdc;--N650-raw:156,188,220;
+  --N700:#bcd3e9;--N700-raw:188,211,233;
+  --N800:#d5e4f3;--N800-raw:213,228,243;
+  --N900:#e6eff9;--N900-raw:230,239,249;
+  --N950:#f3f8fc;--N950-raw:243,248,252;
+  --B50:#082533;--B50-raw:8,37,51;
+  --B100:#0a3447;--B100-raw:10,52,71;
+  --B200:#0c4863;--B200-raw:12,72,99;
+  --B300:#0f5f84;--B300-raw:15,95,132;
+  --B350:#12739e;--B350-raw:18,115,158;
+  --B400:#18a0cf;--B400-raw:24,160,207;
+  --B500:#2fd4ec;--B500-raw:47,212,236;
+  --B600:#5fdef2;--B600-raw:95,222,242;
+  --B700:#8fe8f6;--B700-raw:143,232,246;
+  --B800:#bcf1f9;--B800-raw:188,241,249;
+  --B900:#dff9fc;--B900-raw:223,249,252;
+  --s-color-bg-body:rgba(10,18,26,0.4);--s-color-bg-body-raw:10,18,26;
+  --s-color-bg-dialogs:rgba(10,18,26,0.85);--s-color-bg-dialogs-raw:10,18,26;
+  --s-color-bg-secondary:rgba(10,18,26,0.65);--s-color-bg-secondary-raw:10,18,26;
+  --s-color-bg-invert-secondary:rgba(10,18,26,0.85);--s-color-bg-invert-secondary-raw:10,18,26;
+  --s-color-bg-static-black-secondary:rgba(10,18,26,0.85);--s-color-bg-static-black-secondary-raw:10,18,26;
+  --s-color-bg-base:rgba(7,13,20,0.38);--s-color-bg-base-raw:7,13,20;
+  --s-color-bg-tertiary:rgba(7,13,20,0.42);--s-color-bg-tertiary-raw:7,13,20;
+  --s-color-bg-invert-tertiary:rgba(7,13,20,0.85);--s-color-bg-invert-tertiary-raw:7,13,20;
+  --s-color-bg-static-black-tertiary:rgba(7,13,20,0.85);--s-color-bg-static-black-tertiary-raw:7,13,20;
+  --s-color-bg-quaternary:rgba(5,10,15,0.6);--s-color-bg-quaternary-raw:5,10,15;
+  --s-color-bg-invert-quaternary:rgba(5,10,15,0.85);--s-color-bg-invert-quaternary-raw:5,10,15;
+  --s-color-bg-static-black-quaternary:rgba(5,10,15,0.85);--s-color-bg-static-black-quaternary-raw:5,10,15;
+  --s-color-bg-primary:rgba(18,32,44,0.58);--s-color-bg-primary-raw:18,32,44;
+  --s-color-bg-invert-primary:rgba(18,32,44,0.85);--s-color-bg-invert-primary-raw:18,32,44;
+  --s-color-bg-static-black-primary:rgba(18,32,44,0.85);--s-color-bg-static-black-primary-raw:18,32,44;
+  --s-color-bg-content-base:rgba(14,26,36,0.58);--s-color-bg-content-base-raw:14,26,36;
+  --s-color-bg-float:rgba(18,34,46,0.9);--s-color-bg-float-raw:18,34,46;
+  --dbx-bg-base-web:rgba(15,28,38,0.48);--dbx-bg-base-web-raw:15,28,38;
+  --dbx-bg-base-2:rgba(12,22,32,0.42);--dbx-bg-base-2-raw:12,22,32;
+  --dbx-bg-base-5:rgba(12,22,32,0.42);--dbx-bg-base-5-raw:12,22,32;
+  --dbx-bg-body-web:rgba(16,30,40,0.52);--dbx-bg-body-web-raw:16,30,40;
+  --dbx-bg-body-white:rgba(16,30,40,0.52);--dbx-bg-body-white-raw:16,30,40;
+  --dbx-bg-body-mac:rgba(16,30,40,0.5);
+  --dbx-bg-browser-mac:rgba(19,42,56,0.48);
+  --dbx-bg-browser-win:#132a38;--dbx-bg-browser-win-raw:19,42,56;
+  --dbx-bg-float:rgba(26,48,64,0.9);--dbx-bg-float-raw:26,48,64;
+  --semi-color-primary:rgba(47,212,236,1);
+  --semi-color-primary-hover:rgba(95,222,242,1);
+  --semi-color-primary-active:rgba(24,160,207,1);
+  --semi-color-primary-light-default:rgba(47,212,236,0.18);
+  --semi-color-primary-disabled:rgba(47,212,236,0.35);
+}
+
+/* Atmosphere background layer (image comes from --skin-bg-image, injected by
+   the engine). A mild vertical veil keeps the center/bottom text readable. */
+html[data-skin][data-theme=dark] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(6,11,16,0.10) 0%, rgba(6,11,16,0.22) 55%, rgba(6,11,16,0.62) 100%),
+    var(--skin-bg-image) center/cover no-repeat;
+}

@@ -121,6 +121,9 @@ pub struct Theme {
     pub description: String,
     pub css: String,
     pub icon: Option<PathBuf>,
+    /// Optional atmosphere background image (theme.json "background"),
+    /// resolved relative to the theme directory.
+    pub background: Option<PathBuf>,
     pub path: PathBuf,
 }
 
@@ -131,6 +134,8 @@ struct ThemeMeta {
     name: Option<String>,
     #[serde(default)]
     description: Option<String>,
+    #[serde(default)]
+    background: Option<String>,
 }
 
 impl Theme {
@@ -139,7 +144,7 @@ impl Theme {
     pub fn snippet(&self) -> Vec<u8> {
         let mut out = offline_script(&self.id);
         out.push_str("<style nonce=\"argus-csp-token\">html{color-scheme:dark}");
-        out.push_str(&self.css);
+        out.push_str(&self.effective_css());
         out.push_str("</style>");
         out.into_bytes()
     }
@@ -147,6 +152,38 @@ impl Theme {
     /// JS string evaluated in live (CDP) mode.
     pub fn live_js(&self) -> String {
         live::theme_js(self)
+    }
+
+    /// Theme CSS, with the `--skin-bg-image` variable rule prepended when the
+    /// theme has a background image. theme.css can then reference
+    /// `var(--skin-bg-image)` (e.g. in a fixed body::before layer).
+    pub fn effective_css(&self) -> String {
+        match self.background_data_uri() {
+            Some(uri) => format!(
+                "html[data-skin], html[data-skin] body {{ --skin-bg-image: url(\"{uri}\"); }}\n{}",
+                self.css
+            ),
+            None => self.css.clone(),
+        }
+    }
+
+    /// Background image as a JPEG data URI: resized to <= 1920 px wide,
+    /// encoded as JPEG quality 75, base64'd.
+    fn background_data_uri(&self) -> Option<String> {
+        let path = self.background.as_ref()?;
+        let img = image::open(path).ok()?;
+        let img = if img.width() > 1920 {
+            let height = img.height() * 1920 / img.width();
+            img.resize(1920, height, image::imageops::FilterType::Lanczos3)
+        } else {
+            img
+        };
+        let rgb = img.to_rgb8();
+        let mut jpeg = Vec::new();
+        let mut encoder =
+            image::codecs::jpeg::JpegEncoder::new_with_quality(&mut jpeg, 75);
+        encoder.encode_image(&rgb).ok()?;
+        Some(format!("data:image/jpeg;base64,{}", crate::ws::base64_encode(&jpeg)))
     }
 
     /// First `n` distinct `#rrggbb` colors found in the theme CSS (for UI
@@ -188,12 +225,14 @@ pub fn load(themes_dir: &Path, id_or_path: &str) -> Result<Theme, String> {
     let css = fs::read_to_string(path.join("theme.css"))
         .map_err(|e| format!("cannot read theme.css: {e}"))?;
     let icon = path.join("icon.icns");
+    let background = meta.background.map(|b| path.join(b)).filter(|p| p.exists());
     Ok(Theme {
         name: meta.name.unwrap_or_else(|| meta.id.clone()),
         id: meta.id,
         description: meta.description.unwrap_or_default(),
         css,
         icon: icon.exists().then_some(icon),
+        background,
         path,
     })
 }
@@ -238,5 +277,40 @@ mod tests {
         assert_eq!(pv.accent, 0x9d7bea);
         let pure = themes.iter().find(|t| t.id == "pure-dark").expect("pure-dark");
         assert_eq!(pure.preview_colors().accent, 0x3370eb);
+    }
+
+    #[test]
+    fn background_image_becomes_data_uri() {
+        // build a synthetic theme with a background image in a temp dir
+        let dir = std::env::temp_dir().join(format!("bg-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("theme.json"),
+            r#"{"id":"bg-test","background":"bg.jpg"}"#,
+        )
+        .unwrap();
+        std::fs::write(dir.join("theme.css"), "html{}").unwrap();
+        let img = image::RgbImage::from_pixel(2560, 1600, image::Rgb([10u8, 20, 30]));
+        img.save(dir.join("bg.jpg")).unwrap();
+
+        let t = load(&dir, dir.to_str().unwrap()).unwrap();
+        assert_eq!(t.background.as_deref(), Some(dir.join("bg.jpg").as_path()));
+        let css = t.effective_css();
+        assert!(css.starts_with("html[data-skin], html[data-skin] body { --skin-bg-image: url(\"data:image/jpeg;base64,"));
+        assert!(css.ends_with("html{}"));
+
+        // decode the data URI and check the resize to <=1920 wide
+        let b64 = css
+            .split("data:image/jpeg;base64,")
+            .nth(1)
+            .unwrap()
+            .split('"')
+            .next()
+            .unwrap();
+        let jpeg = crate::ws::base64_decode(b64);
+        let decoded = image::load_from_memory(&jpeg).unwrap();
+        assert_eq!(decoded.width(), 1920);
+        assert_eq!(decoded.height(), 1200);
+        std::fs::remove_dir_all(&dir).ok();
     }
 }

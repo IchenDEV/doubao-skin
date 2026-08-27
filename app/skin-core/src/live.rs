@@ -55,7 +55,7 @@ const JS_TEMPLATE: &str = r#"(function(){
 })();"#;
 
 pub fn theme_js(theme: &Theme) -> String {
-    let css = format!("html{{color-scheme:dark}}{}", theme.css);
+    let css = format!("html{{color-scheme:dark}}{}", theme.effective_css());
     let skin_json = serde_json::to_string(&theme.id).unwrap();
     let css_json = serde_json::to_string(&css).unwrap();
     JS_TEMPLATE

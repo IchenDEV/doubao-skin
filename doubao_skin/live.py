@@ -53,7 +53,7 @@ _JS = """(function(){
 
 
 def theme_js(theme: Theme) -> str:
-    css = "html{color-scheme:dark}" + theme.css
+    css = "html{color-scheme:dark}" + theme.effective_css()
     return _JS % (json.dumps(theme.id), json.dumps(css))
 
 

@@ -10,12 +10,26 @@
 
 ## 效果
 
+纯色主题：
+
 | 主题 | 说明 |
 | --- | --- |
 | `violet-night` 暗夜紫 | 深紫罗兰底 + 紫罗兰强调色（默认，实测验证） |
 | `ocean-cyan` 海洋青 | 石墨蓝底 + 青色强调色 |
 | `forest` 墨绿 | 深墨绿底 + 翠绿强调色 |
 | `pure-dark` 纯暗 | 只强制深色模式，不改颜色 |
+
+氛围主题（带背景图，容器半透明天透出画面，灵感来自 [Codex Dream Skin](https://github.com/Fei-Away/Codex-Dream-Skin)）：
+
+| 主题 | 说明 |
+| --- | --- |
+| `gothic-void` 哥特虚空 | 虚空教堂尖塔 × 紫雾，紫罗兰强调色 |
+| `sakura-night` 夜樱 | 夜色樱花林 × 粉紫月光，樱粉强调色 |
+| `cyber-neon` 赛博霓虹 | 雨夜霓虹都市，青色强调色 |
+| `mist-forest` 雾林 | 晨雾针叶林光束，翠绿强调色 |
+
+![sakura-night](docs/screenshot-sakura-night.png)
+（live 模式 + sakura-night 夜樱主题，原版 App 实测截图）
 
 换肤范围：主聊天窗口、启动器、侧边面板等全部内嵌页面（约 20 个）。
 
@@ -88,15 +102,19 @@ live 模式和离线构建共用同一套主题（CSS 变量覆写），只是�
 
 ```
 themes/my-theme/
-├── theme.json   {"id": "my-theme", "name": "我的主题", "description": "..."}
+├── theme.json   {"id": "my-theme", "name": "我的主题", "description": "...",
+│                 "background": "bg.jpg"   （可选）氛围背景图}
 ├── theme.css    CSS 覆写规则
-└── icon.icns    （可选）自定义应用图标
+├── icon.icns    （可选）自定义应用图标
+└── bg.jpg       （可选）氛围背景图，注入时变成 var(--skin-bg-image)
 ```
 
-`theme.css` 会被注入到所有内嵌页面。注意两点（都是踩过的坑）：
+`theme.css` 会被注入到所有内嵌页面。注意几点（都是踩过的坑）：
 
 - 用 `html[data-skin][data-theme=dark], html[data-skin][data-theme=dark] body` 作为选择器。应用把部分令牌直接定义在 `html, body` 上，只覆写 `html` 会被 body 自己的规则压过。
 - 很多令牌有 `-raw` 孪生变量（`rgba(var(--x-raw), .5)` 用），改色时两个都要覆写。
+- 带背景图时，把主要 surface 令牌改成 `rgba(r,g,b,0.4~0.6)` 半透明，并用 `body::before` 铺 `var(--skin-bg-image)`（参考内置氛围主题）；alpha 太高图透不出（0.8 基本不可见），太低文字可读性差。图本身选深色、主体偏离画面中心的效果最好。
+- 背景图编码差异：Rust 引擎（`app/`）会把图片缩放到 ≤1920 宽并重编码为 JPEG(q75)；Python CLI 无第三方依赖，**原样嵌入不缩放**——自己控制好文件大小。
 
 然后 `python3 -m doubao_skin apply my-theme`（或传主题目录路径）。
 
