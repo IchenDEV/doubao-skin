@@ -36,16 +36,14 @@ DreamSkin 热门主题灵感版（2026-08-28 下载榜快照，背景图均为�
 
 | 主题 | 说明 |
 | --- | --- |
-| `gallery-morning-mist` 晨雾山水 | 浅米水墨山景，安静又清透 |
 | `gallery-cozy-room` 暖室暮光 | 暖灯木色，像在家里工作 |
 | `gallery-neon-koi` 霓虹游鱼 | 青紫霓虹游鱼，醒目又利落 |
 | `gallery-moon-pine` 月下松岚 | 深蓝月夜松林，安静又沉稳 |
-| `gallery-whale-dream` 鲸海轻梦 | 柔粉海面与蓝鲸，轻盈又平静 |
 | `gallery-crimson-rain` 雨夜花影 | 暗红雨夜花影，沉静又有张力 |
 
 灵感来源：[DreamSkin Gallery 下载最多](https://dreamskin.cc/gallery?community=popular)。角色和品牌主题只保留色彩气质，不打包原站人物、品牌或背景素材。
 
-氛围主题（带背景图，容器半透明天透出画面，灵感来自 [Codex Dream Skin](https://github.com/Fei-Away/Codex-Dream-Skin)）：
+氛围主题（带背景图，容器半透明透出画面，灵感来自 [Codex Dream Skin](https://github.com/Fei-Away/Codex-Dream-Skin)）：
 
 | 主题 | 说明 |
 | --- | --- |
