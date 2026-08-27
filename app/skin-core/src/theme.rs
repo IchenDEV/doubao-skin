@@ -52,6 +52,68 @@ fn offline_script(theme_id: &str) -> String {
 /// Marker bytes used to detect pages that already carry an injection.
 pub const MARKER: &[u8] = b"data-skin";
 
+/// Colors for the UI's mini theme preview, parsed from theme.css by variable
+/// name (not by position).
+#[derive(Debug, Clone, Copy)]
+pub struct PreviewColors {
+    /// sidebar strip: --dbx-bg-body-web, fallback --N50
+    pub sidebar: u32,
+    /// main content: --s-color-bg-body, fallback --N00
+    pub main: u32,
+    /// accent dot/button: --semi-color-primary, fallback --B500
+    pub accent: u32,
+}
+
+impl Theme {
+    /// Preview colors for the UI. Themes without a color ramp (pure-dark)
+    /// fall back to neutral dark grays + a blue accent (#3370eb).
+    pub fn preview_colors(&self) -> PreviewColors {
+        PreviewColors {
+            sidebar: self.css_color("--dbx-bg-body-web")
+                .or_else(|| self.css_color("--N50"))
+                .unwrap_or(0x17161e),
+            main: self.css_color("--s-color-bg-body")
+                .or_else(|| self.css_color("--N00"))
+                .unwrap_or(0x121017),
+            accent: self.css_color("--semi-color-primary")
+                .or_else(|| self.css_color("--B500"))
+                .unwrap_or(0x3370eb),
+        }
+    }
+
+    /// Value of a css custom property as 0xRRGGBB; understands `#rrggbb`
+    /// and `rgb[a](r, g, b[, a])`.
+    fn css_color(&self, var: &str) -> Option<u32> {
+        let start = self.css.find(var)?;
+        let after = &self.css[start + var.len()..];
+        let colon = after.find(':')?;
+        if colon > 4 {
+            return None; // the match was a prefix of a longer variable name
+        }
+        let value = after[colon + 1..].split(';').next()?.trim();
+        parse_color_value(value)
+    }
+}
+
+fn parse_color_value(value: &str) -> Option<u32> {
+    if let Some(hex) = value.strip_prefix('#') {
+        let hex = hex.trim();
+        if hex.len() == 6 {
+            return u32::from_str_radix(hex, 16).ok();
+        }
+        return None;
+    }
+    let inner = value
+        .strip_prefix("rgba(")
+        .or_else(|| value.strip_prefix("rgb("))?
+        .strip_suffix(')')?;
+    let mut parts = inner.split(',').map(|p| p.trim());
+    let r: u32 = parts.next()?.parse().ok()?;
+    let g: u32 = parts.next()?.parse().ok()?;
+    let b: u32 = parts.next()?.parse().ok()?;
+    Some((r << 16) | (g << 8) | b)
+}
+
 #[derive(Debug, Clone)]
 pub struct Theme {
     pub id: String,
@@ -170,5 +232,11 @@ mod tests {
         assert!(snippet.contains("--s-color-bg-body:#16131f"));
         assert!(!violet.swatches(4).is_empty());
         assert_eq!(violet.swatches(1)[0], 0x0d0b16);
+        let pv = violet.preview_colors();
+        assert_eq!(pv.sidebar, 0x1f1a2c);
+        assert_eq!(pv.main, 0x16131f);
+        assert_eq!(pv.accent, 0x9d7bea);
+        let pure = themes.iter().find(|t| t.id == "pure-dark").expect("pure-dark");
+        assert_eq!(pure.preview_colors().accent, 0x3370eb);
     }
 }

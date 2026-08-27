@@ -1,8 +1,9 @@
 //! GPUI front-end for the DoubaoWork skin tool (豆包工作皮肤工具).
 //!
-//! One window: theme list with swatches +「Live 应用」/「离线构建」buttons,
-//! a「移除皮肤版」button, a log area and a status line. Actions run on
-//! background std threads and stream log lines back over an mpsc channel.
+//! One window: theme cards with mini previews +「Live 应用」/「离线构建」
+//! buttons, a「移除皮肤版」ghost button, a log area and a status line.
+//! Actions run on background std threads and stream log lines back over an
+//! mpsc channel.
 //!
 //! `--live <theme-id>` triggers the same handler as the theme's「Live 应用」
 //! button right after startup (used for automated verification).
@@ -13,14 +14,27 @@ use std::sync::{mpsc, Arc};
 use std::time::Duration;
 
 use gpui::{
-    div, prelude::*, px, rgb, size, App, Bounds, Context, ElementId, SharedString, Stateful,
-    TitlebarOptions, Window, WindowBounds, WindowOptions,
+    div, prelude::*, px, rgb, size, App, Bounds, Context, ElementId, FontWeight, SharedString,
+    Stateful, TitlebarOptions, Window, WindowBounds, WindowOptions,
 };
 use gpui_platform::application;
 
 use skin_core::{build, live, theme};
 
 const MAX_LOG_LINES: usize = 300;
+
+// palette
+const BG: u32 = 0x0d0b14; // window background
+const CARD_BG: u32 = 0x171426; // theme card background
+const CARD_BORDER: u32 = 0x28223d; // theme card border
+const TEXT: u32 = 0xe8e5f2; // primary text
+const MUTED: u32 = 0x8a84a3; // secondary text
+const FAINT: u32 = 0x5a546e; // hints / idle status dot
+const LOG_BG: u32 = 0x0a0810; // log area background
+const OUTLINE_BORDER: u32 = 0x3a3355; // outline button border
+const OUTLINE_HOVER: u32 = 0x221d38; // outline button hover bg
+const DANGER: u32 = 0xe06c75; // ghost-danger text
+const BUILDING: u32 = 0xe5c07b; // building status dot
 
 enum Msg {
     Log(String),
@@ -29,7 +43,7 @@ enum Msg {
 
 struct ThemeRow {
     theme: theme::Theme,
-    swatches: Vec<u32>,
+    preview: theme::PreviewColors,
 }
 
 struct SkinApp {
@@ -47,7 +61,7 @@ impl SkinApp {
     fn new(tx: mpsc::Sender<Msg>, rx: mpsc::Receiver<Msg>, cx: &mut Context<Self>) -> Self {
         let themes = theme::list(&theme::default_themes_dir())
             .into_iter()
-            .map(|t| ThemeRow { swatches: t.swatches(4), theme: t })
+            .map(|t| ThemeRow { preview: t.preview_colors(), theme: t })
             .collect();
         // Drain worker messages into UI state.
         cx.spawn(async move |this, cx| loop {
@@ -102,6 +116,11 @@ impl SkinApp {
 
     fn push_log(&mut self, line: String) {
         self.logs.push_front(line.into());
+    }
+
+    fn clear_logs(&mut self, cx: &mut Context<Self>) {
+        self.logs.clear();
+        cx.notify();
     }
 
     fn start_live(&mut self, index: usize, cx: &mut Context<Self>) {
@@ -179,11 +198,35 @@ impl SkinApp {
     }
 }
 
-fn action_button(
+/// Mix a 0xRRGGBB color toward white by `amount` (0..1).
+fn lighten(c: u32, amount: f32) -> u32 {
+    let mix = |v: u32| -> u32 { (v as f32 + (255.0 - v as f32) * amount) as u32 };
+    (mix(c >> 16 & 0xff) << 16) | (mix(c >> 8 & 0xff) << 8) | mix(c & 0xff)
+}
+
+/// Accent-filled primary button (「Live 应用」).
+fn primary_button(
     id: impl Into<ElementId>,
     label: &'static str,
-    bg: u32,
-    hover_bg: u32,
+    accent: u32,
+) -> Stateful<gpui::Div> {
+    div()
+        .id(id)
+        .px_3()
+        .py_1()
+        .rounded_md()
+        .text_xs()
+        .text_color(rgb(0xffffff))
+        .bg(rgb(accent))
+        .cursor_pointer()
+        .hover(move |s| s.bg(rgb(lighten(accent, 0.15))))
+        .child(label)
+}
+
+/// Subtle outline button (「离线构建」).
+fn outline_button(
+    id: impl Into<ElementId>,
+    label: &'static str,
     disabled: bool,
 ) -> Stateful<gpui::Div> {
     let b = div()
@@ -192,55 +235,81 @@ fn action_button(
         .py_1()
         .rounded_md()
         .text_xs()
-        .text_color(rgb(0xffffff))
-        .bg(rgb(bg))
-        .child(label);
+        .text_color(rgb(0xc9c4dd))
+        .border_1()
+        .border_color(rgb(OUTLINE_BORDER));
     if disabled {
-        b.opacity(0.4)
+        b.opacity(0.4).child(label)
     } else {
-        b.cursor_pointer().hover(move |s| s.bg(rgb(hover_bg)))
+        b.cursor_pointer().hover(move |s| s.bg(rgb(OUTLINE_HOVER))).child(label)
     }
 }
 
+/// Mini app-layout preview: sidebar strip + main area + accent dot.
+fn mini_preview(preview: theme::PreviewColors) -> impl IntoElement {
+    div()
+        .w(px(92.))
+        .h(px(60.))
+        .rounded_md()
+        .overflow_hidden()
+        .border_1()
+        .border_color(rgb(0x000000).opacity(0.5))
+        .flex()
+        .child(div().w(px(22.)).h_full().bg(rgb(preview.sidebar)))
+        .child(
+            div()
+                .flex_1()
+                .h_full()
+                .bg(rgb(preview.main))
+                .p(px(6.))
+                .child(div().size(px(8.)).rounded_full().bg(rgb(preview.accent))),
+        )
+}
+
 impl SkinApp {
-    fn render_theme_row(&self, index: usize, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render_theme_card(&self, index: usize, cx: &mut Context<Self>) -> impl IntoElement {
         let row = &self.themes[index];
         let t = &row.theme;
+        let accent = row.preview.accent;
+        let is_live = self.live_theme.as_deref() == Some(t.id.as_str());
         let busy = self.building;
-        div()
+
+        let mut card = div()
+            .id(("card", index))
+            .relative()
             .flex()
             .items_center()
             .gap_3()
             .px_3()
-            .py_2()
-            .border_b_1()
-            .border_color(rgb(0x2a2540))
-            .child(
-                // swatches from the theme's first css colors
-                div().flex().gap_1().children(row.swatches.iter().map(|c| {
-                    div().size_4().rounded_sm().bg(rgb(*c)).border_1().border_color(rgb(0x000000))
-                })),
-            )
+            .py(px(10.))
+            .rounded_lg()
+            .bg(rgb(CARD_BG))
+            .border_1()
+            .border_color(rgb(if is_live { accent } else { CARD_BORDER }))
+            .hover(move |s| s.border_color(rgb(accent)))
+            .child(mini_preview(row.preview))
             .child(
                 div()
                     .flex_1()
                     .flex()
                     .flex_col()
+                    .gap(px(2.))
                     .child(
                         div()
                             .flex()
-                            .gap_2()
                             .items_baseline()
+                            .gap_2()
                             .child(
                                 div()
-                                    .text_sm()
-                                    .font_weight(gpui::FontWeight::SEMIBOLD)
+                                    .text_size(px(15.))
+                                    .font_weight(FontWeight::SEMIBOLD)
+                                    .text_color(rgb(TEXT))
                                     .child(t.name.clone()),
                             )
-                            .child(div().text_xs().text_color(rgb(0x8a84a3)).child(t.id.clone())),
+                            .child(div().text_xs().text_color(rgb(FAINT)).child(t.id.clone())),
                     )
                     .child(
-                        div().text_xs().text_color(rgb(0xa8a2c0)).child(t.description.clone()),
+                        div().text_sm().text_color(rgb(MUTED)).child(t.description.clone()),
                     ),
             )
             .child(
@@ -248,94 +317,185 @@ impl SkinApp {
                     .flex()
                     .gap_2()
                     .child(
-                        action_button(("live", index), "Live 应用", 0x4e3594, 0x5d40b3, busy)
-                            .on_click(cx.listener(move |this, _ev, _window, cx| {
+                        primary_button(("live", index), "Live 应用", accent).on_click(
+                            cx.listener(move |this, _ev, _window, cx| {
                                 this.start_live(index, cx);
-                            })),
+                            }),
+                        ),
                     )
                     .child(
-                        action_button(("build", index), "离线构建", 0x2b5d50, 0x37705f, busy)
-                            .on_click(cx.listener(move |this, _ev, _window, cx| {
+                        outline_button(("build", index), "离线构建", busy).on_click(
+                            cx.listener(move |this, _ev, _window, cx| {
                                 this.start_build(index, cx);
-                            })),
+                            }),
+                        ),
                     ),
-            )
+            );
+        if is_live {
+            card = card.child(
+                div()
+                    .absolute()
+                    .top(px(-7.))
+                    .right_3()
+                    .px_2()
+                    .rounded_full()
+                    .bg(rgb(accent))
+                    .text_color(rgb(0xffffff))
+                    .text_size(px(10.))
+                    .child("应用中"),
+            );
+        }
+        card
     }
 }
 
 impl Render for SkinApp {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let mut root = div()
+        // status dot: live theme accent > building yellow > idle gray
+        let dot_color = if let Some(id) = &self.live_theme {
+            self.themes
+                .iter()
+                .find(|r| &r.theme.id == id)
+                .map(|r| r.preview.accent)
+                .unwrap_or(FAINT)
+        } else if self.building {
+            BUILDING
+        } else {
+            FAINT
+        };
+
+        let header = div()
             .flex()
-            .flex_col()
-            .size_full()
-            .bg(rgb(0x16131f))
-            .text_color(rgb(0xe6e2f2))
+            .items_end()
+            .justify_between()
+            .px_4()
+            .pb_2()
             .child(
-                // header
                 div()
                     .flex()
-                    .items_center()
-                    .px_3()
-                    .py_2()
-                    .border_b_1()
-                    .border_color(rgb(0x2a2540))
+                    .flex_col()
+                    .gap(px(2.))
                     .child(
                         div()
-                            .flex_1()
-                            .text_sm()
-                            .font_weight(gpui::FontWeight::BOLD)
+                            .text_size(px(17.))
+                            .font_weight(FontWeight::BOLD)
+                            .text_color(rgb(TEXT))
                             .child("豆包工作 · 皮肤工具"),
                     )
                     .child(
-                        action_button("remove", "移除皮肤版", 0x7a3030, 0x944040, self.building)
+                        div()
+                            .text_xs()
+                            .text_color(rgb(MUTED))
+                            .child("给豆包工作换个皮肤 · Live 注入 / 离线构建"),
+                    ),
+            )
+            .child(
+                div()
+                    .id("remove")
+                    .px_2()
+                    .py_1()
+                    .rounded_md()
+                    .text_xs()
+                    .text_color(rgb(DANGER))
+                    .cursor_pointer()
+                    .hover(|s| s.bg(rgb(DANGER).opacity(0.12)))
+                    .child("移除皮肤版")
+                    .on_click(cx.listener(|this, _ev, _window, cx| {
+                        this.remove_skin(cx);
+                    })),
+            );
+
+        let mut cards = div()
+            .id("cards")
+            .flex_1()
+            .overflow_y_scroll()
+            .px_4()
+            .pb_2()
+            .flex()
+            .flex_col()
+            .gap(px(10.));
+        if self.themes.is_empty() {
+            cards = cards.child(
+                div().p_3().text_sm().text_color(rgb(MUTED)).child("未找到主题（themes/ 目录为空）"),
+            );
+        }
+        for i in 0..self.themes.len() {
+            cards = cards.child(self.render_theme_card(i, cx));
+        }
+
+        let log_text: String =
+            self.logs.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n");
+        let log_section = div()
+            .px_4()
+            .pb_2()
+            .flex()
+            .flex_col()
+            .gap_1()
+            .child(
+                div()
+                    .flex()
+                    .items_center()
+                    .justify_between()
+                    .child(div().text_xs().text_color(rgb(FAINT)).child("日志"))
+                    .child(
+                        div()
+                            .id("clear-logs")
+                            .px_1()
+                            .rounded_sm()
+                            .text_xs()
+                            .text_color(rgb(FAINT))
+                            .cursor_pointer()
+                            .hover(|s| s.text_color(rgb(MUTED)).bg(rgb(CARD_BORDER)))
+                            .child("清空")
                             .on_click(cx.listener(|this, _ev, _window, cx| {
-                                this.remove_skin(cx);
+                                this.clear_logs(cx);
                             })),
+                    ),
+            )
+            .child(
+                div()
+                    .h(px(150.))
+                    .rounded_md()
+                    .border_1()
+                    .border_color(rgb(CARD_BORDER))
+                    .bg(rgb(LOG_BG))
+                    .p_2()
+                    .id("log")
+                    .overflow_y_scroll()
+                    .child(
+                        div()
+                            .text_xs()
+                            .font_family("Menlo")
+                            .text_color(rgb(0xbdb7d4))
+                            .child(if log_text.is_empty() {
+                                "暂无日志".to_string()
+                            } else {
+                                log_text
+                            }),
                     ),
             );
 
-        // theme rows
-        let mut list = div().id("themes").flex_1().overflow_y_scroll().flex().flex_col();
-        if self.themes.is_empty() {
-            list = list.child(div().p_3().text_sm().child("未找到主题（themes/ 目录为空）"));
-        }
-        for i in 0..self.themes.len() {
-            list = list.child(self.render_theme_row(i, cx));
-        }
-        root = root.child(list);
+        let status_bar = div()
+            .px_4()
+            .py_2()
+            .border_t_1()
+            .border_color(rgb(CARD_BORDER))
+            .flex()
+            .items_center()
+            .gap_2()
+            .child(div().size(px(8.)).rounded_full().bg(rgb(dot_color)))
+            .child(div().text_xs().text_color(rgb(MUTED)).child(self.status.clone()));
 
-        // log area (newest first so no auto-scroll is needed)
-        let log_text: String =
-            self.logs.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n");
-        root = root.child(
-            div()
-                .h(px(190.))
-                .border_t_1()
-                .border_color(rgb(0x2a2540))
-                .bg(rgb(0x100d18))
-                .p_2()
-                .id("log")
-                .overflow_y_scroll()
-                .child(
-                    div().text_xs().font_family("Menlo").text_color(rgb(0xbdb7d4)).child(
-                        if log_text.is_empty() { "日志输出…".to_string() } else { log_text },
-                    ),
-                ),
-        );
-
-        // status line
-        root.child(
-            div()
-                .px_3()
-                .py_1()
-                .border_t_1()
-                .border_color(rgb(0x2a2540))
-                .bg(rgb(0x1c1829))
-                .text_xs()
-                .text_color(rgb(0x9d97b8))
-                .child(self.status.clone()),
-        )
+        div()
+            .flex()
+            .flex_col()
+            .size_full()
+            .bg(rgb(BG))
+            .pt(px(30.)) // leave room for the traffic lights (transparent titlebar)
+            .child(header)
+            .child(cards)
+            .child(log_section)
+            .child(status_bar)
     }
 }
 
@@ -357,6 +517,7 @@ fn init_logger() {
 
 fn main() {
     init_logger();
+    // parse `--live <theme-id>`
     let args: Vec<String> = std::env::args().collect();
     let mut live_arg: Option<String> = None;
     let mut i = 1;
@@ -372,13 +533,14 @@ fn main() {
     application().run(move |cx: &mut App| {
         let (tx, rx) = mpsc::channel::<Msg>();
 
-        let bounds = Bounds::centered(None, size(px(760.), px(660.)), cx);
+        let bounds = Bounds::centered(None, size(px(780.), px(680.)), cx);
         let window = cx
             .open_window(
                 WindowOptions {
                     window_bounds: Some(WindowBounds::Windowed(bounds)),
                     titlebar: Some(TitlebarOptions {
-                        title: Some("豆包工作 · 皮肤工具".into()),
+                        title: None,
+                        appears_transparent: true,
                         ..Default::default()
                     }),
                     ..Default::default()

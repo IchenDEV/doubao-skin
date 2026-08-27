@@ -55,10 +55,12 @@ python3 -m doubao_skin remove               # 删除皮肤版应用
 
 ### C. Rust + GPUI 桌面应用（`app/`）
 
+![app-ui](docs/app-ui.png)
+
 `app/` 是一个 Rust workspace，把 Python 实现完整移植为原生 GUI（同一套主题文件、同一套注入逻辑）：
 
 - `skin-core`（库）：主题加载、pak v5 解析/重建、离线构建流水线、CDP live 注入（std-only 的 WebSocket/CDP 客户端，无 tokio）。
-- `skin-ui`（GPUI 界面）：主题列表 +「Live 应用」「离线构建」「移除皮肤版」按钮 + 日志区。
+- `skin-ui`（GPUI 界面）：主题卡片（迷你界面预览 + 强调色按钮）+「Live 应用」「离线构建」「移除皮肤版」+ 日志区。
 
 ```bash
 cd app
