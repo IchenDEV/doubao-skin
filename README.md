@@ -23,22 +23,46 @@
 
 需要 macOS、已安装的「豆包工作」、Python 3（无第三方依赖）。
 
+**两种方式：**
+
+### A. live 模式（CDP 注入，推荐体验）
+
+不改任何 App 文件：给原版 App 带调试端口启动，通过 Chrome DevTools Protocol 把主题注入每个内嵌页面。
+
+```bash
+python3 -m doubao_skin live violet-night   # 守护模式：启动 App 并持续注入
+python3 -m doubao_skin live forest --once  # 只对当前页面注入一次（热切换）
+```
+
+![live-forest](docs/screenshot-live-forest.png)
+（live 模式 + forest 墨绿主题，原版 App 实测截图）
+
+- 热切换：直接再跑一条 `live <别的主题> --once` 即可即时换色
+- 需要守护进程常驻（新页面/新窗口才会被注入）；App 退出后主题消失，下次需重新跑
+- 注意：运行期间 localhost 会开一个调试端口，本地进程可借此控制 App 页面
+
+### B. 离线构建（改副本，一次到位）
+
 ```bash
 python3 -m doubao_skin list                 # 列出主题
 python3 -m doubao_skin apply violet-night   # 构建皮肤版应用
 python3 -m doubao_skin remove               # 删除皮肤版应用
 ```
 
-`apply` 会在 `~/Applications/` 生成 **`DoubaoWork-Skin.app`**，直接打开即可。原版应用不受影响，随时共存。
+`apply` 会在 `~/Applications/` 生成 **`DoubaoWork-Skin.app`**，直接打开即可，永久生效、无需守护进程。原版应用不受影响，随时共存。
 
 首次启动时 macOS 会请求钥匙串访问（“DoubaoWork Safe Storage”）：输入开机密码并选择 **始终允许**。这是重签名改变应用身份所致；每次重新构建（换主题）会再弹一次。
 
 ## 原理
 
-1. **克隆而非修改**：`/Applications` 里的原版受 macOS App Management（MACL）保护，属主也无法写入。用 APFS clonefile 克隆到 `~/Applications`，瞬间完成、不占额外磁盘。
-2. **主界面在 resources.pak 里**：主聊天 UI 不是散文件，而是 gzip 压缩后打进 Chromium 的 `resources.pak`。本工具内置了一个极简 pak v5 解析/重建器（`doubao_skin/pak.py`），把主题 CSS 注入包内全部页面；磁盘上的本地入口 HTML（侧边面板等）也一并注入。
-3. **主题 = CSS 变量覆写**：应用自身已有完整深色主题和设计令牌体系（`--N*` 中性色板、`--B*` 品牌色板、`--s-color-*`、`--dbx-*` 表层令牌）。皮肤通过强制 `data-theme="dark"` + 高优先级选择器覆写这些令牌实现换肤，不碰组件样式。
-4. **ad-hoc 重签名**：改资源后签名失效会被 Gatekeeper 判“已损坏”，重新 ad-hoc 签名后即可运行。
+live 模式和离线构建共用同一套主题（CSS 变量覆写），只是送达方式不同：
+
+1. **主题 = CSS 变量覆写**：应用自身已有完整深色主题和设计令牌体系（`--N*` 中性色板、`--B*` 品牌色板、`--s-color-*`、`--dbx-*` 表层令牌）。皮肤通过强制 `data-theme="dark"` + 高优先级选择器覆写这些令牌实现换肤，不碰组件样式。
+2. **live 模式**：App（Chromium 内核）接受 `--remote-debugging-port`，用 CDP 的 `Runtime.evaluate` 在每个内嵌页面执行注入 JS（装 `<style>` + MutationObserver 守住 `data-theme`/`data-skin` 属性），并用 `Page.addScriptToEvaluateOnNewDocument` 保证导航后仍生效。内置了 stdlib 极简 WebSocket/CDP 客户端（`doubao_skin/ws.py`）。
+3. **离线构建**：
+   - *克隆而非修改*：`/Applications` 里的原版受 macOS App Management（MACL）保护，属主也无法写入。用 APFS clonefile 克隆到 `~/Applications`，瞬间完成、不占额外磁盘。
+   - *主界面在 resources.pak 里*：主聊天 UI 不是散文件，而是 gzip 压缩后打进 Chromium 的 `resources.pak`。本工具内置了一个极简 pak v5 解析/重建器（`doubao_skin/pak.py`），把主题 CSS 注入包内全部页面；磁盘上的本地入口 HTML（侧边面板等）也一并注入。
+   - *ad-hoc 重签名*：改资源后签名失效会被 Gatekeeper 判“已损坏”，重新 ad-hoc 签名后即可运行。
 
 ## 自定义主题
 
@@ -60,8 +84,8 @@ themes/my-theme/
 
 ## 已知限制
 
-- 原版应用升级后需重新 `apply`（皮肤版不会自动跟进）。
-- ad-hoc 签名的 cdhash 每次构建都变，所以钥匙串授权每次重建要重新点一次。
+- live 模式：主题随 App 退出而消失；运行期间本地调试端口开放；App 若已在运行会被重启一次（为了带调试参数）。
+- 离线构建：原版应用升级后需重新 `apply`（皮肤版不会自动跟进）；ad-hoc 签名的 cdhash 每次构建都变，钥匙串授权每次重建要重新点一次。
 - 主题只覆盖深色模式（皮肤本身强制 dark）。
 
 ## 许可
