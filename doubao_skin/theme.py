@@ -53,13 +53,31 @@ class Theme:
 
     def effective_css(self) -> str:
         """Theme CSS with the --skin-bg-image variable prepended when the
-        theme has a background image (embedded as-is, no resize)."""
+        theme has a background image (embedded as-is, no resize). Unlike the
+        Rust engine (which bakes the "veil" into the image), we add a plain
+        CSS veil via body::after — slightly different look, same idea."""
         if not self.background:
             return self.css
         mime = "image/png" if self.background.suffix.lower() == ".png" else "image/jpeg"
         uri = f"data:{mime};base64," + base64.b64encode(self.background.read_bytes()).decode()
+        veil = (
+            "html[data-skin] body::after { content:\"\"; position:fixed; inset:0; "
+            f"z-index:0; pointer-events:none; background:rgba({self._base_rgb()},0.45); }}\n"
+        )
         return (f'html[data-skin], html[data-skin] body {{ --skin-bg-image: url("{uri}"); }}\n'
-                + self.css)
+                + veil + self.css)
+
+    def _base_rgb(self) -> str:
+        """--s-color-bg-body as 'r,g,b' for the CSS veil; default 18,19,23."""
+        import re
+        m = re.search(r"--s-color-bg-body\s*:\s*(?:#([0-9a-fA-F]{6})|rgba?\(([^)]+)\))", self.css)
+        if m:
+            if m.group(1):
+                h = m.group(1)
+                return f"{int(h[0:2],16)},{int(h[2:4],16)},{int(h[4:6],16)}"
+            parts = m.group(2).split(",")
+            return ",".join(p.strip() for p in parts[:3])
+        return "18,19,23"
 
     def snippet(self) -> bytes:
         script = _SCRIPT % self.id

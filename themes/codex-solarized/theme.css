@@ -1,0 +1,61 @@
+/* Doubao Work adaptation of Codex's built-in solarized-dark theme.
+   Canonical palette: https://github.com/altercation/solarized (MIT). */
+html[data-skin][data-theme=dark],
+html[data-skin][data-theme=dark] body {
+  --N00:#001f27;--N00-raw:0,31,39;
+  --N50:#00252e;--N50-raw:0,37,46;
+  --N100:#002b36;--N100-raw:0,43,54;
+  --N200:#073642;--N200-raw:7,54,66;
+  --N300:#164650;--N300-raw:22,70,80;
+  --N350:#285760;--N350-raw:40,87,96;
+  --N400:#3e686f;--N400-raw:62,104,111;
+  --N500:#586e75;--N500-raw:88,110,117;
+  --N600:#657b83;--N600-raw:101,123,131;
+  --N650:#708990;--N650-raw:112,137,144;
+  --N700:#839496;--N700-raw:131,148,150;
+  --N800:#93a1a1;--N800-raw:147,161,161;
+  --N900:#eee8d5;--N900-raw:238,232,213;
+  --N950:#fdf6e3;--N950-raw:253,246,227;
+  --B50:#072d40;--B50-raw:7,45,64;
+  --B100:#0a3d57;--B100-raw:10,61,87;
+  --B200:#105372;--B200-raw:16,83,114;
+  --B300:#176a91;--B300-raw:23,106,145;
+  --B350:#1e79a8;--B350-raw:30,121,168;
+  --B400:#2587c9;--B400-raw:37,135,201;
+  --B500:#268bd2;--B500-raw:38,139,210;
+  --B600:#4b9ddd;--B600-raw:75,157,221;
+  --B700:#70b1e6;--B700-raw:112,177,230;
+  --B800:#9bc7ee;--B800-raw:155,199,238;
+  --B900:#c9e0f6;--B900-raw:201,224,246;
+  --s-color-bg-body:#002b36;--s-color-bg-body-raw:0,43,54;
+  --s-color-bg-dialogs:#002b36;--s-color-bg-dialogs-raw:0,43,54;
+  --s-color-bg-secondary:#002b36;--s-color-bg-secondary-raw:0,43,54;
+  --s-color-bg-invert-secondary:#002b36;--s-color-bg-invert-secondary-raw:0,43,54;
+  --s-color-bg-static-black-secondary:#002b36;--s-color-bg-static-black-secondary-raw:0,43,54;
+  --s-color-bg-base:#001f27;--s-color-bg-base-raw:0,31,39;
+  --s-color-bg-tertiary:#001f27;--s-color-bg-tertiary-raw:0,31,39;
+  --s-color-bg-invert-tertiary:#001f27;--s-color-bg-invert-tertiary-raw:0,31,39;
+  --s-color-bg-static-black-tertiary:#001f27;--s-color-bg-static-black-tertiary-raw:0,31,39;
+  --s-color-bg-quaternary:#00181e;--s-color-bg-quaternary-raw:0,24,30;
+  --s-color-bg-invert-quaternary:#00181e;--s-color-bg-invert-quaternary-raw:0,24,30;
+  --s-color-bg-static-black-quaternary:#00181e;--s-color-bg-static-black-quaternary-raw:0,24,30;
+  --s-color-bg-primary:#073642;--s-color-bg-primary-raw:7,54,66;
+  --s-color-bg-invert-primary:#073642;--s-color-bg-invert-primary-raw:7,54,66;
+  --s-color-bg-static-black-primary:#073642;--s-color-bg-static-black-primary-raw:7,54,66;
+  --s-color-bg-content-base:#06313a;--s-color-bg-content-base-raw:6,49,58;
+  --s-color-bg-float:#164650;--s-color-bg-float-raw:22,70,80;
+  --dbx-bg-base-web:#001f27;--dbx-bg-base-web-raw:0,31,39;
+  --dbx-bg-base-2:#00181e;--dbx-bg-base-2-raw:0,24,30;
+  --dbx-bg-base-5:#00181e;--dbx-bg-base-5-raw:0,24,30;
+  --dbx-bg-body-web:#00252e;--dbx-bg-body-web-raw:0,37,46;
+  --dbx-bg-body-white:#00252e;--dbx-bg-body-white-raw:0,37,46;
+  --dbx-bg-body-mac:#00252e;
+  --dbx-bg-browser-mac:#073642;
+  --dbx-bg-browser-win:#073642;--dbx-bg-browser-win-raw:7,54,66;
+  --dbx-bg-float:#164650;--dbx-bg-float-raw:22,70,80;
+  --semi-color-primary:rgba(38,139,210,1);
+  --semi-color-primary-hover:rgba(75,157,221,1);
+  --semi-color-primary-active:rgba(37,135,201,1);
+  --semi-color-primary-light-default:rgba(38,139,210,0.18);
+  --semi-color-primary-disabled:rgba(38,139,210,0.35);
+}

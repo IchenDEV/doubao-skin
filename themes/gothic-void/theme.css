@@ -1,6 +1,6 @@
-/* Atmosphere theme: translucent surfaces let --skin-bg-image show through
-   (veil alpha tuned against the live app: image ~40-60% visible in open
-   areas, near-solid where text sits).
+/* Atmosphere theme: surfaces are moderately translucent (0.72-0.85)
+   and the readability veil is baked into --skin-bg-image by the engine
+   (theme.json "veil").
    Must target body too: the app defines some tokens on `html, body` directly,
    which beats html-level inheritance. */
 html[data-skin][data-theme=dark],
@@ -30,32 +30,32 @@ html[data-skin][data-theme=dark] body {
   --B700:#ccadf7;--B700-raw:204,173,247;
   --B800:#e0ccfb;--B800-raw:224,204,251;
   --B900:#efe6fd;--B900-raw:239,230,253;
-  --s-color-bg-body:rgba(18,14,28,0.4);--s-color-bg-body-raw:18,14,28;
+  --s-color-bg-body:rgba(18,14,28,0.52);--s-color-bg-body-raw:18,14,28;
   --s-color-bg-dialogs:rgba(18,14,28,0.85);--s-color-bg-dialogs-raw:18,14,28;
-  --s-color-bg-secondary:rgba(18,14,28,0.65);--s-color-bg-secondary-raw:18,14,28;
+  --s-color-bg-secondary:rgba(18,14,28,0.60);--s-color-bg-secondary-raw:18,14,28;
   --s-color-bg-invert-secondary:rgba(18,14,28,0.85);--s-color-bg-invert-secondary-raw:18,14,28;
   --s-color-bg-static-black-secondary:rgba(18,14,28,0.85);--s-color-bg-static-black-secondary-raw:18,14,28;
-  --s-color-bg-base:rgba(14,11,22,0.38);--s-color-bg-base-raw:14,11,22;
-  --s-color-bg-tertiary:rgba(14,11,22,0.42);--s-color-bg-tertiary-raw:14,11,22;
+  --s-color-bg-base:rgba(14,11,22,0.52);--s-color-bg-base-raw:14,11,22;
+  --s-color-bg-tertiary:rgba(14,11,22,0.55);--s-color-bg-tertiary-raw:14,11,22;
   --s-color-bg-invert-tertiary:rgba(14,11,22,0.85);--s-color-bg-invert-tertiary-raw:14,11,22;
   --s-color-bg-static-black-tertiary:rgba(14,11,22,0.85);--s-color-bg-static-black-tertiary-raw:14,11,22;
-  --s-color-bg-quaternary:rgba(11,9,16,0.6);--s-color-bg-quaternary-raw:11,9,16;
+  --s-color-bg-quaternary:rgba(11,9,16,0.60);--s-color-bg-quaternary-raw:11,9,16;
   --s-color-bg-invert-quaternary:rgba(11,9,16,0.85);--s-color-bg-invert-quaternary-raw:11,9,16;
   --s-color-bg-static-black-quaternary:rgba(11,9,16,0.85);--s-color-bg-static-black-quaternary-raw:11,9,16;
-  --s-color-bg-primary:rgba(35,28,51,0.58);--s-color-bg-primary-raw:35,28,51;
+  --s-color-bg-primary:rgba(35,28,51,0.60);--s-color-bg-primary-raw:35,28,51;
   --s-color-bg-invert-primary:rgba(35,28,51,0.85);--s-color-bg-invert-primary-raw:35,28,51;
   --s-color-bg-static-black-primary:rgba(35,28,51,0.85);--s-color-bg-static-black-primary-raw:35,28,51;
-  --s-color-bg-content-base:rgba(26,21,38,0.58);--s-color-bg-content-base-raw:26,21,38;
-  --s-color-bg-float:rgba(32,26,46,0.9);--s-color-bg-float-raw:32,26,46;
-  --dbx-bg-base-web:rgba(27,22,40,0.48);--dbx-bg-base-web-raw:27,22,40;
-  --dbx-bg-base-2:rgba(23,19,32,0.42);--dbx-bg-base-2-raw:23,19,32;
-  --dbx-bg-base-5:rgba(23,19,32,0.42);--dbx-bg-base-5-raw:23,19,32;
-  --dbx-bg-body-web:rgba(29,24,48,0.52);--dbx-bg-body-web-raw:29,24,48;
-  --dbx-bg-body-white:rgba(29,24,48,0.52);--dbx-bg-body-white-raw:29,24,48;
-  --dbx-bg-body-mac:rgba(29,24,48,0.5);
-  --dbx-bg-browser-mac:rgba(36,28,61,0.48);
+  --s-color-bg-content-base:rgba(26,21,38,0.60);--s-color-bg-content-base-raw:26,21,38;
+  --s-color-bg-float:rgba(32,26,46,0.92);--s-color-bg-float-raw:32,26,46;
+  --dbx-bg-base-web:rgba(27,22,40,0.55);--dbx-bg-base-web-raw:27,22,40;
+  --dbx-bg-base-2:rgba(23,19,32,0.52);--dbx-bg-base-2-raw:23,19,32;
+  --dbx-bg-base-5:rgba(23,19,32,0.52);--dbx-bg-base-5-raw:23,19,32;
+  --dbx-bg-body-web:rgba(29,24,48,0.56);--dbx-bg-body-web-raw:29,24,48;
+  --dbx-bg-body-white:rgba(29,24,48,0.56);--dbx-bg-body-white-raw:29,24,48;
+  --dbx-bg-body-mac:rgba(29,24,48,0.52);
+  --dbx-bg-browser-mac:rgba(36,28,61,0.52);
   --dbx-bg-browser-win:#241c3d;--dbx-bg-browser-win-raw:36,28,61;
-  --dbx-bg-float:rgba(51,43,71,0.9);--dbx-bg-float-raw:51,43,71;
+  --dbx-bg-float:rgba(51,43,71,0.92);--dbx-bg-float-raw:51,43,71;
   --semi-color-primary:rgba(160,107,232,1);
   --semi-color-primary-hover:rgba(183,142,242,1);
   --semi-color-primary-active:rgba(122,82,221,1);
@@ -63,15 +63,13 @@ html[data-skin][data-theme=dark] body {
   --semi-color-primary-disabled:rgba(160,107,232,0.35);
 }
 
-/* Atmosphere background layer (image comes from --skin-bg-image, injected by
-   the engine). A mild vertical veil keeps the center/bottom text readable. */
+/* Atmosphere background layer. The readability veil is baked into the image
+   itself by the engine (theme.json "veil"), so this stays a plain cover. */
 html[data-skin][data-theme=dark] body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(12,10,20,0.10) 0%, rgba(12,10,20,0.22) 55%, rgba(12,10,20,0.62) 100%),
-    var(--skin-bg-image) center/cover no-repeat;
+  background: var(--skin-bg-image) center/cover no-repeat;
 }

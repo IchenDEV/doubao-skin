@@ -1,0 +1,9 @@
+{
+  "id": "codex-dracula",
+  "name": "豆包莓夜",
+  "description": "鲜明的莓红，让重点更醒目",
+  "derivedFrom": "Dracula",
+  "sourceUrl": "https://github.com/dracula/dracula-theme",
+  "sourceCommit": "2985f660b04e6961b0887ffac2f8d3f35f431698",
+  "license": "MIT"
+}

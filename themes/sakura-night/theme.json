@@ -2,5 +2,6 @@
   "id": "sakura-night",
   "name": "夜樱",
   "description": "夜色樱花林 × 粉紫月光，樱粉强调色，半透明底透出氛围图",
-  "background": "bg.jpg"
+  "background": "bg.jpg",
+  "veil": 0.25
 }

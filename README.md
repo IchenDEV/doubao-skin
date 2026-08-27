@@ -19,6 +19,32 @@
 | `forest` 墨绿 | 深墨绿底 + 翠绿强调色 |
 | `pure-dark` 纯暗 | 只强制深色模式，不改颜色 |
 
+Codex 常见配色（纯色豆包工作版）：
+
+| 主题 | 说明 |
+| --- | --- |
+| `codex-catppuccin` 豆包柔紫 | 柔和的紫色，久看也舒服 |
+| `codex-dracula` 豆包莓夜 | 鲜明的莓红，让重点更醒目 |
+| `codex-nord` 豆包极光 | 清爽的蓝色，安静又清晰 |
+| `codex-gruvbox` 豆包暖木 | 温暖的棕金色，更有亲切感 |
+| `codex-solarized` 豆包深海 | 柔和的深蓝色，更适合专注 |
+| `codex-one-half` 豆包清蓝 | 干净的蓝色，简单耐看 |
+
+来源、色板和许可证见 [主题研究与选型](design/theme-standard/codex-theme-research.md)。
+
+DreamSkin 热门主题灵感版（2026-08-28 下载榜快照，背景图均为原创生成）：
+
+| 主题 | 说明 |
+| --- | --- |
+| `gallery-morning-mist` 晨雾山水 | 浅米水墨山景，安静又清透 |
+| `gallery-cozy-room` 暖室暮光 | 暖灯木色，像在家里工作 |
+| `gallery-neon-koi` 霓虹游鱼 | 青紫霓虹游鱼，醒目又利落 |
+| `gallery-moon-pine` 月下松岚 | 深蓝月夜松林，安静又沉稳 |
+| `gallery-whale-dream` 鲸海轻梦 | 柔粉海面与蓝鲸，轻盈又平静 |
+| `gallery-crimson-rain` 雨夜花影 | 暗红雨夜花影，沉静又有张力 |
+
+灵感来源：[DreamSkin Gallery 下载最多](https://dreamskin.cc/gallery?community=popular)。角色和品牌主题只保留色彩气质，不打包原站人物、品牌或背景素材。
+
 氛围主题（带背景图，容器半透明天透出画面，灵感来自 [Codex Dream Skin](https://github.com/Fei-Away/Codex-Dream-Skin)）：
 
 | 主题 | 说明 |
@@ -113,14 +139,15 @@ themes/my-theme/
 
 - 用 `html[data-skin][data-theme=dark], html[data-skin][data-theme=dark] body` 作为选择器。应用把部分令牌直接定义在 `html, body` 上，只覆写 `html` 会被 body 自己的规则压过。
 - 很多令牌有 `-raw` 孪生变量（`rgba(var(--x-raw), .5)` 用），改色时两个都要覆写。
-- 带背景图时，把主要 surface 令牌改成 `rgba(r,g,b,0.4~0.6)` 半透明，并用 `body::before` 铺 `var(--skin-bg-image)`（参考内置氛围主题）；alpha 太高图透不出（0.8 基本不可见），太低文字可读性差。图本身选深色、主体偏离画面中心的效果最好。
-- 背景图编码差异：Rust 引擎（`app/`）会把图片缩放到 ≤1920 宽并重编码为 JPEG(q75)；Python CLI 无第三方依赖，**原样嵌入不缩放**——自己控制好文件大小。
+- 带背景图时，把主要 surface 令牌改成半透明，并用 `body::before` 铺 `var(--skin-bg-image)`（参考内置氛围主题）。引擎会把 `veil` 压暗层**烘进图片本身**（`theme.json` 的 `"veil": 0~1`，Rust 端），所以容器 alpha 直接用 0.5~0.65 即可，不用自己再叠 veil——透图度 = 容器 alpha 一件事，可调可预期。图本身选深色、主体偏离画面中心的效果最好。
+- 背景图编码差异：Rust 引擎（`app/`）会把图片缩放到 ≤1920 宽、重编码为 JPEG(q75) 并烘焙 veil；Python CLI 无第三方依赖，**原样嵌入不缩放也不烘焙**——自己控制好文件大小。
 
 然后 `python3 -m doubao_skin apply my-theme`（或传主题目录路径）。
 
 ## 已知限制
 
 - live 模式：主题随 App 退出而消失；运行期间本地调试端口开放；App 若已在运行会被重启一次（为了带调试参数）。
+  - App 被遮挡（切到别的 Space / 隐藏）时渲染进程会被系统冻结、CDP 暂时不应答——正常现象。watcher 发现页面失活会先唤醒（activate），唤不醒才重启 App；失活目标每 ~30 秒才探测一次（每次 CDP 连接都要建完整 DevTools 会话，探测过密会把渲染进程打到高 CPU）。
 - 离线构建：原版应用升级后需重新 `apply`（皮肤版不会自动跟进）；ad-hoc 签名的 cdhash 每次构建都变，钥匙串授权每次重建要重新点一次。
 - 主题只覆盖深色模式（皮肤本身强制 dark）。
 

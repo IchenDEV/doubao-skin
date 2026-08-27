@@ -1,0 +1,9 @@
+{
+  "id": "codex-solarized",
+  "name": "豆包深海",
+  "description": "柔和的深蓝色，更适合专注",
+  "derivedFrom": "Solarized Dark",
+  "sourceUrl": "https://github.com/altercation/solarized",
+  "sourceCommit": "62f656a02f93c5190a8753159e34b385588d5ff3",
+  "license": "MIT"
+}

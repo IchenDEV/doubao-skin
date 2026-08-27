@@ -95,6 +95,17 @@ impl Theme {
     }
 }
 
+/// Blend every pixel toward `base` by `k`: out = img*(1-k) + base*k.
+fn bake_veil(img: &mut image::RgbImage, base: (u8, u8, u8), k: f32) {
+    let (br, bg, bb) = (base.0 as f32, base.1 as f32, base.2 as f32);
+    let keep = 1.0 - k;
+    for px in img.pixels_mut() {
+        px.0[0] = (px.0[0] as f32 * keep + br * k) as u8;
+        px.0[1] = (px.0[1] as f32 * keep + bg * k) as u8;
+        px.0[2] = (px.0[2] as f32 * keep + bb * k) as u8;
+    }
+}
+
 fn parse_color_value(value: &str) -> Option<u32> {
     if let Some(hex) = value.strip_prefix('#') {
         let hex = hex.trim();
@@ -124,6 +135,11 @@ pub struct Theme {
     /// Optional atmosphere background image (theme.json "background"),
     /// resolved relative to the theme directory.
     pub background: Option<PathBuf>,
+    /// How strongly the background image is blended toward the theme's base
+    /// color before encoding ("veil", 0..1, default 0.45). Baking the veil
+    /// into the image keeps surface-token alphas independent of readability:
+    /// image visibility is no longer (container alpha x css veil).
+    pub veil: f32,
     pub path: PathBuf,
 }
 
@@ -136,6 +152,12 @@ struct ThemeMeta {
     description: Option<String>,
     #[serde(default)]
     background: Option<String>,
+    #[serde(default = "default_veil")]
+    veil: f32,
+}
+
+fn default_veil() -> f32 {
+    0.45
 }
 
 impl Theme {
@@ -167,8 +189,9 @@ impl Theme {
         }
     }
 
-    /// Background image as a JPEG data URI: resized to <= 1920 px wide,
-    /// encoded as JPEG quality 75, base64'd.
+    /// Background image as a JPEG data URI: resized to <= 1920 px wide, the
+    /// veil baked in (blended toward the theme's base color), encoded as JPEG
+    /// quality 75, base64'd.
     fn background_data_uri(&self) -> Option<String> {
         let path = self.background.as_ref()?;
         let img = image::open(path).ok()?;
@@ -178,12 +201,19 @@ impl Theme {
         } else {
             img
         };
-        let rgb = img.to_rgb8();
+        let mut rgb = img.to_rgb8();
+        bake_veil(&mut rgb, self.base_color(), self.veil.clamp(0.0, 1.0));
         let mut jpeg = Vec::new();
         let mut encoder =
             image::codecs::jpeg::JpegEncoder::new_with_quality(&mut jpeg, 75);
         encoder.encode_image(&rgb).ok()?;
         Some(format!("data:image/jpeg;base64,{}", crate::ws::base64_encode(&jpeg)))
+    }
+
+    /// Theme base color for the veil: --s-color-bg-body, else #121317.
+    fn base_color(&self) -> (u8, u8, u8) {
+        let c = self.css_color("--s-color-bg-body").unwrap_or(0x121317);
+        ((c >> 16) as u8, (c >> 8) as u8, c as u8)
     }
 
     /// First `n` distinct `#rrggbb` colors found in the theme CSS (for UI
@@ -233,6 +263,7 @@ pub fn load(themes_dir: &Path, id_or_path: &str) -> Result<Theme, String> {
         css,
         icon: icon.exists().then_some(icon),
         background,
+        veil: meta.veil,
         path,
     })
 }
@@ -311,6 +342,43 @@ mod tests {
         let decoded = image::load_from_memory(&jpeg).unwrap();
         assert_eq!(decoded.width(), 1920);
         assert_eq!(decoded.height(), 1200);
+        // veil baked in: solid (10,20,30) blended 45% toward default base
+        // #121317 => (13.6, 19.6, 26.9); allow JPEG noise
+        let px = decoded.to_rgb8().get_pixel(960, 600).0;
+        assert!((px[0] as i32 - 14).abs() <= 2, "r={}", px[0]);
+        assert!((px[1] as i32 - 20).abs() <= 2, "g={}", px[1]);
+        assert!((px[2] as i32 - 27).abs() <= 2, "b={}", px[2]);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn veil_field_and_base_color_parsing() {
+        let dir = std::env::temp_dir().join(format!("veil-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("theme.json"),
+            r#"{"id":"veil-test","background":"bg.jpg","veil":0.5}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            dir.join("theme.css"),
+            "html[data-skin]{--s-color-bg-body:rgba(40,20,60,0.40);}",
+        )
+        .unwrap();
+        image::RgbImage::from_pixel(64, 64, image::Rgb([200u8, 200, 200]))
+            .save(dir.join("bg.jpg"))
+            .unwrap();
+        let t = load(&dir, dir.to_str().unwrap()).unwrap();
+        assert_eq!(t.veil, 0.5);
+        assert_eq!(t.base_color(), (40, 20, 60));
+        // baked: 200*0.5 + base*0.5 => (120, 110, 130)
+        let css = t.effective_css();
+        let b64 = css.split("base64,").nth(1).unwrap().split('"').next().unwrap();
+        let decoded = image::load_from_memory(&crate::ws::base64_decode(b64)).unwrap();
+        let px = decoded.to_rgb8().get_pixel(10, 10).0;
+        assert!((px[0] as i32 - 120).abs() <= 3, "r={}", px[0]);
+        assert!((px[1] as i32 - 110).abs() <= 3, "g={}", px[1]);
+        assert!((px[2] as i32 - 130).abs() <= 3, "b={}", px[2]);
         std::fs::remove_dir_all(&dir).ok();
     }
 }

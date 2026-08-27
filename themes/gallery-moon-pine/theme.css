@@ -1,0 +1,70 @@
+/* Original Doubao Work adaptation inspired by DreamSkin's moonlit-pine mood.
+   No upstream artwork or CSS is bundled. */
+html[data-skin][data-theme=dark],
+html[data-skin][data-theme=dark] body {
+  --N00:#080c12;--N00-raw:8,12,18;
+  --N50:#0c1118;--N50-raw:12,17,24;
+  --N100:#111823;--N100-raw:17,24,35;
+  --N200:#151c25;--N200-raw:21,28,37;
+  --N300:#202a35;--N300-raw:32,42,53;
+  --N350:#2d3945;--N350-raw:45,57,69;
+  --N400:#3c4955;--N400-raw:60,73,85;
+  --N500:#53616d;--N500-raw:83,97,109;
+  --N600:#6c7983;--N600-raw:108,121,131;
+  --N650:#87939b;--N650-raw:135,147,155;
+  --N700:#9aa5ad;--N700-raw:154,165,173;
+  --N800:#bec7cc;--N800-raw:190,199,204;
+  --N900:#dbe1e4;--N900-raw:219,225,228;
+  --N950:#edf1f3;--N950-raw:237,241,243;
+  --B50:#121c25;--B50-raw:18,28,37;
+  --B100:#1a2834;--B100-raw:26,40,52;
+  --B200:#263947;--B200-raw:38,57,71;
+  --B300:#354b5d;--B300-raw:53,75,93;
+  --B350:#476175;--B350-raw:71,97,117;
+  --B400:#60798d;--B400-raw:96,121,141;
+  --B500:#8095a5;--B500-raw:128,149,165;
+  --B600:#94a6b3;--B600-raw:148,166,179;
+  --B700:#a4b4c0;--B700-raw:164,180,192;
+  --B800:#c1cbd2;--B800-raw:193,203,210;
+  --B900:#e0e5e8;--B900-raw:224,229,232;
+  --s-color-bg-body:rgba(12,17,24,0.50);--s-color-bg-body-raw:12,17,24;
+  --s-color-bg-dialogs:rgba(12,17,24,0.90);--s-color-bg-dialogs-raw:12,17,24;
+  --s-color-bg-secondary:rgba(17,24,35,0.62);--s-color-bg-secondary-raw:17,24,35;
+  --s-color-bg-invert-secondary:rgba(17,24,35,0.90);--s-color-bg-invert-secondary-raw:17,24,35;
+  --s-color-bg-static-black-secondary:rgba(17,24,35,0.90);--s-color-bg-static-black-secondary-raw:17,24,35;
+  --s-color-bg-base:rgba(8,12,18,0.52);--s-color-bg-base-raw:8,12,18;
+  --s-color-bg-tertiary:rgba(12,17,24,0.58);--s-color-bg-tertiary-raw:12,17,24;
+  --s-color-bg-invert-tertiary:rgba(12,17,24,0.90);--s-color-bg-invert-tertiary-raw:12,17,24;
+  --s-color-bg-static-black-tertiary:rgba(12,17,24,0.90);--s-color-bg-static-black-tertiary-raw:12,17,24;
+  --s-color-bg-quaternary:rgba(8,12,18,0.64);--s-color-bg-quaternary-raw:8,12,18;
+  --s-color-bg-invert-quaternary:rgba(8,12,18,0.90);--s-color-bg-invert-quaternary-raw:8,12,18;
+  --s-color-bg-static-black-quaternary:rgba(8,12,18,0.90);--s-color-bg-static-black-quaternary-raw:8,12,18;
+  --s-color-bg-primary:rgba(32,42,53,0.66);--s-color-bg-primary-raw:32,42,53;
+  --s-color-bg-invert-primary:rgba(32,42,53,0.90);--s-color-bg-invert-primary-raw:32,42,53;
+  --s-color-bg-static-black-primary:rgba(32,42,53,0.90);--s-color-bg-static-black-primary-raw:32,42,53;
+  --s-color-bg-content-base:rgba(21,28,37,0.60);--s-color-bg-content-base-raw:21,28,37;
+  --s-color-bg-float:rgba(32,42,53,0.94);--s-color-bg-float-raw:32,42,53;
+  --dbx-bg-base-web:rgba(12,17,24,0.54);--dbx-bg-base-web-raw:12,17,24;
+  --dbx-bg-base-2:rgba(8,12,18,0.52);--dbx-bg-base-2-raw:8,12,18;
+  --dbx-bg-base-5:rgba(8,12,18,0.52);--dbx-bg-base-5-raw:8,12,18;
+  --dbx-bg-body-web:rgba(12,17,24,0.56);--dbx-bg-body-web-raw:12,17,24;
+  --dbx-bg-body-white:rgba(12,17,24,0.56);--dbx-bg-body-white-raw:12,17,24;
+  --dbx-bg-body-mac:rgba(12,17,24,0.52);
+  --dbx-bg-browser-mac:rgba(32,42,53,0.58);
+  --dbx-bg-browser-win:#202a35;--dbx-bg-browser-win-raw:32,42,53;
+  --dbx-bg-float:rgba(45,57,69,0.94);--dbx-bg-float-raw:45,57,69;
+  --semi-color-primary:rgba(82,111,134,1);
+  --semi-color-primary-hover:rgba(71,97,117,1);
+  --semi-color-primary-active:rgba(53,75,93,1);
+  --semi-color-primary-light-default:rgba(128,149,165,0.18);
+  --semi-color-primary-disabled:rgba(82,111,134,0.35);
+}
+
+html[data-skin][data-theme=dark] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--skin-bg-image) center/cover no-repeat;
+}

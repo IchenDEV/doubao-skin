@@ -254,12 +254,16 @@ impl Cdp {
     }
 
     pub fn call(&mut self, method: &str, params: serde_json::Value) -> Result<serde_json::Value, String> {
+        self.call_with_timeout(method, params, Duration::from_secs(10))
+    }
+
+    pub fn call_with_timeout(&mut self, method: &str, params: serde_json::Value, timeout: Duration) -> Result<serde_json::Value, String> {
         self.next_id += 1;
         let id = self.next_id;
         let msg = serde_json::json!({"id": id, "method": method, "params": params});
         self.ws.send_text(&msg.to_string())?;
         loop {
-            let text = self.ws.recv_text(Duration::from_secs(10))?;
+            let text = self.ws.recv_text(timeout)?;
             let parsed: serde_json::Value =
                 serde_json::from_str(&text).map_err(|e| format!("bad json: {e}"))?;
             if parsed.get("id").and_then(|v| v.as_u64()) == Some(id) {
@@ -272,9 +276,14 @@ impl Cdp {
     }
 
     pub fn evaluate(&mut self, expression: &str) -> Result<serde_json::Value, String> {
-        let result = self.call(
+        self.evaluate_with_timeout(expression, Duration::from_secs(10))
+    }
+
+    pub fn evaluate_with_timeout(&mut self, expression: &str, timeout: Duration) -> Result<serde_json::Value, String> {
+        let result = self.call_with_timeout(
             "Runtime.evaluate",
             serde_json::json!({"expression": expression, "returnByValue": true}),
+            timeout,
         )?;
         Ok(result.pointer("/result/value").cloned().unwrap_or(serde_json::Value::Null))
     }

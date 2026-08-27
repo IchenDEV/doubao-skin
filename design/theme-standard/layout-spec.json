@@ -1,0 +1,111 @@
+{
+  "name": "doubao-theme-picker",
+  "version": 1,
+  "baseUnit": 4,
+  "spacing": {
+    "1": 4,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "5": 20,
+    "6": 24,
+    "8": 32
+  },
+  "breakpoints": {
+    "compact": {
+      "minWidth": 720,
+      "columns": 4,
+      "margin": 16,
+      "gutter": 12
+    },
+    "regular": {
+      "minWidth": 900,
+      "columns": 8,
+      "margin": 20,
+      "gutter": 16
+    },
+    "wide": {
+      "minWidth": 1120,
+      "columns": 12,
+      "margin": 24,
+      "gutter": 20,
+      "maxWidth": 1400
+    }
+  },
+  "window": {
+    "defaultSize": {
+      "width": 1120,
+      "height": 720
+    },
+    "minimumSize": {
+      "width": 720,
+      "height": 560
+    },
+    "resizable": true
+  },
+  "shell": {
+    "titlebarHeight": 52,
+    "regions": {
+      "themeList": {
+        "wide": {
+          "start": 1,
+          "span": 3,
+          "minWidth": 220,
+          "idealWidth": 240,
+          "maxWidth": 280
+        },
+        "regular": {
+          "start": 1,
+          "span": 2,
+          "minWidth": 208,
+          "maxWidth": 240
+        },
+        "compact": {
+          "mode": "toolbar-popover"
+        }
+      },
+      "previewWorkspace": {
+        "wide": {
+          "start": 4,
+          "span": 9,
+          "minWidth": 720
+        },
+        "regular": {
+          "start": 3,
+          "span": 6,
+          "minWidth": 560
+        },
+        "compact": {
+          "start": 1,
+          "span": 4,
+          "minWidth": 0
+        }
+      }
+    }
+  },
+  "workspace": {
+    "contentPadding": 24,
+    "sectionGap": 20,
+    "previewAspectRatio": "16:9",
+    "previewMinHeight": 320,
+    "actionRow": {
+      "height": 64,
+      "titleSpan": 6,
+      "actionSpan": 3,
+      "compactMode": "stack"
+    }
+  },
+  "verticalRhythm": {
+    "themeRowHeight": 44,
+    "controlHeight": 28,
+    "primaryControlHeight": 32,
+    "sectionGap": 20
+  },
+  "alignment": [
+    "Theme names share one leading edge.",
+    "Preview, description and action row share the same left and right bounds.",
+    "The primary action stays visible without scrolling at the default window size.",
+    "No log, console or technical status region is present."
+  ],
+  "exceptions": []
+}

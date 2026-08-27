@@ -2,5 +2,6 @@
   "id": "mist-forest",
   "name": "雾林",
   "description": "晨雾针叶林光束，翠绿强调色，半透明底透出氛围图",
-  "background": "bg.jpg"
+  "background": "bg.jpg",
+  "veil": 0.22
 }

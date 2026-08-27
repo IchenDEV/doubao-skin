@@ -1,0 +1,9 @@
+{
+  "id": "codex-one-half",
+  "name": "豆包清蓝",
+  "description": "干净的蓝色，简单耐看",
+  "derivedFrom": "One Half Dark",
+  "sourceUrl": "https://github.com/sonph/onehalf",
+  "sourceCommit": "75eb2e97acd74660779fed8380989ee7891eec56",
+  "license": "MIT"
+}

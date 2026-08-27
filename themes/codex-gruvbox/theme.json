@@ -1,0 +1,9 @@
+{
+  "id": "codex-gruvbox",
+  "name": "豆包暖木",
+  "description": "温暖的棕金色，更有亲切感",
+  "derivedFrom": "Gruvbox Dark",
+  "sourceUrl": "https://github.com/morhetz/gruvbox",
+  "sourceCommit": "5d15b2765f59754d7ac263c88a0f6e3e58124951",
+  "license": "MIT/X11"
+}

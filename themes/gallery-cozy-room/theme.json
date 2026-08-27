@@ -1,0 +1,15 @@
+{
+  "id": "gallery-cozy-room",
+  "name": "暖室暮光",
+  "description": "暖灯木色，像在家里工作",
+  "background": "bg.jpg",
+  "veil": 0.30,
+  "inspiredBy": "DreamSkin 休闲室内居家",
+  "sourceUrl": "https://dreamskin.cc/themes/ver_34a73ec14a33630c2578",
+  "sourceVersion": "ver_34a73ec14a33630c2578",
+  "sourceLicense": "CC BY-NC 4.0",
+  "sourceRank": 2,
+  "sourceDownloads": 3257,
+  "sourceSnapshot": "2026-08-28",
+  "artwork": "Original ImageGen background"
+}

@@ -120,17 +120,94 @@ fn targets(port: u16) -> Result<Vec<serde_json::Value>, String> {
     serde_json::from_slice(&body).map_err(|e| format!("bad /json: {e}"))
 }
 
-fn ensure_running<F: FnMut(String)>(port: u16, mut log: F) -> Result<(), String> {
+fn ensure_running<F: FnMut(String)>(port: u16, mut log: F) -> Result<bool, String> {
     if port_up(port) {
         log("debug port already up — reusing the running instance".into());
-        return Ok(());
+        return Ok(false);
     }
     if !Path::new(APP_BINARY).exists() {
         return Err(format!("app not found: {APP_BINARY}"));
     }
-    // a running instance without the debug flag must be restarted first
+    // a running instance without the debug flag must be restarted first:
+    // graceful quit, then hard-kill whatever remains (a wedged instance may
+    // never finish quitting, and a leftover process makes the next launch
+    // restore a window-less session with renderers that never answer CDP)
     let _ = Command::new("osascript")
         .args(["-e", "tell application \"DoubaoWork\" to quit"])
+        .output();
+    std::thread::sleep(Duration::from_secs(3));
+    kill_app();
+    launch_app(port, &mut log)?;
+    for _ in 0..60 {
+        if port_up(port) {
+            return Ok(true);
+        }
+        std::thread::sleep(Duration::from_millis(500));
+    }
+    Err("debug port did not come up".into())
+}
+
+/// Marker file with the unix timestamp of our last app launch, shared
+/// across watcher processes so a fresh watcher never restarts an app that
+/// is still booting.
+fn launch_marker() -> &'static str {
+    "/tmp/doubao-work-skin-launched-at"
+}
+
+fn launched_recently() -> bool {
+    std::fs::read_to_string(launch_marker())
+        .ok()
+        .and_then(|s| s.trim().parse::<u64>().ok())
+        .map(|t| {
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
+            now.saturating_sub(t) < 120
+        })
+        .unwrap_or(false)
+}
+
+fn mark_launched() {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let _ = std::fs::write(launch_marker(), now.to_string());
+}
+
+/// Launch the app through LaunchServices with the debug flag: a directly
+/// exec'd binary can end up in a wedged state (no windows, unresponsive
+/// renderers) on some systems.
+fn launch_app<F: FnMut(String)>(port: u16, mut log: F) -> Result<(), String> {
+    log(format!("launching DoubaoWork --remote-debugging-port={port}"));
+    mark_launched();
+    Command::new("open")
+        .arg("-a")
+        .arg("/Applications/DoubaoWork.app")
+        .arg("--args")
+        .arg(format!("--remote-debugging-port={port}"))
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .map_err(|e| format!("cannot launch app: {e}"))?;
+    // nudge a window open (like clicking the Dock icon): when the previous
+    // session was saved window-less, pages would boot without a window and
+    // their renderers never answer CDP
+    let _ = Command::new("osascript")
+        .args(["-e", "tell application \"DoubaoWork\" to reopen"])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn();
+    Ok(())
+}
+
+/// Kill the app. A wedged instance must be hard-killed: a graceful
+/// AppleScript quit can persist a window-less session whose renderers then
+/// never answer CDP on the next launch.
+fn kill_app() {
+    let _ = Command::new("pkill")
+        .args(["-f", "DoubaoWork.app/Contents/MacOS"])
         .output();
     for _ in 0..20 {
         let running = Command::new("pgrep")
@@ -143,29 +220,24 @@ fn ensure_running<F: FnMut(String)>(port: u16, mut log: F) -> Result<(), String>
         }
         std::thread::sleep(Duration::from_millis(500));
     }
-    // Launch through LaunchServices: a directly exec'd binary can end up in
-    // a wedged state (no windows, unresponsive renderers) on some systems.
-    log(format!("launching DoubaoWork --remote-debugging-port={port}"));
-    Command::new("open")
-        .arg("-a")
-        .arg("/Applications/DoubaoWork.app")
-        .arg("--args")
-        .arg(format!("--remote-debugging-port={port}"))
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn()
-        .map_err(|e| format!("cannot launch app: {e}"))?;
-    for _ in 0..60 {
-        if port_up(port) {
-            return Ok(());
-        }
-        std::thread::sleep(Duration::from_millis(500));
-    }
-    Err("debug port did not come up".into())
 }
 
 /// Watch pages and inject the theme. Runs until `stop` is set, the debug
 /// port goes away, or (with `once`) after a single pass.
+///
+/// Dead targets: when the app's window is closed its renderers stop answering
+/// CDP commands (the targets stay listed in /json). We probe each candidate
+/// with a 1.5s evaluate before injecting; unresponsive targets are marked
+/// dead and skipped quietly (one log line when marked, none while probing).
+/// A dead target that answers again is re-injected; ids that vanish from
+/// /json are dropped from the dead set.
+///
+/// Wedge recovery: this app permanently stops answering CDP on ALL windowed
+/// targets once its window has been closed for a while (the browser process
+/// and /json stay alive, so it is not detectable via the port). We restart
+/// the app ONCE, only at watcher startup (i.e. when the user just picked a
+/// theme) — never unprompted during steady state, so we don't reopen windows
+/// the user deliberately closed.
 pub fn run<F: FnMut(String)>(
     theme: &Theme,
     port: u16,
@@ -173,39 +245,193 @@ pub fn run<F: FnMut(String)>(
     stop: Arc<AtomicBool>,
     mut log: F,
 ) -> Result<(), String> {
-    ensure_running(port, &mut log)?;
+    let ensure_running_launched = ensure_running(port, &mut log)?;
     let js = theme_js(theme);
     let mut injected: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut dead: std::collections::HashSet<String> = std::collections::HashSet::new();
     log(format!("live theme: {} ({}) — watching pages…", theme.name, theme.id));
+    let started = std::time::Instant::now();
+    // when WE just (re)launched the app, its pages may take minutes to boot —
+    // they look dead but are merely slow. Suppress the wedge restart for two
+    // minutes after our own launch so we never restart a booting app.
+    let mut launched_by_us_at: Option<std::time::Instant> =
+        if ensure_running_launched { Some(std::time::Instant::now()) } else { None };
+    let mut port_was_down = false;
+    let mut down_ticks = 0u32;
+    let mut all_dead_since: Option<std::time::Instant> = None;
+    let mut heartbeat_tick = 0u32;
+    let mut dead_probe_tick = 0u32;
+    let mut wedge_restarted = false;
+    let mut revive_attempted = false;
     while !stop.load(Ordering::Relaxed) {
         let list = match targets(port) {
             Ok(l) => l,
             Err(_) => {
-                log("debug port went away (app quit?) — exiting".into());
-                return Ok(());
+                if once {
+                    log("debug port went away (app quit?) — exiting".into());
+                    return Ok(());
+                }
+                // app quit: keep watching; if it doesn't come back on its own,
+                // relaunch it with the debug flag
+                if !port_was_down {
+                    log("debug port went away — waiting for the app to come back…".into());
+                    port_was_down = true;
+                }
+                down_ticks += 1;
+                if down_ticks >= 5 && !port_up(port) {
+                    log("relaunching app with the debug port…".into());
+                    if launch_app(port, &mut log).is_err() {
+                        log("relaunch failed, will keep waiting".into());
+                    } else {
+                        launched_by_us_at = Some(std::time::Instant::now());
+                    }
+                    down_ticks = 0;
+                }
+                std::thread::sleep(Duration::from_secs(2));
+                continue;
             }
         };
+        if port_was_down {
+            // fresh app instance: new target ids, inject everything again
+            log("app is back — re-injecting pages…".into());
+            injected.clear();
+            dead.clear();
+            port_was_down = false;
+            all_dead_since = None;
+        }
+        // collect the matching page targets
+        struct T<'a> { id: &'a str, url: &'a str, ws: &'a str }
+        let mut pages = Vec::new();
         for t in &list {
             if t.get("type").and_then(|v| v.as_str()) != Some("page") {
                 continue;
             }
             let url = t.get("url").and_then(|v| v.as_str()).unwrap_or("");
             let tid = t.get("id").and_then(|v| v.as_str()).unwrap_or("");
-            if tid.is_empty()
-                || injected.contains(tid)
-                || !URL_PATTERNS.iter().any(|p| url.contains(p))
-            {
+            if tid.is_empty() || !URL_PATTERNS.iter().any(|p| url.contains(p)) {
                 continue;
             }
             let ws_url = t.get("webSocketDebuggerUrl").and_then(|v| v.as_str()).unwrap_or("");
-            match inject_target(ws_url, &js) {
-                Ok(()) => {
-                    injected.insert(tid.to_string());
-                    log(format!("  injected: {}", &url[..url.len().min(70)]));
+            pages.push(T { id: tid, url, ws: ws_url });
+        }
+        // forget dead ids that no longer exist
+        let ids: std::collections::HashSet<&str> = pages.iter().map(|p| p.id).collect();
+        dead.retain(|id| ids.contains(id.as_str()));
+        injected.retain(|id| ids.contains(id.as_str()));
+
+        // Wedge recovery (startup only): every WINDOWED target dead (the
+        // background page stays responsive without a window, so it is
+        // excluded) while this watcher is fresh => the app is frozen.
+        // Two-stage recovery: first ACTIVATE the app (macOS freezes the
+        // renderers of an occluded app; activation wakes them — the common
+        // case); only if pages stay dead afterwards do we hard-kill and
+        // relaunch. Never restart an app launched within the last two
+        // minutes — a booting instance looks dead but is merely slow.
+        let windowed: Vec<&T> =
+            pages.iter().filter(|p| !p.url.contains("background")).collect();
+        let startup = started.elapsed() < Duration::from_secs(120);
+        let booting = launched_by_us_at
+            .map(|t| t.elapsed() < Duration::from_secs(120))
+            .unwrap_or(false)
+            || launched_recently();
+        if startup
+            && !booting
+            && !wedge_restarted
+            && !windowed.is_empty()
+            && windowed.iter().all(|p| dead.contains(p.id))
+        {
+            if revive_attempted {
+                // stage 2: still all dead after a wake attempt — genuinely
+                // wedged, hard-kill and relaunch (no extra waiting: these
+                // targets already proved dead once before the wake)
+                log("pages still unresponsive after wake — restarting the app…".into());
+                kill_app();
+                let _ = launch_app(port, &mut log);
+                launched_by_us_at = Some(std::time::Instant::now());
+                injected.clear();
+                dead.clear();
+                all_dead_since = None;
+                wedge_restarted = true;
+                std::thread::sleep(Duration::from_secs(5));
+                continue;
+            }
+            let since = all_dead_since.get_or_insert_with(std::time::Instant::now);
+            if since.elapsed() > Duration::from_secs(8) {
+                // stage 1: occluded-app freeze — just wake it up
+                log("pages unresponsive — waking the app (may be occluded)…".into());
+                let _ = Command::new("osascript")
+                    .args(["-e", "tell application \"DoubaoWork\" to reopen"])
+                    .output();
+                let _ = Command::new("osascript")
+                    .args(["-e", "tell application \"DoubaoWork\" to activate"])
+                    .output();
+                revive_attempted = true;
+                all_dead_since = None;
+                // give the renderers a moment to wake, then force fresh
+                // probes: the wedge check reads the `dead` set, which is
+                // stale at this point
+                std::thread::sleep(Duration::from_secs(5));
+                dead.clear();
+                continue;
+            }
+        } else {
+            all_dead_since = None;
+        }
+
+        // low-frequency heartbeat for already-injected targets: if one stops
+        // answering, demote it to dead so it gets re-probed (and re-injected
+        // when it recovers)
+        heartbeat_tick += 1;
+        if heartbeat_tick >= 15 {
+            heartbeat_tick = 0;
+            for p in &pages {
+                if injected.contains(p.id) && !probe(p.ws) {
+                    injected.remove(p.id);
+                    dead.insert(p.id.to_string());
+                    log(format!(
+                        "  target stopped responding, watching quietly: {}",
+                        &p.url[..p.url.len().min(60)]
+                    ));
                 }
-                Err(e) => {
-                    // page may be mid-navigation; retry next round
-                    log(format!("  retry later: {} ({e})", &url[..url.len().min(60)]));
+            }
+        }
+
+        // IMPORTANT: every CDP probe spins up a full DevTools session in the
+        // renderer — probing every 2s keeps renderers at 100% CPU. Probe dead
+        // targets only every 15th tick (~30s); that's plenty for recovery.
+        dead_probe_tick += 1;
+        let probe_dead_now = dead_probe_tick >= 15;
+        if probe_dead_now {
+            dead_probe_tick = 0;
+        }
+
+        for p in &pages {
+            if injected.contains(p.id) {
+                continue;
+            }
+            if dead.contains(p.id) {
+                if !probe_dead_now {
+                    continue;
+                }
+                // silent probe: back to life?
+                if !probe(p.ws) {
+                    continue;
+                }
+                dead.remove(p.id);
+                log(format!("  target responsive again: {}", &p.url[..p.url.len().min(60)]));
+            }
+            match inject_target(p.ws, &js) {
+                Ok(()) => {
+                    injected.insert(p.id.to_string());
+                    log(format!("  injected: {}", &p.url[..p.url.len().min(70)]));
+                }
+                Err(_) => {
+                    // unresponsive or mid-navigation — mark dead, stay quiet
+                    dead.insert(p.id.to_string());
+                    log(format!(
+                        "  target not responding, watching quietly: {}",
+                        &p.url[..p.url.len().min(60)]
+                    ));
                 }
             }
         }
@@ -218,9 +444,31 @@ pub fn run<F: FnMut(String)>(
     Ok(())
 }
 
+/// Quick liveness probe: connect and evaluate a trivial expression with a
+/// short timeout. Renderers of a closed-window app accept the WebSocket but
+/// either never answer, or answer from the `cross-site-support` shell page
+/// the app swaps in when it unloads the real UI — both count as dead.
+fn probe(ws_url: &str) -> bool {
+    let Ok(mut cdp) = Cdp::connect(ws_url, Duration::from_millis(4000)) else {
+        return false;
+    };
+    let ok = cdp
+        .evaluate_with_timeout("location.href", Duration::from_millis(4000))
+        .map(|v| !v.as_str().unwrap_or("").contains("cross-site-support"))
+        .unwrap_or(false);
+    cdp.close();
+    ok
+}
+
 fn inject_target(ws_url: &str, js: &str) -> Result<(), String> {
     let mut cdp = Cdp::connect(ws_url, Duration::from_secs(10))?;
     let result = (|| {
+        // probe first: a wedged renderer accepts the socket but never answers
+        // (or answers from the cross-site-support shell)
+        let href = cdp.evaluate_with_timeout("location.href", Duration::from_millis(4000))?;
+        if href.as_str().unwrap_or("").contains("cross-site-support") {
+            return Err("shell page (real UI unloaded)".into());
+        }
         cdp.call("Page.enable", serde_json::json!({}))?;
         cdp.call(
             "Page.addScriptToEvaluateOnNewDocument",
