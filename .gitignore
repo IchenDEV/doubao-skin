@@ -1,0 +1,5 @@
+# dev artifacts (local working files, backups, screenshots, venv)
+work/
+__pycache__/
+*.pyc
+.DS_Store
