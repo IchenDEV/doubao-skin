@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="sheet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#6D4AE8"/>
+    </linearGradient>
+    <linearGradient id="peel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF79B8"/>
+      <stop offset="1" stop-color="#F04C92"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#sheet)" d="M646 610c0-37.6 30.4-68 68-68h120c37.6 0 68 30.4 68 68v164c0 37.6-30.4 68-68 68H714c-37.6 0-68-30.4-68-68V610Z"/>
+  <path fill="#FFFFFF" fill-opacity=".94" d="M704 620c0-11 9-20 20-20h100c11 0 20 9 20 20v42c0 11-9 20-20 20H724c-11 0-20-9-20-20v-42Z"/>
+  <circle cx="727" cy="738" r="17" fill="#67E8F9"/>
+  <circle cx="774" cy="738" r="17" fill="#C4B5FD"/>
+  <circle cx="821" cy="738" r="17" fill="#FF8FBE"/>
+  <path fill="url(#peel)" d="M902 698v76c0 37.6-30.4 68-68 68h-77c71-24 121-74 145-144Z"/>
+  <path fill="#FFFFFF" fill-opacity=".72" d="M757 842c35.5-11.8 65.1-29.9 88.8-54.2 23.6-24.2 42.4-54.2 56.2-89.8-6 45.5-22.2 80.7-48.6 105.5-23.9 22.6-56 35.4-96.4 38.5Z"/>
+</svg>
