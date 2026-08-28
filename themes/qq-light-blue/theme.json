@@ -1,0 +1,12 @@
+{
+  "id": "qq-light-blue",
+  "name": "QQ轻蓝",
+  "description": "浅蓝气泡与柔光，轻快又熟悉",
+  "background": "bg.jpg",
+  "veil": 0.06,
+  "inspiredBy": "Mac QQ current light visual",
+  "sourceUrl": "https://apps.apple.com/cn/app/qq/id451108668?mt=12",
+  "sourceSnapshot": "2026-08-28",
+  "sourceEvidence": "Light, lively visual design with light and night appearances",
+  "artwork": "Original ImageGen background; no QQ logo, mascot, or interface copied"
+}

@@ -43,6 +43,15 @@ DreamSkin 热门主题灵感版（2026-08-28 下载榜快照，背景图均为�
 
 灵感来源：[DreamSkin Gallery 下载最多](https://dreamskin.cc/gallery?community=popular)。角色和品牌主题只保留色彩气质，不打包原站人物、品牌或背景素材。
 
+品牌视觉灵感主题（背景图均为原创生成）：
+
+| 主题 | 说明 |
+| --- | --- |
+| `qq-light-blue` QQ轻蓝 | 浅蓝气泡与柔光，轻快又熟悉 |
+| `gallery-whale-maid` 鲸鱼娘 | 浅青晴空与蓝鲸少女，明亮又俏皮 |
+
+QQ 主题参考 [Mac QQ 官方页面](https://apps.apple.com/cn/app/qq/id451108668?mt=12) 的轻盈浅色视觉；鲸鱼娘参考 [DreamSkin 原主题](https://dreamskin.cc/themes/ver_cb557ececaa5de3f3dbe) 的浅青蓝白氛围。两款主题都使用原创背景，不包含原站人物、文字或品牌素材。
+
 氛围主题（带背景图，容器半透明透出画面，灵感来自 [Codex Dream Skin](https://github.com/Fei-Away/Codex-Dream-Skin)）：
 
 | 主题 | 说明 |

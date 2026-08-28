@@ -515,6 +515,24 @@ fn init_logger() {
     log::set_max_level(log::LevelFilter::Info);
 }
 
+#[cfg(target_os = "macos")]
+fn set_application_icon() {
+    use cocoa::appkit::{NSApp, NSApplication, NSImage};
+    use cocoa::base::nil;
+    use cocoa::foundation::NSData;
+
+    let bytes = include_bytes!("../../../assets/app-icon/AppIcon.icns");
+
+    // SAFETY: GPUI invokes this closure on AppKit's main thread. NSData copies the
+    // embedded bytes, NSImage retains its data, and NSApplication retains the image.
+    unsafe {
+        let data = NSData::dataWithBytes_length_(nil, bytes.as_ptr().cast(), bytes.len() as _);
+        let image = NSImage::initWithData_(NSImage::alloc(nil), data);
+        assert!(image != nil, "embedded AppIcon.icns must be a valid macOS icon");
+        NSApp().setApplicationIconImage_(image);
+    }
+}
+
 fn main() {
     init_logger();
     // parse `--live <theme-id>`
@@ -531,6 +549,9 @@ fn main() {
     }
 
     application().run(move |cx: &mut App| {
+        #[cfg(target_os = "macos")]
+        set_application_icon();
+
         let (tx, rx) = mpsc::channel::<Msg>();
 
         let bounds = Bounds::centered(None, size(px(780.), px(680.)), cx);

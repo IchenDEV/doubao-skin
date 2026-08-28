@@ -4763,6 +4763,7 @@ dependencies = [
 name = "skin-ui"
 version = "0.1.0"
 dependencies = [
+ "cocoa 0.26.0",
  "gpui",
  "gpui_platform",
  "log",

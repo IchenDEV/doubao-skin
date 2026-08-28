@@ -9,3 +9,6 @@ skin-core = { path = "../skin-core" }
 log = "0.4"
 gpui = { git = "https://github.com/zed-industries/zed", rev = "b962c0ab00b3d368503d8cd4000a6de2895b535c" }
 gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "b962c0ab00b3d368503d8cd4000a6de2895b535c", features = ["runtime_shaders", "font-kit"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "0.26.0"

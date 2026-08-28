@@ -1,0 +1,14 @@
+{
+  "id": "gallery-whale-maid",
+  "name": "鲸鱼娘",
+  "description": "浅青晴空与蓝鲸少女，明亮又俏皮",
+  "background": "bg.jpg",
+  "veil": 0.04,
+  "inspiredBy": "DreamSkin DeepSeek-鲸鱼娘",
+  "sourceUrl": "https://dreamskin.cc/themes/ver_cb557ececaa5de3f3dbe",
+  "sourceVersion": "ver_cb557ececaa5de3f3dbe",
+  "sourceLicense": "MIT",
+  "sourceDownloads": 2065,
+  "sourceSnapshot": "2026-08-28",
+  "artwork": "Original ImageGen adaptation; no upstream artwork, text, or branding bundled"
+}

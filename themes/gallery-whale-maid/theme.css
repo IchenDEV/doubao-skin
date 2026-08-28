@@ -1,0 +1,79 @@
+/* Original Doubao Work adaptation of DreamSkin's DeepSeek-鲸鱼娘 mood.
+   No upstream artwork, dialogue, or branding is bundled. */
+html[data-skin][data-theme=dark],
+html[data-skin][data-theme=dark] body {
+  --N00:#ffffff;--N00-raw:255,255,255;
+  --N50:#f9fbff;--N50-raw:249,251,255;
+  --N100:#f0f6ff;--N100-raw:240,246,255;
+  --N200:#e6edf8;--N200-raw:230,237,248;
+  --N300:#d6dfed;--N300-raw:214,223,237;
+  --N350:#c3cee4;--N350-raw:195,206,228;
+  --N400:#abb4cf;--N400-raw:171,180,207;
+  --N500:#9099b6;--N500-raw:144,153,182;
+  --N600:#737d9d;--N600-raw:115,125,157;
+  --N650:#626b89;--N650-raw:98,107,137;
+  --N700:#55557c;--N700-raw:85,85,124;
+  --N800:#455b78;--N800-raw:69,91,120;
+  --N900:#352970;--N900-raw:53,41,112;
+  --N950:#171333;--N950-raw:23,19,51;
+  --B50:#fff8ef;--B50-raw:255,248,239;
+  --B100:#f9ecd8;--B100-raw:249,236,216;
+  --B200:#edd9b8;--B200-raw:237,217,184;
+  --B300:#ceb683;--B300-raw:206,182,131;
+  --B350:#b08b63;--B350-raw:176,139,99;
+  --B400:#9b6d43;--B400-raw:155,109,67;
+  --B500:#7a4e29;--B500-raw:122,78,41;
+  --B600:#693f22;--B600-raw:105,63,34;
+  --B700:#59341b;--B700-raw:89,52,27;
+  --B800:#482916;--B800-raw:72,41,22;
+  --B900:#351e11;--B900-raw:53,30,17;
+  --s-color-bg-body:rgba(189,153,153,0.30);--s-color-bg-body-raw:189,153,153;
+  --s-color-bg-dialogs:rgba(255,255,255,0.96);--s-color-bg-dialogs-raw:255,255,255;
+  --s-color-bg-secondary:rgba(195,206,228,0.74);--s-color-bg-secondary-raw:195,206,228;
+  --s-color-bg-invert-secondary:rgba(53,41,112,0.94);--s-color-bg-invert-secondary-raw:53,41,112;
+  --s-color-bg-static-black-secondary:rgba(53,41,112,0.94);--s-color-bg-static-black-secondary-raw:53,41,112;
+  --s-color-bg-base:rgba(171,180,207,0.62);--s-color-bg-base-raw:171,180,207;
+  --s-color-bg-tertiary:rgba(230,237,248,0.78);--s-color-bg-tertiary-raw:230,237,248;
+  --s-color-bg-invert-tertiary:rgba(69,91,120,0.94);--s-color-bg-invert-tertiary-raw:69,91,120;
+  --s-color-bg-static-black-tertiary:rgba(69,91,120,0.94);--s-color-bg-static-black-tertiary-raw:69,91,120;
+  --s-color-bg-quaternary:rgba(214,223,237,0.78);--s-color-bg-quaternary-raw:214,223,237;
+  --s-color-bg-invert-quaternary:rgba(85,85,124,0.94);--s-color-bg-invert-quaternary-raw:85,85,124;
+  --s-color-bg-static-black-quaternary:rgba(85,85,124,0.94);--s-color-bg-static-black-quaternary-raw:85,85,124;
+  --s-color-bg-primary:rgba(255,255,255,0.82);--s-color-bg-primary-raw:255,255,255;
+  --s-color-bg-invert-primary:rgba(23,19,51,0.96);--s-color-bg-invert-primary-raw:23,19,51;
+  --s-color-bg-static-black-primary:rgba(23,19,51,0.96);--s-color-bg-static-black-primary-raw:23,19,51;
+  --s-color-bg-content-base:rgba(255,255,255,0.68);--s-color-bg-content-base-raw:255,255,255;
+  --s-color-bg-float:rgba(255,255,255,0.96);--s-color-bg-float-raw:255,255,255;
+  --dbx-bg-base-web:rgba(171,180,207,0.62);--dbx-bg-base-web-raw:171,180,207;
+  --dbx-bg-base-2:rgba(195,206,228,0.68);--dbx-bg-base-2-raw:195,206,228;
+  --dbx-bg-base-5:rgba(230,237,248,0.72);--dbx-bg-base-5-raw:230,237,248;
+  --dbx-bg-body-web:rgba(255,255,255,0.68);--dbx-bg-body-web-raw:255,255,255;
+  --dbx-bg-body-white:rgba(255,255,255,0.72);--dbx-bg-body-white-raw:255,255,255;
+  --dbx-bg-body-mac:rgba(255,255,255,0.66);
+  --dbx-bg-browser-mac:rgba(195,206,228,0.72);
+  --dbx-bg-browser-win:#c3cee4;--dbx-bg-browser-win-raw:195,206,228;
+  --dbx-bg-float:rgba(255,255,255,0.96);--dbx-bg-float-raw:255,255,255;
+  --semi-color-primary:rgba(122,78,41,1);
+  --semi-color-primary-hover:rgba(105,63,34,1);
+  --semi-color-primary-active:rgba(89,52,27,1);
+  --semi-color-primary-light-default:rgba(133,193,204,0.24);
+  --semi-color-primary-disabled:rgba(122,78,41,0.35);
+}
+
+html[data-skin][data-theme=dark] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background: var(--skin-bg-image) center/cover no-repeat;
+}
+
+html[data-skin][data-theme=dark] body {
+  position: relative;
+  isolation: isolate;
+}
+
+html[data-skin][data-theme=dark] body::after {
+  z-index: -1;
+}
