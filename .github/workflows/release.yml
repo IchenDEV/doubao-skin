@@ -72,12 +72,11 @@ jobs:
           security set-keychain-settings -lut 21600 "$keychain_file"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_file"
           security import "$certificate_file" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain_file"
-          security add-trusted-cert -p codeSign -k "$keychain_file" "$certificate_pem"
           security list-keychain -d user -s "$keychain_file"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -k "$KEYCHAIN_PASSWORD" "$keychain_file"
-          if ! security find-identity -v -p codesigning "$keychain_file" | grep -Fq "$MACOS_SIGNING_IDENTITY"; then
+          if ! security find-identity -p codesigning "$keychain_file" | grep -Fq "$MACOS_SIGNING_IDENTITY"; then
             echo "MACOS_SIGNING_IDENTITY is unavailable in the imported keychain" >&2
-            security find-identity -v -p codesigning "$keychain_file" >&2 || true
+            security find-identity -p codesigning "$keychain_file" >&2 || true
             exit 1
           fi
           {
