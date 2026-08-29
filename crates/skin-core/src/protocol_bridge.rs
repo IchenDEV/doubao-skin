@@ -1341,11 +1341,9 @@ mod tests {
                 .as_bytes(),
             )
             .unwrap();
+        client.shutdown(Shutdown::Write).unwrap();
         let mut response = String::new();
-        if let Err(error) = client.read_to_string(&mut response) {
-            assert_eq!(error.kind(), std::io::ErrorKind::ConnectionReset);
-            assert!(response.contains("\"end_type\":3"));
-        }
+        client.read_to_string(&mut response).unwrap();
         server.stop();
         upstream_thread.join().unwrap();
 
@@ -1361,6 +1359,7 @@ mod tests {
         assert!(response.starts_with("HTTP/1.1 200 OK"));
         assert!(response.contains("\"text\":\"UP_\""));
         assert!(response.contains("\"text\":\"OK\""));
+        assert!(response.contains("\"end_type\":3"));
         assert_eq!(shared.stats.lock().unwrap().completed, 1);
     }
 }
