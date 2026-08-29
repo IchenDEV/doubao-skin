@@ -22,7 +22,7 @@ export async function generateMetadata({
   const { id } = await params;
   const theme = getTheme(id);
   if (!theme) return {};
-  const title = `${theme.name} · 豆包主题`;
+  const title = `${theme.name} · 豆皮`;
   const url = `${SITE_URL}/themes/${theme.id}`;
   const image = theme.previewDetail ?? theme.bgDetail ?? SOCIAL_IMAGE;
   return {

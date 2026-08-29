@@ -3148,7 +3148,7 @@ mod tests {
                 "{} needs a package version",
                 theme.id
             );
-            assert_eq!(theme.author, "豆包主题", "{} needs an author", theme.id);
+            assert_eq!(theme.author, "豆皮", "{} needs an author", theme.id);
             assert!(
                 theme
                     .preview_image

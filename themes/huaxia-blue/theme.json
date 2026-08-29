@@ -1,7 +1,7 @@
 {
   "$schema": "../../design/theme-standard/theme-v2.schema.json",
   "appearance": "both",
-  "author": "豆包主题",
+  "author": "豆皮",
   "background": {
     "type": "gradient",
     "gradient": "linear-gradient(155deg, #f4f7fb 0%, #eaf0f7 48%, #ffffff 100%)",

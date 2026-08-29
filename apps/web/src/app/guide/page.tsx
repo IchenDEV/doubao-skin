@@ -15,7 +15,7 @@ import {
 } from "@/lib/site";
 
 const DESCRIPTION =
-  "下载豆包主题 macOS 通用版，完成首次打开、应用与恢复，并在 Codex 或 Claude Code 中安装主题 Skill。";
+  "下载豆皮 macOS 通用版，完成首次打开、应用与恢复，并在 Codex 或 Claude Code 中安装主题 Skill。";
 
 export const metadata: Metadata = {
   title: "使用与下载",
@@ -25,13 +25,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "zh_CN",
     url: `${SITE_URL}/guide`,
-    title: "使用与下载 · 豆包主题",
+    title: "使用与下载 · 豆皮",
     description: DESCRIPTION,
     images: [{ url: SOCIAL_IMAGE, width: 1200, height: 675 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "使用与下载 · 豆包主题",
+    title: "使用与下载 · 豆皮",
     description: DESCRIPTION,
     images: [SOCIAL_IMAGE],
   },
@@ -44,9 +44,9 @@ export default function GuidePage() {
         value={{
           "@context": "https://schema.org",
           "@type": "WebPage",
-          name: "豆包主题使用与下载",
+          name: "豆皮使用与下载",
           url: `${SITE_URL}/guide`,
-          description: "豆包主题的下载、安装、应用、恢复与 Skill 安装指南。",
+          description: "豆皮的下载、安装、应用、恢复与 Skill 安装指南。",
           inLanguage: "zh-CN",
         }}
       />
@@ -75,8 +75,8 @@ export default function GuidePage() {
         <p className="step-number">02</p>
         <h2>首次打开</h2>
         <ol className="numbered-list">
-          <li>解压下载的文件，把“豆包主题”拖入“应用程序”文件夹。</li>
-          <li>第一次打开时，在 Finder 中右键“豆包主题”，再选择“打开”。</li>
+          <li>解压下载的文件，把“豆皮”拖入“应用程序”文件夹。</li>
+          <li>第一次打开时，在 Finder 中右键“豆皮”，再选择“打开”。</li>
           <li>如果系统再次询问，确认打开即可；不需要关闭系统安全功能。</li>
         </ol>
       </section>
@@ -86,7 +86,7 @@ export default function GuidePage() {
         <h2>应用与恢复</h2>
         <ol className="numbered-list">
           <li>先保存「豆包」或「豆包工作」里正在进行的内容。</li>
-          <li>在“豆包主题”中选择目标应用和喜欢的主题，确认预览。</li>
+          <li>在“豆皮”中选择目标应用和喜欢的主题，确认预览。</li>
           <li>点击“应用主题”；需要还原时，点击“恢复默认”。</li>
         </ol>
         <p className="callout">应用过程中目标应用可能重新打开。恢复默认只清理正在运行的主题，不会删除已下载的主题包。</p>

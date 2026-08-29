@@ -29,7 +29,7 @@ export default async function HomePage({
         value={{
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          name: "豆包主题库",
+          name: "豆皮库",
           description: SITE_TAGLINE,
           url: SITE_URL,
           mainEntity: {

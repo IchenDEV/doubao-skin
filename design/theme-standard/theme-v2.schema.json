@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://doubao-work.local/theme-v2.schema.json",
-  "title": "豆包主题包 v2",
+  "title": "豆皮包 v2",
   "type": "object",
   "required": ["id", "name", "description"],
   "properties": {

@@ -43,16 +43,16 @@ actions!(
 );
 
 fn application_menu() -> Menu {
-    Menu::new("豆包主题").items([
-        MenuItem::action("关于豆包主题", About),
+    Menu::new("豆皮").items([
+        MenuItem::action("关于豆皮", About),
         MenuItem::separator(),
         MenuItem::os_submenu("服务", SystemMenuType::Services),
         MenuItem::separator(),
-        MenuItem::action("隐藏豆包主题", HideApplication),
+        MenuItem::action("隐藏豆皮", HideApplication),
         MenuItem::action("隐藏其他", HideOthers),
         MenuItem::action("全部显示", ShowAll),
         MenuItem::separator(),
-        MenuItem::action("退出豆包主题", QuitApplication),
+        MenuItem::action("退出豆皮", QuitApplication),
     ])
 }
 
@@ -2919,7 +2919,7 @@ impl Render for SkinApp {
             .text_size(px(17.))
             .font_weight(FontWeight::BOLD)
             .text_color(rgb(colors.text))
-            .child("豆包主题");
+            .child("豆皮");
         let target_switch = self.render_target_switch(cx);
 
         let header = if compact {
@@ -3093,7 +3093,7 @@ impl Render for SkinApp {
         div()
             .id("theme-picker")
             .role(Role::Application)
-            .aria_label("豆包主题")
+            .aria_label("豆皮")
             .size_full()
             .track_focus(&self.focus_handle)
             .on_key_down(cx.listener(Self::key_down))
@@ -3189,11 +3189,21 @@ fn init_logger() {
 }
 
 #[cfg(target_os = "macos")]
-fn set_application_icon() {
+fn set_development_icon() {
     use cocoa::appkit::{NSApp, NSApplication, NSImage};
-    use cocoa::base::nil;
-    use cocoa::foundation::NSData;
+    use cocoa::base::{id, nil};
+    use cocoa::foundation::{NSData, NSString};
+    use objc::{msg_send, sel, sel_impl};
 
+    unsafe {
+        let bundle: id = msg_send![objc::class!(NSBundle), mainBundle];
+        let path: id = msg_send![bundle, bundlePath];
+        let ext = NSString::alloc(nil).init_str(".app");
+        let is_bundle: bool = msg_send![path, hasSuffix: ext];
+        if is_bundle {
+            return;
+        }
+    }
     let bytes = include_bytes!("../../../assets/app-icon/AppIcon.icns");
     unsafe {
         let data = NSData::dataWithBytes_length_(nil, bytes.as_ptr().cast(), bytes.len() as _);
@@ -3255,7 +3265,7 @@ fn main() {
     });
     app.run(move |cx: &mut App| {
         #[cfg(target_os = "macos")]
-        set_application_icon();
+        set_development_icon();
         cx.bind_keys([
             KeyBinding::new("cmd-h", HideApplication, None),
             KeyBinding::new("cmd-alt-h", HideOthers, None),
@@ -3340,7 +3350,7 @@ mod ui_regression_tests {
     #[test]
     fn application_menu_contains_the_native_about_and_lifecycle_items() {
         let menu = application_menu();
-        assert_eq!(menu.name.as_ref(), "豆包主题");
+        assert_eq!(menu.name.as_ref(), "豆皮");
         let names = menu
             .items
             .iter()
@@ -3351,13 +3361,7 @@ mod ui_regression_tests {
             .collect::<Vec<_>>();
         assert_eq!(
             names,
-            [
-                "关于豆包主题",
-                "隐藏豆包主题",
-                "隐藏其他",
-                "全部显示",
-                "退出豆包主题",
-            ]
+            ["关于豆皮", "隐藏豆皮", "隐藏其他", "全部显示", "退出豆皮",]
         );
         assert!(menu.items.iter().any(|item| matches!(
             item,

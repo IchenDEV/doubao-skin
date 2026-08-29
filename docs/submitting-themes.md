@@ -1,6 +1,6 @@
 # 提交新主题
 
-豆包主题库通过 GitHub Pull Request 接收主题，不在网页上直接上传文件。每个主题必须是可以由桌面应用和 `doubao-theme` CLI 真实加载的独立目录。
+豆皮库通过 GitHub Pull Request 接收主题，不在网页上直接上传文件。每个主题必须是可以由桌面应用和 `doubao-theme` CLI 真实加载的独立目录。
 
 ## 1. 准备仓库和分支
 

@@ -98,11 +98,11 @@ jobs:
           ./scripts/build-macos.sh --universal
       - name: Verify stable signatures and package checksums
         run: |
-          ./scripts/verify-macos-signature.sh "dist/豆包主题.app" "$MACOS_CERTIFICATE_SHA256"
+          ./scripts/verify-macos-signature.sh "dist/豆皮.app" "$MACOS_CERTIFICATE_SHA256"
           (cd dist && shasum -a 256 -c Doubao-Skin-macOS-universal.zip.sha256)
           (cd dist && shasum -a 256 -c Doubao-Skin-macOS-universal.dmg.sha256)
           (cd dist && shasum -a 256 -c doubao-theme-macOS-universal.tar.gz.sha256)
-          dist/豆包主题.app/Contents/Resources/bin/doubao-theme --version
+          dist/豆皮.app/Contents/Resources/bin/doubao-theme --version
           verify_dir=$(mktemp -d "$RUNNER_TEMP/doubao-skin-release-verify.XXXXXX")
           mount_dir=$(mktemp -d "$RUNNER_TEMP/doubao-skin-release-mount.XXXXXX")
           cleanup() {
@@ -111,12 +111,12 @@ jobs:
           }
           trap cleanup EXIT HUP INT TERM
           ditto -x -k "dist/Doubao-Skin-macOS-universal.zip" "$verify_dir"
-          ./scripts/verify-macos-signature.sh "$verify_dir/豆包主题.app" "$MACOS_CERTIFICATE_SHA256"
+          ./scripts/verify-macos-signature.sh "$verify_dir/豆皮.app" "$MACOS_CERTIFICATE_SHA256"
           hdiutil verify "dist/Doubao-Skin-macOS-universal.dmg"
           hdiutil attach "dist/Doubao-Skin-macOS-universal.dmg" -nobrowse -readonly -mountpoint "$mount_dir"
-          test -d "$mount_dir/豆包主题.app"
+          test -d "$mount_dir/豆皮.app"
           test "$(readlink "$mount_dir/Applications")" = "/Applications"
-          ./scripts/verify-macos-signature.sh "$mount_dir/豆包主题.app" "$MACOS_CERTIFICATE_SHA256"
+          ./scripts/verify-macos-signature.sh "$mount_dir/豆皮.app" "$MACOS_CERTIFICATE_SHA256"
       - uses: actions/upload-artifact@v7
         with:
           name: Doubao-Skin-macOS-universal

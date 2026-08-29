@@ -4,7 +4,7 @@ set -eu
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_DIR=$(dirname "$SCRIPT_DIR")
 DIST_DIR="$REPO_DIR/dist"
-APP_NAME="豆包主题"
+APP_NAME="豆皮"
 BUNDLE="$DIST_DIR/$APP_NAME.app"
 LEGACY_BUNDLE="$DIST_DIR/Doubao Skin.app"
 EXECUTABLE_NAME="doubao-skin"
