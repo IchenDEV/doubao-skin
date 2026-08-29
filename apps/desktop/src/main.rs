@@ -10,8 +10,9 @@ use std::time::Duration;
 use gpui::{
     actions, div, img, point, prelude::*, px, rgb, size, svg, App, AssetSource, Bounds, Context,
     ExternalPaths, FocusHandle, FontWeight, KeyBinding, KeyDownEvent, Menu, MenuItem, MouseButton,
-    MouseDownEvent, MouseMoveEvent, ObjectFit, PathPromptOptions, Pixels, Rgba, Role, SharedString,
-    SystemMenuType, TitlebarOptions, Window, WindowAppearance, WindowBounds, WindowOptions,
+    MouseDownEvent, MouseMoveEvent, ObjectFit, PathPromptOptions, Pixels, QuitMode, Rgba, Role,
+    SharedString, SystemMenuType, TitlebarOptions, Window, WindowAppearance, WindowBounds,
+    WindowOptions,
 };
 use gpui_platform::application;
 
@@ -3258,7 +3259,9 @@ fn main() {
         .map(|pair| pair[1].clone());
     let url_buffer: Arc<Mutex<Vec<String>>> = Arc::default();
     let url_buffer_for_callback = url_buffer.clone();
-    let app = application().with_assets(Assets);
+    let app = application()
+        .with_assets(Assets)
+        .with_quit_mode(QuitMode::LastWindowClosed);
     app.on_open_urls(move |urls| {
         if let Ok(mut buf) = url_buffer_for_callback.lock() {
             buf.extend(urls);
