@@ -744,6 +744,25 @@ h3 {
   width: 100%;
 }
 
+.download-button.is-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.download-button.is-primary:hover {
+  opacity: 0.88;
+  background: var(--accent);
+}
+
+.download-button.is-secondary {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  font-weight: 500;
+}
+.download-button.is-secondary:hover {
+  background: var(--accent-soft);
+}
+
 .fine-print {
   margin: 14px 0 0 !important;
   color: var(--ink-3) !important;

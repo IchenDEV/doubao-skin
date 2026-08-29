@@ -2074,6 +2074,7 @@ impl SkinApp {
         let accent = parse_store_accent(row.theme.accent.as_deref());
         let store_selected = self.store_selected;
         div()
+            .id("store-detail")
             .flex_1()
             .min_h(px(0.))
             .overflow_scroll()
@@ -2124,13 +2125,14 @@ impl SkinApp {
                             .text_xs()
                             .text_color(rgb(colors.muted))
                             .when(!row.theme.category.is_empty(), |d| {
+                                let label = store_category_label(&row.theme.category).to_string();
                                 d.child(
                                     div()
                                         .px_2()
                                         .py_1()
                                         .rounded(px(4.))
                                         .bg(rgb(colors.control))
-                                        .child(store_category_label(&row.theme.category)),
+                                        .child(label),
                                 )
                             })
                             .when(!row.theme.version.is_empty(), |d| {
@@ -3262,14 +3264,13 @@ fn main() {
         .map(|pair| pair[1].clone());
     let url_buffer: Arc<Mutex<Vec<String>>> = Arc::default();
     let url_buffer_for_callback = url_buffer.clone();
-    application()
-        .with_assets(Assets)
-        .on_open_urls(move |urls| {
-            if let Ok(mut buf) = url_buffer_for_callback.lock() {
-                buf.extend(urls);
-            }
-        })
-        .run(move |cx: &mut App| {
+    let app = application().with_assets(Assets);
+    app.on_open_urls(move |urls| {
+        if let Ok(mut buf) = url_buffer_for_callback.lock() {
+            buf.extend(urls);
+        }
+    });
+    app.run(move |cx: &mut App| {
         #[cfg(target_os = "macos")]
         set_application_icon();
         cx.bind_keys([
