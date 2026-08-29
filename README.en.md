@@ -84,16 +84,34 @@ Plugin sources are under [`plugins/doubao-skin`](plugins/doubao-skin). The websi
 
 ## Rust CLI
 
-`doubao-theme` does not depend on Node.js, Python, or GPUI:
+`doubao-theme` is a standalone command-line tool that does not depend on Node.js, Python, or GPUI.
+
+### Install
+
+One-line install (macOS only):
 
 ```bash
-cargo run -p skin-core --bin doubao-theme -- list
-cargo run -p skin-core --bin doubao-theme -- create themes/my-theme \
+curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
+```
+
+The script downloads the prebuilt universal binary from GitHub Releases, verifies its checksum, and places it in `/usr/local/bin`. Set `INSTALL_DIR` to choose a different location, or `VERSION` to pin a specific release:
+
+```bash
+VERSION=v0.1.0 INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
+```
+
+You can also download `doubao-theme-macOS-universal.tar.gz` from [GitHub Releases](https://github.com/IchenDEV/doubao-skin/releases/latest) and extract it manually.
+
+### Usage
+
+```bash
+doubao-theme list
+doubao-theme create themes/my-theme \
   --name "My Theme" --description "A calm dark theme" \
   --accent "#5b7ee5" --appearance both --author "Local user"
-cargo run -p skin-core --bin doubao-theme -- check themes/my-theme
-cargo run -p skin-core --bin doubao-theme -- preview themes/my-theme
-cargo run -p skin-core --bin doubao-theme -- pack themes/my-theme dist/my-theme.doubao-skin.zip
+doubao-theme check themes/my-theme
+doubao-theme preview themes/my-theme
+doubao-theme pack themes/my-theme dist/my-theme.doubao-skin.zip
 ```
 
 Additional commands include `install`, `apply`, `restore`, `build`, and `remove-build`. Run `doubao-theme --help` for the complete interface.

@@ -249,7 +249,22 @@ trap - EXIT HUP INT TERM
   shasum -a 256 "$DMG_BASENAME" > "$DMG_BASENAME.sha256"
 )
 
+CLI_TARBALL_BASENAME="doubao-theme-macOS-$ARCHIVE_LABEL.tar.gz"
+CLI_TARBALL="$DIST_DIR/$CLI_TARBALL_BASENAME"
+rm -f "$CLI_TARBALL" "$CLI_TARBALL.sha256"
+CLI_STAGING=$(mktemp -d "$DIST_DIR/.cli-staging.XXXXXX")
+cp "$BUNDLE/Contents/Resources/bin/$CLI_EXECUTABLE_NAME" "$CLI_STAGING/$CLI_EXECUTABLE_NAME"
+cp "$REPO_DIR/LICENSE" "$CLI_STAGING/LICENSE"
+tar -czf "$CLI_TARBALL" -C "$CLI_STAGING" "$CLI_EXECUTABLE_NAME" LICENSE
+rm -rf "$CLI_STAGING"
+(
+  cd "$DIST_DIR"
+  shasum -a 256 "$CLI_TARBALL_BASENAME" > "$CLI_TARBALL_BASENAME.sha256"
+)
+
 echo "Built $ARCHIVE"
 echo "Checksum $ARCHIVE.sha256"
 echo "Built $DMG"
 echo "Checksum $DMG.sha256"
+echo "Built $CLI_TARBALL"
+echo "Checksum $CLI_TARBALL.sha256"

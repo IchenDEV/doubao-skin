@@ -113,6 +113,22 @@ fn main() {
     let json_output = remove_flag(&mut args, "--json");
     if args
         .iter()
+        .any(|arg| matches!(arg.as_str(), "-V" | "--version"))
+        || args.first().is_some_and(|arg| arg == "version")
+    {
+        let version = env!("CARGO_PKG_VERSION");
+        if json_output {
+            println!(
+                "{}",
+                json!({"ok": true, "command": "version", "result": {"version": version}})
+            );
+        } else {
+            println!("doubao-theme {version}");
+        }
+        return;
+    }
+    if args
+        .iter()
         .any(|arg| matches!(arg.as_str(), "-h" | "--help"))
         || args.first().is_some_and(|arg| arg == "help")
     {
@@ -454,7 +470,10 @@ fn text_field<'a>(value: &'a Value, key: &str) -> &'a str {
 }
 
 fn usage() -> &'static str {
-    "doubao-theme — 豆包主题命令行工具\n\n\
+    concat!(
+        "doubao-theme ",
+        env!("CARGO_PKG_VERSION"),
+        " — 豆包主题命令行工具\n\n\
 用法：\n\
   doubao-theme list [--json]\n\
   doubao-theme create <theme-dir> --name <名称> [--description <描述>] [--accent <#RRGGBB>] [--appearance light|dark|both] [--author <作者>]\n\
@@ -465,6 +484,8 @@ fn usage() -> &'static str {
   doubao-theme apply <theme> [--target doubao|doubao-work] [--watch]\n\
   doubao-theme restore [--target doubao|doubao-work]\n\
   doubao-theme build <theme>\n\
-  doubao-theme remove-build\n\n\
-退出码：0 成功，2 参数错误，3 主题无效，4 外部操作失败"
+  doubao-theme remove-build\n\
+  doubao-theme --version\n\n\
+退出码：0 成功，2 参数错误，3 主题无效，4 外部操作失败",
+    )
 }

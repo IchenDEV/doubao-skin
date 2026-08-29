@@ -16,7 +16,13 @@ Resolve one executable before doing any work, in this order:
 3. Use `/Applications/豆包主题.app/Contents/Resources/bin/doubao-theme` when it exists.
 4. In this repository, use `cargo run -p skin-core --bin doubao-theme --`.
 
-If none is available, stop and tell the user how to build the repository. Never substitute a handwritten archive script.
+If none is available, suggest installing the standalone CLI:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
+```
+
+Never substitute a handwritten archive script.
 
 ## Create a theme
 
