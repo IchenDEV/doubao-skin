@@ -119,7 +119,13 @@ export default async function ThemePage({
             <p className="panel-note">
               下载原生 macOS 应用，打开后选择“{theme.name}”并点击“应用主题”。无需额外运行环境。
             </p>
-            <Link className="download-button is-full" href="/guide#download">
+            <a
+              className="download-button is-full is-primary"
+              href={`doubao-skin://apply/${theme.id}`}
+            >
+              在本地应用中打开
+            </a>
+            <Link className="download-button is-full is-secondary" href="/guide#download">
               前往使用与下载
             </Link>
           </section>
