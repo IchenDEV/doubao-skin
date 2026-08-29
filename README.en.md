@@ -40,6 +40,8 @@ Download the latest build from [GitHub Releases](https://github.com/IchenDEV/dou
 
 If macOS blocks the first launch, right-click the app and choose **Open**.
 
+Release packages use one continuous community self-signed certificate. They are not Apple-notarized; future versions retain this signing identity unless an announced security rotation is required.
+
 1. Open Doubao Skin.
 2. Choose Doubao or Doubao Work.
 3. Pick a theme and review the preview.

@@ -13,6 +13,7 @@ CLI_EXECUTABLE_NAME="doubao-theme"
 CLI_PACKAGE_NAME="skin-core"
 APP_VERSION=${APP_VERSION:-$(awk -F '"' '/^version =/ { print $2; exit }' "$REPO_DIR/Cargo.toml")}
 CODESIGN_IDENTITY=${CODESIGN_IDENTITY:--}
+CODESIGN_KEYCHAIN=${CODESIGN_KEYCHAIN:-}
 BUILD_MODE=${1:-host}
 DEFAULT_BUNDLED_THEMES="doubao-snack-giggle doubao-dessert-giggle gallery-whale-maid qq-light-blue pure-dark"
 BUNDLED_THEMES=${BUNDLED_THEMES:-$DEFAULT_BUNDLED_THEMES}
@@ -165,7 +166,11 @@ done
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $APP_VERSION" "$BUNDLE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${GITHUB_RUN_NUMBER:-1}" "$BUNDLE/Contents/Info.plist"
 
-codesign --force --deep --options runtime --sign "$CODESIGN_IDENTITY" "$BUNDLE"
+if [ -n "$CODESIGN_KEYCHAIN" ]; then
+  codesign --force --deep --options runtime --timestamp=none --keychain "$CODESIGN_KEYCHAIN" --sign "$CODESIGN_IDENTITY" "$BUNDLE"
+else
+  codesign --force --deep --options runtime --timestamp=none --sign "$CODESIGN_IDENTITY" "$BUNDLE"
+fi
 codesign --verify --deep --strict "$BUNDLE"
 
 NOTARY_VALUES="${APPLE_ID:-}${APPLE_TEAM_ID:-}${APPLE_APP_PASSWORD:-}"

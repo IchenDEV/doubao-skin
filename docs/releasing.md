@@ -25,21 +25,19 @@ Set `BUNDLE_ALL_THEMES=1` when an internal build needs every checked-in theme. S
 
 ## Signing and notarization
 
-Without repository secrets, the workflow uses an ad-hoc signature. The package is useful for development and community testing, but macOS may require the user to explicitly open it.
+Every release uses the same long-lived community self-signed identity. The job refuses to build when its encrypted certificate, pinned SHA-256 fingerprint, or SHA-1 signing identity is missing or mismatched. This creates a continuous release identity across versions, but it is not Apple notarization: macOS may require users to right-click the app and choose Open on first launch.
 
-For a production-quality notarized release, configure these GitHub Actions secrets:
+Configure these GitHub Actions secrets:
 
 | Secret | Value |
 | --- | --- |
-| `MACOS_CERTIFICATE` | Base64-encoded Developer ID Application `.p12`. |
+| `MACOS_CERTIFICATE` | Base64-encoded, password-protected community self-signed `.p12`. |
 | `MACOS_CERTIFICATE_PASSWORD` | Password of the `.p12` file. |
-| `MACOS_SIGNING_IDENTITY` | Full Developer ID Application identity. |
+| `MACOS_CERTIFICATE_SHA256` | SHA-256 fingerprint of the public certificate, without relying on its display name. |
+| `MACOS_SIGNING_IDENTITY` | SHA-1 code-signing identity accepted by `codesign`. |
 | `KEYCHAIN_PASSWORD` | Temporary CI keychain password. |
-| `APPLE_ID` | Apple account used by `notarytool`. |
-| `APPLE_TEAM_ID` | Apple Developer Team ID. |
-| `APPLE_APP_PASSWORD` | App-specific password for notarization. |
 
-If any notarization credential is supplied, all three notarization values must be present. The packaging script notarizes and staples the app before packaging, then notarizes and staples the DMG. It fails rather than publishing a partly configured release. Builds without these credentials remain ad-hoc signed development artifacts and must not be described as notarized.
+Keep the encrypted recovery `.p12` outside the repository with mode `0600`; keep its password in a protected credential store. Rotate this identity only through a documented emergency release process, publish the new fingerprint, and preserve the old artifact record. Apple Developer ID signing and notarization are a separate release model and must not be mixed with this self-signed workflow.
 
 ## Release checklist
 
@@ -49,5 +47,5 @@ If any notarization credential is supplied, all three notarization values must b
 - Verify the real desktop window and native apply workflow.
 - Confirm theme and artwork provenance.
 - Create and push the version tag.
-- Download both release packages and verify their checksums. Run `hdiutil verify` on the DMG, mount it read-only, confirm it contains “豆包主题.app” and `Applications -> /Applications`, verify the mounted app with `codesign --verify --deep --strict`, then test a clean install.
+- Download both release packages and verify their checksums. Run `hdiutil verify` on the DMG, mount it read-only, confirm it contains “豆包主题.app” and `Applications -> /Applications`, verify the mounted app with `./scripts/verify-macos-signature.sh <app> <certificate-sha256>`, then test a clean install.
 - Confirm `Contents/Resources/bin/doubao-theme --help` runs and both bundled Skill directories pass validation.

@@ -18,8 +18,6 @@ jobs:
     runs-on: macos-15
     environment:
       name: production
-    env:
-      HAS_SIGNING_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE != '' }}
     steps:
       - uses: actions/checkout@v7
       - name: Install Rust toolchain
@@ -38,35 +36,86 @@ jobs:
             echo "Tag $GITHUB_REF_NAME does not match workspace version $workspace_version" >&2
             exit 1
           fi
-      - name: Import Developer ID certificate
-        if: ${{ env.HAS_SIGNING_CERTIFICATE == 'true' }}
+      - name: Import stable community signing certificate
         env:
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_CERTIFICATE_SHA256: ${{ secrets.MACOS_CERTIFICATE_SHA256 }}
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          certificate_file="$RUNNER_TEMP/developer-id.p12"
-          keychain_file="$RUNNER_TEMP/app-signing.keychain-db"
+          for required in MACOS_CERTIFICATE MACOS_CERTIFICATE_PASSWORD MACOS_CERTIFICATE_SHA256 MACOS_SIGNING_IDENTITY KEYCHAIN_PASSWORD; do
+            eval "value=\${$required}"
+            if [ -z "$value" ]; then
+              echo "Missing required release secret: $required" >&2
+              exit 1
+            fi
+          done
+          signing_dir=$(mktemp -d "$RUNNER_TEMP/doubao-skin-signing.XXXXXX")
+          certificate_file="$signing_dir/community-release.p12"
+          certificate_pem="$signing_dir/community-release.pem"
+          keychain_file="$signing_dir/community-release.keychain-db"
           printf '%s' "$MACOS_CERTIFICATE" | base64 --decode > "$certificate_file"
+          openssl pkcs12 -in "$certificate_file" -clcerts -nokeys -passin "pass:$MACOS_CERTIFICATE_PASSWORD" -out "$certificate_pem"
+          expected_fingerprint=$(printf '%s' "$MACOS_CERTIFICATE_SHA256" | tr -d ':' | tr '[:lower:]' '[:upper:]')
+          case "$expected_fingerprint" in ''|*[!0-9A-F]*) echo "MACOS_CERTIFICATE_SHA256 is not hexadecimal" >&2; exit 1 ;; esac
+          if [ "${#expected_fingerprint}" -ne 64 ]; then
+            echo "MACOS_CERTIFICATE_SHA256 must contain 64 hexadecimal characters" >&2
+            exit 1
+          fi
+          actual_fingerprint=$(openssl x509 -in "$certificate_pem" -noout -fingerprint -sha256 | sed 's/^[^=]*=//' | tr -d ':' | tr '[:lower:]' '[:upper:]')
+          if [ "$actual_fingerprint" != "$expected_fingerprint" ]; then
+            echo "Imported certificate does not match MACOS_CERTIFICATE_SHA256" >&2
+            exit 1
+          fi
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_file"
           security set-keychain-settings -lut 21600 "$keychain_file"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_file"
           security import "$certificate_file" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain_file"
+          security add-trusted-cert -d -r trustRoot -k "$keychain_file" "$certificate_pem"
           security list-keychain -d user -s "$keychain_file"
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$keychain_file"
+          if ! security find-identity -v -p codesigning "$keychain_file" | grep -Fq "$MACOS_SIGNING_IDENTITY"; then
+            echo "MACOS_SIGNING_IDENTITY is unavailable in the imported keychain" >&2
+            security find-identity -v -p codesigning "$keychain_file" >&2 || true
+            exit 1
+          fi
+          {
+            echo "CODESIGN_IDENTITY=$MACOS_SIGNING_IDENTITY"
+            echo "MACOS_CERTIFICATE_SHA256=$expected_fingerprint"
+            echo "SIGNING_DIR=$signing_dir"
+            echo "SIGNING_KEYCHAIN=$keychain_file"
+          } >> "$GITHUB_ENV"
       - name: Test workspace
         run: cargo test --workspace --all-targets --locked
       - name: Build, sign and package
         env:
-          CODESIGN_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          CODESIGN_IDENTITY: ${{ env.CODESIGN_IDENTITY }}
+          CODESIGN_KEYCHAIN: ${{ env.SIGNING_KEYCHAIN }}
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             export APP_VERSION="${GITHUB_REF_NAME#v}"
           fi
           ./scripts/build-macos.sh --universal
+      - name: Verify stable signatures and package checksums
+        run: |
+          ./scripts/verify-macos-signature.sh "dist/豆包主题.app" "$MACOS_CERTIFICATE_SHA256"
+          (cd dist && shasum -a 256 -c Doubao-Skin-macOS-universal.zip.sha256)
+          (cd dist && shasum -a 256 -c Doubao-Skin-macOS-universal.dmg.sha256)
+          verify_dir=$(mktemp -d "$RUNNER_TEMP/doubao-skin-release-verify.XXXXXX")
+          mount_dir=$(mktemp -d "$RUNNER_TEMP/doubao-skin-release-mount.XXXXXX")
+          cleanup() {
+            hdiutil detach "$mount_dir" -quiet 2>/dev/null || true
+            rm -rf "$verify_dir" "$mount_dir"
+          }
+          trap cleanup EXIT HUP INT TERM
+          ditto -x -k "dist/Doubao-Skin-macOS-universal.zip" "$verify_dir"
+          ./scripts/verify-macos-signature.sh "$verify_dir/豆包主题.app" "$MACOS_CERTIFICATE_SHA256"
+          hdiutil verify "dist/Doubao-Skin-macOS-universal.dmg"
+          hdiutil attach "dist/Doubao-Skin-macOS-universal.dmg" -nobrowse -readonly -mountpoint "$mount_dir"
+          test -d "$mount_dir/豆包主题.app"
+          test "$(readlink "$mount_dir/Applications")" = "/Applications"
+          ./scripts/verify-macos-signature.sh "$mount_dir/豆包主题.app" "$MACOS_CERTIFICATE_SHA256"
       - uses: actions/upload-artifact@v7
         with:
           name: Doubao-Skin-macOS-universal
@@ -95,6 +144,16 @@ jobs:
               dist/Doubao-Skin-macOS-universal.dmg \
               dist/Doubao-Skin-macOS-universal.dmg.sha256 \
               --verify-tag \
-              --generate-notes \
+              --notes "Community self-signed release. This package is not Apple-notarized; if macOS blocks first launch, right-click the app and choose Open." \
               --title "Doubao Skin $GITHUB_REF_NAME"
           fi
+      - name: Remove temporary signing material
+        if: ${{ always() }}
+        run: |
+          if [ -n "${SIGNING_KEYCHAIN:-}" ] && [ -f "$SIGNING_KEYCHAIN" ]; then
+            security delete-keychain "$SIGNING_KEYCHAIN" || true
+          fi
+          case "${SIGNING_DIR:-}" in
+            "$RUNNER_TEMP"/doubao-skin-signing.*) rm -rf "$SIGNING_DIR" ;;
+            *) : ;;
+          esac
