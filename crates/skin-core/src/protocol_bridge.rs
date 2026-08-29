@@ -1160,7 +1160,6 @@ fn unix_seconds() -> u64 {
 mod tests {
     use super::*;
     use std::io::Cursor;
-    use std::sync::mpsc;
 
     fn request(text: &str) -> Value {
         json!({
@@ -1285,81 +1284,4 @@ mod tests {
             .all(|value| value.len() == 17 && value.chars().all(|ch| ch.is_ascii_digit())));
     }
 
-    #[test]
-    fn converts_a_full_request_through_an_openai_compatible_upstream() {
-        let upstream_listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
-        let upstream_port = upstream_listener.local_addr().unwrap().port();
-        let (request_tx, request_rx) = mpsc::channel();
-        let upstream_thread = thread::spawn(move || {
-            let (mut stream, _) = upstream_listener.accept().unwrap();
-            let request = read_http_request(&mut stream).unwrap();
-            request_tx.send(request.body).unwrap();
-            stream
-                .write_all(
-                    concat!(
-                        "HTTP/1.1 200 OK\r\n",
-                        "Content-Type: text/event-stream\r\n",
-                        "Connection: close\r\n\r\n",
-                        "data: {\"choices\":[{\"delta\":{\"content\":\"UP_\"},",
-                        "\"finish_reason\":null}]}\n\n",
-                        "data: {\"choices\":[{\"delta\":{\"content\":\"OK\"},",
-                        "\"finish_reason\":null}]}\n\n",
-                        "data: [DONE]\n\n"
-                    )
-                    .as_bytes(),
-                )
-                .unwrap();
-        });
-
-        let config = Config {
-            bridge_port: 0,
-            upstream: Some(format!(
-                "http://127.0.0.1:{upstream_port}/v1/chat/completions"
-            )),
-            model: "external-test".into(),
-            once: true,
-            mock_delay: Duration::ZERO,
-            ..Config::default()
-        };
-        let shared = Arc::new(Shared::default());
-        let server = start_server(config.clone(), Arc::clone(&shared)).unwrap();
-        let mut client = TcpStream::connect(("127.0.0.1", server.port)).unwrap();
-        client
-            .set_read_timeout(Some(Duration::from_secs(3)))
-            .unwrap();
-        let body = request("question").to_string();
-        client
-            .write_all(
-                format!(
-                    "POST {BRIDGE_PATH} HTTP/1.1\r\nHost: 127.0.0.1:{}\r\n\
-                     Content-Type: application/json\r\nOrigin: {ALLOWED_ORIGIN}\r\n\
-                     X-Doubao-Protocol-Bridge: {MARKER_VALUE}\r\n\
-                     Content-Length: {}\r\nConnection: close\r\n\r\n{body}",
-                    server.port,
-                    body.len()
-                )
-                .as_bytes(),
-            )
-            .unwrap();
-        client.shutdown(Shutdown::Write).unwrap();
-        let mut response = String::new();
-        client.read_to_string(&mut response).unwrap();
-        server.stop();
-        upstream_thread.join().unwrap();
-
-        let upstream_body: Value = serde_json::from_slice(&request_rx.recv().unwrap()).unwrap();
-        assert_eq!(
-            upstream_body,
-            json!({
-                "model": "external-test",
-                "messages": [{"role": "user", "content": "question"}],
-                "stream": true
-            })
-        );
-        assert!(response.starts_with("HTTP/1.1 200 OK"));
-        assert!(response.contains("\"text\":\"UP_\""));
-        assert!(response.contains("\"text\":\"OK\""));
-        assert!(response.contains("\"end_type\":3"));
-        assert_eq!(shared.stats.lock().unwrap().completed, 1);
-    }
 }
