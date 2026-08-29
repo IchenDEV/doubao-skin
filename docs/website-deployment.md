@@ -7,7 +7,7 @@ The recommended production path is Vercel's GitHub integration. GitHub Actions v
 1. Push the repository to GitHub and import it in Vercel.
 2. Set the Vercel project Root Directory to `apps/web`.
 3. Select the Next.js framework preset and Node.js 24.
-4. Because this app pins pnpm 12, set the install command to `corepack pnpm install --frozen-lockfile`, keep the build command as `pnpm build`, and add `ENABLE_EXPERIMENTAL_COREPACK=1` to Preview and Production. Vercel's automatic pnpm selection currently covers pnpm 6–10; Corepack reads the exact `packageManager` version from `package.json`.
+4. Because this app pins pnpm 12, keep the install command as `corepack pnpm install --frozen-lockfile` and the build command as `corepack pnpm run build`. Both are committed in `vercel.json`, so Git deployments do not fall back to Vercel's legacy pnpm shim. Keep `ENABLE_EXPERIMENTAL_COREPACK=1` enabled for Preview and Production.
 5. Set the Production Branch to `main`.
 6. Repository links are fixed to `https://github.com/IchenDEV/doubao-skin`.
 7. The desktop download is fixed to `https://github.com/IchenDEV/doubao-skin/releases/latest/download/Doubao-Skin-macOS-universal.zip`. Keep the large desktop archive on GitHub Releases rather than Vercel; the website does not read an environment-variable override.

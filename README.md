@@ -98,7 +98,7 @@ cargo run -p skin-core --bin doubao-theme -- pack themes/my-theme dist/my-theme.
 
 ## 从源码构建
 
-需要 macOS、Rust 1.97.1+、Node.js 24.20+ 与 pnpm 12。
+需要 macOS、Rust 1.97.1+、Node.js 24.19+ 与 pnpm 12。
 
 ```bash
 # 测试与检查

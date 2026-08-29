@@ -6,7 +6,7 @@ Thanks for contributing to Doubao Skin. Keep changes focused, preserve the nativ
 
 - macOS 13 or later
 - Stable Rust 1.97.1 or later
-- Node.js 24.20.0 LTS and pnpm 12.0.0 for the theme gallery
+- Node.js 24.19.0+ and pnpm 12.0.0 for the theme gallery
 - An installed copy of DoubaoWork for live integration testing
 
 ```bash

@@ -4,7 +4,7 @@
 
 - macOS 13 or later
 - Stable Rust 1.97.1 or later
-- Node.js 24.20.0 LTS and pnpm 12.0.0
+- Node.js 24.19.0+ and pnpm 12.0.0
 - `zip`, `codesign`, `ditto`, and Xcode command-line tools for packaging
 - Xcode 26 or later with Icon Composer to regenerate the adaptive app icon; packaging falls back to the checked-in compiled icon resources when full Xcode is unavailable
 

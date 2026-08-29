@@ -98,7 +98,7 @@ Additional commands include `install`, `apply`, `restore`, `build`, and `remove-
 
 ## Build from source
 
-Requirements: macOS, Rust 1.97.1+, Node.js 24.20+, and pnpm 12.
+Requirements: macOS, Rust 1.97.1+, Node.js 24.19+, and pnpm 12.
 
 ```bash
 # Test and validate the whole project
