@@ -3189,6 +3189,7 @@ fn init_logger() {
 }
 
 #[cfg(target_os = "macos")]
+#[allow(unexpected_cfgs)]
 fn set_development_icon() {
     use cocoa::appkit::{NSApp, NSApplication, NSImage};
     use cocoa::base::{id, nil};
