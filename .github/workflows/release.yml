@@ -72,7 +72,6 @@ jobs:
           security set-keychain-settings -lut 21600 "$keychain_file"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_file"
           security import "$certificate_file" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain_file"
-          security add-trusted-cert -d -r trustRoot -k "$keychain_file" "$certificate_pem"
           security list-keychain -d user -s "$keychain_file"
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$keychain_file"
           if ! security find-identity -v -p codesigning "$keychain_file" | grep -Fq "$MACOS_SIGNING_IDENTITY"; then
