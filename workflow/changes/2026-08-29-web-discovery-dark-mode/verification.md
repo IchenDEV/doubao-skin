@@ -5,7 +5,7 @@ status: pending
 owner: "codex"
 created: "2026-08-29"
 based_on: plan.md
-commit: ""
+commit: "57350971e35d7ca28be3dce08fa58e296caf946a"
 verification_mode: "fresh-context"
 verified_by: "Averroes (fresh-context verifier)"
 verified_at: "2026-08-29"
@@ -61,9 +61,20 @@ verified_at: "2026-08-29"
 - The first full gate run encountered one transient missing terminal event in an unrelated protocol-bridge loopback test. That exact test passed immediately in isolation, and the complete `./scripts/check.sh all` rerun passed all 31 core tests and every remaining gate.
 - The GitHub repository and Latest Release asset are future public targets chosen by the user. The exact URL is assembled and verified in rendered HTML, but remote Release availability remains pending until the user uploads/publishes it.
 - For the same reason, the scheduled health workflow's GitHub download probe cannot pass until that first universal Release asset exists; the workflow contract is configured but not claimed as remotely verified.
-- Production promotion to `doubao-skin.idevlab.dev` is intentionally pending a new explicit approval under the accepted Plan.
-- The worktree is uncommitted and contains unrelated concurrent changes. Verification is scoped to the files and deployment above; a commit anchor is still required before marking this artifact passed.
-- After the final 26-theme gate and Preview deployment, an independent concurrent task added four new source directories: claude-warm, github-repository, huaxia-blue, and machine-overseer. They are intentionally absent from this change's 26-theme generated catalog and Preview; their owning task must sync and verify them before any later Production promotion.
+- The Vercel CLI prints a non-fatal local `pnpm-lock.yaml` parse warning before upload. Both cloud deployments still verified the lockfile supply chain, installed with pnpm 12, and completed the Next.js build.
+- The Latest Release URL is correct, but the universal ZIP remains unavailable until the first GitHub Release publishes that exact asset; no release was created as part of this deployment task.
+
+## Publication and deployment follow-up
+
+- The user explicitly approved creating and pushing the public repository, updating the existing Vercel Production deployment, and connecting automatic deployment.
+- Public repository: `https://github.com/IchenDEV/doubao-skin`, default branch `main`, initial publication commit `57350971e35d7ca28be3dce08fa58e296caf946a`.
+- All repository and download constants now use `IchenDEV/doubao-skin`; the public scan found no old repository URL, local username, embedded credential, private key, or unignored local build artifact.
+- Two consecutive catalog syncs generated 30 themes and 30 installable packages with combined manifest hash `e73e41b705e6f86f65aa7d89a71f55f9e4812384f0220c878418955e912417da`.
+- Final `./scripts/check.sh all` passed 9 desktop tests, 31 core tests, 12 CLI/integration tests, workflow policy, Clippy, website regressions, skill discovery, TypeScript, the 38-route Next.js production build, and the dependency audit.
+- New Preview `dpl_AZn13RWigez6X8NNDEHJrzc2G2kv` reached `READY`; authenticated smoke checks returned schema version 1, 30 themes, and the exact new GitHub universal ZIP URL.
+- New Production `dpl_46ciy1MHcYMGenkv8HJdd1hQgmbo` reached `READY` and was aliased to `https://doubao-skin.idevlab.dev`.
+- Vercel project `prj_JEnkkULvtOJVFLhOH57CGmk0Fp3V` now has root directory `apps/web`; `vercel git connect https://github.com/IchenDEV/doubao-skin` reported `Connected`. A follow-up push is used below to verify the automatic Production path rather than relying on configuration output alone.
+- Local browser acceptance covered the 30-theme library, combined background/gallery filter result of 4, exact guide download URL, 390px layout without horizontal overflow, one filter panel, and zero console errors. The current public gallery screenshot is committed at `docs/images/gallery.png`.
 
 ## Verdict
 
