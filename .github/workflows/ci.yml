@@ -35,6 +35,9 @@ jobs:
         run: |
           rustup show
           rustup component add rustfmt clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - name: Reject tracked Python sources
         run: |
           if [ -n "$(git ls-files '*.py')" ]; then
@@ -43,10 +46,10 @@ jobs:
           fi
       - name: Check formatting
         run: cargo fmt --all -- --check
-      - name: Run tests
-        run: cargo test --workspace --all-targets --locked
       - name: Run Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Run tests
+        run: cargo test --workspace --all-targets --locked
       - name: Check packaging script
         run: bash -n scripts/build-macos.sh
 

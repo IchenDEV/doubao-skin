@@ -24,6 +24,9 @@ jobs:
         run: |
           rustup show
           rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - name: Validate release tag
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: |
