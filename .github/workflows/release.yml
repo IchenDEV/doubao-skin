@@ -86,6 +86,7 @@ jobs:
             echo "SIGNING_KEYCHAIN=$keychain_file"
           } >> "$GITHUB_ENV"
       - name: Test workspace
+        timeout-minutes: 10
         run: cargo test --workspace --all-targets --locked || cargo test --workspace --all-targets --locked
       - name: Build, sign and package
         env:
