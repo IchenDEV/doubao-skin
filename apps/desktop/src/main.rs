@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{mpsc, Arc};
+use std::sync::{mpsc, Arc, Mutex};
 use std::time::Duration;
 
 use gpui::{
@@ -387,6 +387,7 @@ enum Msg {
         error: Option<String>,
         open_library: bool,
     },
+    OpenUrl(String),
 }
 
 struct ThemeRow {
@@ -416,6 +417,7 @@ struct SkinApp {
     installing_package: bool,
     installing_store_theme: Option<String>,
     selected: usize,
+    store_selected: usize,
     query: String,
     search_active: bool,
     internal_logs: VecDeque<String>,
@@ -431,12 +433,14 @@ struct SkinApp {
     live_thread: Option<std::thread::JoinHandle<()>>,
     generation: u64,
     focus_handle: FocusHandle,
+    url_buffer: Arc<Mutex<Vec<String>>>,
 }
 
 impl SkinApp {
     fn new(
         tx: mpsc::Sender<Msg>,
         rx: mpsc::Receiver<Msg>,
+        url_buffer: Arc<Mutex<Vec<String>>>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
@@ -465,11 +469,28 @@ impl SkinApp {
             live::TargetApp::Doubao.is_installed(),
             live::TargetApp::DoubaoWork.is_installed(),
         );
+        let url_buf = url_buffer.clone();
         cx.spawn(async move |this, cx| loop {
             while let Ok(msg) = rx.try_recv() {
                 if this
                     .update(cx, |this, cx| {
                         this.handle_msg(msg);
+                        cx.notify();
+                    })
+                    .is_err()
+                {
+                    return;
+                }
+            }
+            let urls: Vec<String> = url_buf
+                .lock()
+                .ok()
+                .map(|mut buf| buf.drain(..).collect())
+                .unwrap_or_default();
+            for url in urls {
+                if this
+                    .update(cx, |this, cx| {
+                        this.handle_open_url(&url, cx);
                         cx.notify();
                     })
                     .is_err()
@@ -495,6 +516,7 @@ impl SkinApp {
             installing_package: false,
             installing_store_theme: None,
             selected: 0,
+            store_selected: 0,
             query: String::new(),
             search_active: false,
             internal_logs: VecDeque::new(),
@@ -510,6 +532,7 @@ impl SkinApp {
             live_thread: None,
             generation: 0,
             focus_handle,
+            url_buffer,
         }
     }
 
@@ -706,6 +729,9 @@ impl SkinApp {
                     Ok(rows) => {
                         self.store_rows = rows;
                         self.store_error = None;
+                        if self.store_selected >= self.store_rows.len() {
+                            self.store_selected = 0;
+                        }
                     }
                     Err(error) => self.store_error = Some(error),
                 }
@@ -739,7 +765,74 @@ impl SkinApp {
                     format!("已安装 {} 个主题", ids.len())
                 };
             }
+            Msg::OpenUrl(url) => {
+                if let Ok(mut buf) = self.url_buffer.lock() {
+                    buf.push(url);
+                }
+            }
         }
+    }
+
+    fn handle_open_url(&mut self, url: &str, cx: &mut Context<Self>) {
+        let theme_id = url
+            .strip_prefix("doubao-skin://apply/")
+            .or_else(|| url.strip_prefix("doubao-skin://theme/"))
+            .map(|id| id.trim_end_matches('/'));
+        let Some(theme_id) = theme_id else {
+            return;
+        };
+        if let Some(index) = self
+            .themes
+            .iter()
+            .position(|row| row.theme.id == theme_id)
+        {
+            self.source_view = SourceView::Library;
+            self.selected = index;
+            self.query.clear();
+            self.apply_selected(cx);
+            return;
+        }
+        if let Some(index) = self
+            .store_rows
+            .iter()
+            .position(|row| row.theme.id == theme_id)
+        {
+            self.source_view = SourceView::Store;
+            self.store_selected = index;
+            self.query.clear();
+            self.install_store_theme(index, cx);
+            return;
+        }
+        let id_owned = theme_id.to_string();
+        let tx = self.tx.clone();
+        self.message = format!("正在查找主题「{id_owned}」…");
+        std::thread::spawn(move || {
+            let catalog_url = theme::theme_store_url();
+            match theme::fetch_store_catalog(&catalog_url) {
+                Ok(catalog) => {
+                    let _ = tx.send(Msg::StoreLoaded(Ok(catalog
+                        .themes
+                        .into_iter()
+                        .map(|store_theme| {
+                            let cache_dir = theme::theme_store_cache_dir();
+                            let preview =
+                                theme::cache_store_preview(&catalog_url, &store_theme, &cache_dir)
+                                    .ok()
+                                    .flatten();
+                            StoreRow {
+                                theme: store_theme,
+                                preview,
+                            }
+                        })
+                        .collect())));
+                    let _ = tx.send(Msg::OpenUrl(format!("doubao-skin://apply/{id_owned}")));
+                }
+                Err(error) => {
+                    let _ = tx.send(Msg::StoreLoaded(Err(error)));
+                }
+            }
+        });
+        cx.notify();
     }
 
     fn reload_themes(&mut self, preferred_id: Option<&str>) {
@@ -1520,6 +1613,145 @@ impl SkinApp {
         list.into_any_element()
     }
 
+    fn render_store_sidebar_item(
+        &self,
+        index: usize,
+        cx: &mut Context<Self>,
+    ) -> gpui::AnyElement {
+        let colors = self.colors;
+        let row = &self.store_rows[index];
+        let selected = index == self.store_selected;
+        let installed = self
+            .themes
+            .iter()
+            .any(|theme| theme.theme.id == row.theme.id);
+        let accent = parse_store_accent(row.theme.accent.as_deref());
+        div()
+            .id(("store-sidebar", index))
+            .role(Role::Button)
+            .aria_label(row.theme.name.clone())
+            .h(px(42.))
+            .flex_shrink_0()
+            .px_3()
+            .flex()
+            .items_center()
+            .gap_3()
+            .rounded(px(8.))
+            .bg(if selected {
+                rgb(accent).opacity(0.16)
+            } else {
+                rgb(colors.sidebar)
+            })
+            .cursor_pointer()
+            .hover(|style| style.bg(rgb(colors.hover)))
+            .on_click(cx.listener(move |this, _event, _window, cx| {
+                this.store_selected = index;
+                cx.notify();
+            }))
+            .child(
+                div()
+                    .size(px(28.))
+                    .rounded(px(6.))
+                    .bg(rgb(accent).opacity(0.24))
+                    .flex()
+                    .items_center()
+                    .justify_center()
+                    .child(
+                        div()
+                            .size(px(12.))
+                            .rounded_full()
+                            .bg(rgb(accent)),
+                    ),
+            )
+            .child(
+                div()
+                    .flex_1()
+                    .min_w(px(0.))
+                    .overflow_hidden()
+                    .whitespace_nowrap()
+                    .text_sm()
+                    .font_weight(if selected {
+                        FontWeight::SEMIBOLD
+                    } else {
+                        FontWeight::NORMAL
+                    })
+                    .text_color(rgb(colors.text))
+                    .child(row.theme.name.clone()),
+            )
+            .when(installed, |item| {
+                item.child(
+                    div()
+                        .text_xs()
+                        .text_color(rgb(colors.muted))
+                        .child("已安装"),
+                )
+            })
+            .into_any_element()
+    }
+
+    fn render_store_sidebar_list(&self, cx: &mut Context<Self>) -> gpui::AnyElement {
+        let colors = self.colors;
+        let mut list = div()
+            .id("store-themes-sidebar")
+            .role(Role::List)
+            .aria_label("商店主题")
+            .flex_1()
+            .min_h(px(0.))
+            .overflow_scroll()
+            .flex_col()
+            .px_3()
+            .pb_4();
+        if self.store_loading {
+            return list
+                .child(
+                    div()
+                        .px_3()
+                        .py_4()
+                        .text_sm()
+                        .text_color(rgb(colors.muted))
+                        .child("正在连接…"),
+                )
+                .into_any_element();
+        }
+        if let Some(error) = self.store_error.as_ref() {
+            return list
+                .child(
+                    div()
+                        .px_3()
+                        .py_4()
+                        .flex()
+                        .flex_col()
+                        .gap_2()
+                        .text_sm()
+                        .text_color(rgb(colors.muted))
+                        .child("暂时无法连接")
+                        .child(div().text_xs().child(error.clone())),
+                )
+                .into_any_element();
+        }
+        let indices = self.filtered_store_indices();
+        if indices.is_empty() {
+            return list
+                .child(
+                    div()
+                        .px_3()
+                        .py_4()
+                        .text_sm()
+                        .text_color(rgb(colors.muted))
+                        .child(if self.query.is_empty() {
+                            "暂时没有可用主题"
+                        } else {
+                            "没有匹配的主题"
+                        }),
+                )
+                .into_any_element();
+        }
+        for index in indices {
+            list = list.child(self.render_store_sidebar_item(index, cx));
+        }
+        list.into_any_element()
+    }
+
     fn render_store_preview(&self, row: &StoreRow, height: f32) -> gpui::AnyElement {
         let colors = self.colors;
         let accent = parse_store_accent(row.theme.accent.as_deref());
@@ -1817,6 +2049,154 @@ impl SkinApp {
         }
         body = body.child(grid);
         body.into_any_element()
+    }
+
+    fn render_store_detail(&self, cx: &mut Context<Self>) -> gpui::AnyElement {
+        let colors = self.colors;
+        let Some(row) = self.store_rows.get(self.store_selected) else {
+            return div()
+                .flex_1()
+                .min_h(px(0.))
+                .flex()
+                .items_center()
+                .justify_center()
+                .text_sm()
+                .text_color(rgb(colors.muted))
+                .child("选择一个主题以查看详情")
+                .into_any_element();
+        };
+        let installed = self
+            .themes
+            .iter()
+            .any(|theme| theme.theme.id == row.theme.id);
+        let installing =
+            self.installing_store_theme.as_deref() == Some(row.theme.id.as_str());
+        let accent = parse_store_accent(row.theme.accent.as_deref());
+        let store_selected = self.store_selected;
+        div()
+            .flex_1()
+            .min_h(px(0.))
+            .overflow_scroll()
+            .p(px(32.))
+            .flex()
+            .flex_col()
+            .items_center()
+            .gap_6()
+            .child(
+                div()
+                    .w(px(480.))
+                    .max_w_full()
+                    .overflow_hidden()
+                    .rounded(px(12.))
+                    .border_1()
+                    .border_color(rgb(colors.border))
+                    .bg(rgb(colors.control))
+                    .child(self.render_store_preview(row, 280.)),
+            )
+            .child(
+                div()
+                    .w(px(480.))
+                    .max_w_full()
+                    .flex()
+                    .flex_col()
+                    .gap_3()
+                    .child(
+                        div()
+                            .text_size(px(22.))
+                            .font_weight(FontWeight::BOLD)
+                            .text_color(rgb(colors.text))
+                            .child(row.theme.name.clone()),
+                    )
+                    .child(
+                        div()
+                            .text_sm()
+                            .text_color(rgb(colors.muted))
+                            .child(if row.theme.description.is_empty() {
+                                row.theme.category.clone()
+                            } else {
+                                row.theme.description.clone()
+                            }),
+                    )
+                    .child(
+                        div()
+                            .flex()
+                            .gap_2()
+                            .text_xs()
+                            .text_color(rgb(colors.muted))
+                            .when(!row.theme.category.is_empty(), |d| {
+                                d.child(
+                                    div()
+                                        .px_2()
+                                        .py_1()
+                                        .rounded(px(4.))
+                                        .bg(rgb(colors.control))
+                                        .child(store_category_label(&row.theme.category)),
+                                )
+                            })
+                            .when(!row.theme.version.is_empty(), |d| {
+                                d.child(
+                                    div()
+                                        .px_2()
+                                        .py_1()
+                                        .rounded(px(4.))
+                                        .bg(rgb(colors.control))
+                                        .child(format!("v{}", row.theme.version)),
+                                )
+                            })
+                            .when(!row.theme.author.is_empty(), |d| {
+                                d.child(
+                                    div()
+                                        .px_2()
+                                        .py_1()
+                                        .rounded(px(4.))
+                                        .bg(rgb(colors.control))
+                                        .child(row.theme.author.clone()),
+                                )
+                            }),
+                    )
+                    .child(
+                        div()
+                            .id("install-store-detail")
+                            .role(Role::Button)
+                            .aria_label(if installed {
+                                "已安装"
+                            } else if installing {
+                                "安装中…"
+                            } else {
+                                "安装主题"
+                            })
+                            .mt_2()
+                            .h(px(40.))
+                            .px_6()
+                            .rounded(px(8.))
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .text_sm()
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .cursor_pointer()
+                            .when(installed, |btn| {
+                                btn.bg(rgb(colors.installed_control))
+                                    .text_color(rgb(colors.muted))
+                                    .child("已安装")
+                            })
+                            .when(!installed && !installing, |btn| {
+                                btn.bg(rgb(accent))
+                                    .text_color(rgb(0xffffff))
+                                    .hover(|style| style.opacity(0.88))
+                                    .child("安装主题")
+                                    .on_click(cx.listener(move |this, _event, _window, cx| {
+                                        this.install_store_theme(store_selected, cx)
+                                    }))
+                            })
+                            .when(installing, |btn| {
+                                btn.bg(rgb(colors.control))
+                                    .text_color(rgb(colors.muted))
+                                    .child("正在安装…")
+                            }),
+                    ),
+            )
+            .into_any_element()
     }
 
     fn render_preview(&self, row: &ThemeRow, compact: bool, short: bool) -> gpui::AnyElement {
@@ -2641,7 +3021,7 @@ impl Render for SkinApp {
             }
         } else {
             let detail = if self.source_view == SourceView::Store {
-                self.render_store(false, cx)
+                self.render_store_detail(cx)
             } else {
                 content
             };
@@ -2687,6 +3067,38 @@ impl Render for SkinApp {
                                 .child(self.render_drop_target(false, cx))
                                 .child(div().h(px(12.)))
                                 .child(self.render_theme_list(false, cx))
+                        })
+                        .when(self.source_view == SourceView::Store, |sidebar| {
+                            sidebar
+                                .child(
+                                    div()
+                                        .px_5()
+                                        .pb_3()
+                                        .flex()
+                                        .items_center()
+                                        .justify_between()
+                                        .text_xs()
+                                        .font_weight(FontWeight::SEMIBOLD)
+                                        .text_color(rgb(colors.muted))
+                                        .child("主题商店")
+                                        .child(
+                                            div()
+                                                .id("refresh-store-sidebar")
+                                                .role(Role::Button)
+                                                .aria_label("刷新")
+                                                .cursor_pointer()
+                                                .hover(|style| style.opacity(0.72))
+                                                .child(if self.store_loading {
+                                                    "加载中…"
+                                                } else {
+                                                    "刷新"
+                                                })
+                                                .on_click(cx.listener(|this, _event, _window, cx| {
+                                                    this.load_store(cx)
+                                                })),
+                                        ),
+                                )
+                                .child(self.render_store_sidebar_list(cx))
                         }),
                 )
                 .child(detail)
@@ -2792,21 +3204,10 @@ fn init_logger() {
 }
 
 #[cfg(target_os = "macos")]
-fn set_development_application_icon() {
+fn set_application_icon() {
     use cocoa::appkit::{NSApp, NSApplication, NSImage};
     use cocoa::base::nil;
     use cocoa::foundation::NSData;
-
-    let runs_from_app_bundle = std::env::current_exe().ok().is_some_and(|path| {
-        path.ancestors().any(|ancestor| {
-            ancestor
-                .extension()
-                .is_some_and(|extension| extension == "app")
-        })
-    });
-    if runs_from_app_bundle {
-        return;
-    }
 
     let bytes = include_bytes!("../../../assets/app-icon/AppIcon.icns");
     unsafe {
@@ -2859,9 +3260,18 @@ fn main() {
         .windows(2)
         .find(|pair| pair[0] == "--live")
         .map(|pair| pair[1].clone());
-    application().with_assets(Assets).run(move |cx: &mut App| {
+    let url_buffer: Arc<Mutex<Vec<String>>> = Arc::default();
+    let url_buffer_for_callback = url_buffer.clone();
+    application()
+        .with_assets(Assets)
+        .on_open_urls(move |urls| {
+            if let Ok(mut buf) = url_buffer_for_callback.lock() {
+                buf.extend(urls);
+            }
+        })
+        .run(move |cx: &mut App| {
         #[cfg(target_os = "macos")]
-        set_development_application_icon();
+        set_application_icon();
         cx.bind_keys([
             KeyBinding::new("cmd-h", HideApplication, None),
             KeyBinding::new("cmd-alt-h", HideOthers, None),
@@ -2879,9 +3289,10 @@ fn main() {
             size(px(MAIN_WINDOW_WIDTH), px(MAIN_WINDOW_HEIGHT)),
             cx,
         );
+        let url_buf = url_buffer.clone();
         let window = cx
             .open_window(main_window_options(bounds), move |window, cx| {
-                cx.new(move |cx| SkinApp::new(tx, rx, window, cx))
+                cx.new(move |cx| SkinApp::new(tx, rx, url_buf, window, cx))
             })
             .unwrap();
         if let Some(id) = live_arg {
