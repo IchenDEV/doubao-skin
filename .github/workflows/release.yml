@@ -15,7 +15,7 @@ concurrency:
 jobs:
   package:
     name: Universal macOS package
-    runs-on: macos-15
+    runs-on: macos-26
     environment:
       name: production
     steps:
