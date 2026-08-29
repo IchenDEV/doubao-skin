@@ -75,6 +75,10 @@ verified_at: "2026-08-29"
 - New Production `dpl_46ciy1MHcYMGenkv8HJdd1hQgmbo` reached `READY` and was aliased to `https://doubao-skin.idevlab.dev`.
 - Vercel project `prj_JEnkkULvtOJVFLhOH57CGmk0Fp3V` now has root directory `apps/web`; `vercel git connect https://github.com/IchenDEV/doubao-skin` reported `Connected`. A follow-up push is used below to verify the automatic Production path rather than relying on configuration output alone.
 - Local browser acceptance covered the 30-theme library, combined background/gallery filter result of 4, exact guide download URL, 390px layout without horizontal overflow, one filter panel, and zero console errors. The current public gallery screenshot is committed at `docs/images/gallery.png`.
+- Follow-up commit `1128066` triggered Git deployment `dpl_4WJbspGpQnE1RDHQBGpt6M4ztqXw`, proving the repository hook worked. That first run failed because Vercel supplied Node 24.19.0 and a legacy pnpm shim while the project required Node 24.20.0 and pnpm 12.
+- Commit `a5a7eb1` aligned the supported Node 24 range with Vercel's 24.19.0 runtime and committed Corepack-backed install/build commands in `vercel.json`. The local web and workflow gates passed before push.
+- That push automatically created Production deployment `dpl_HcVxQemzqenwxcqemBgv6FU2nEWk` from Git commit `a5a7eb1`; it reached `READY` and received the custom-domain alias without a manual `vercel deploy` command.
+- Final public-browser acceptance on `https://doubao-skin.idevlab.dev` found 30 theme articles, one filter panel, the new GitHub repository URL, the exact new universal ZIP URL, no horizontal overflow at 1600 × 1000 or 390 × 844, and no console errors.
 
 ## Verdict
 
