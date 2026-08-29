@@ -1,4 +1,4 @@
-export const SITE_NAME = "豆包主题";
+export const SITE_NAME = "豆皮";
 export const SITE_NAME_EN = "DOUBAO THEMES";
 export const SITE_TAGLINE = "同时支持 macOS 版「豆包」与「豆包工作」";
 export const SITE_URL = "https://doubao-skin.idevlab.dev";

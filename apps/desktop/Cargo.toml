@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license = "GPL-3.0-or-later"
 rust-version.workspace = true
-description = "Native macOS desktop app for 豆包主题"
+description = "Native macOS desktop app for 豆皮"
 publish = false
 
 [[bin]]

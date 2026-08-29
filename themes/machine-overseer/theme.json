@@ -1,7 +1,7 @@
 {
   "$schema": "../../design/theme-standard/theme-v2.schema.json",
   "appearance": "both",
-  "author": "豆包主题",
+  "author": "豆皮",
   "background": {
     "type": "image",
     "src": "bg.jpg",

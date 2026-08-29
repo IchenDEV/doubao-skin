@@ -12,7 +12,7 @@ import {
 } from "@/lib/site";
 
 const DESCRIPTION =
-  "使用主题创作 Skill 或 Rust CLI 创建、检查并通过 GitHub Pull Request 投稿新的豆包主题。";
+  "使用主题创作 Skill 或 Rust CLI 创建、检查并通过 GitHub Pull Request 投稿新的豆皮。";
 
 export const metadata: Metadata = {
   title: "创作与投稿",
@@ -22,13 +22,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "zh_CN",
     url: `${SITE_URL}/contribute`,
-    title: "创作与投稿 · 豆包主题",
+    title: "创作与投稿 · 豆皮",
     description: DESCRIPTION,
     images: [{ url: SOCIAL_IMAGE, width: 1200, height: 675 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "创作与投稿 · 豆包主题",
+    title: "创作与投稿 · 豆皮",
     description: DESCRIPTION,
     images: [SOCIAL_IMAGE],
   },
@@ -49,9 +49,9 @@ export default function ContributePage() {
         value={{
           "@context": "https://schema.org",
           "@type": "WebPage",
-          name: "豆包主题创作与投稿",
+          name: "豆皮创作与投稿",
           url: `${SITE_URL}/contribute`,
-          description: "豆包主题的创作、检查、素材许可和 GitHub 投稿流程。",
+          description: "豆皮的创作、检查、素材许可和 GitHub 投稿流程。",
           inLanguage: "zh-CN",
         }}
       />

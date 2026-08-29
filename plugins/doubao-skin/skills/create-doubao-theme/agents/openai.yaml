@@ -1,4 +1,4 @@
 interface:
-  display_name: "创作豆包主题"
+  display_name: "创作豆皮"
   short_description: "从自然语言生成、检查、预览并打包豆包工作主题"
   default_prompt: "使用 $create-doubao-theme 按我的视觉要求创作一个可安装的豆包工作主题。"

@@ -1,6 +1,6 @@
 # 工程架构
 
-豆包主题是一个小型 monorepo：一套 Rust 核心驱动原生 macOS 应用，一套 Next.js 网站展示并分发同一批主题包。`themes/` 是两端共享的唯一主题源。
+豆皮是一个小型 monorepo：一套 Rust 核心驱动原生 macOS 应用，一套 Next.js 网站展示并分发同一批主题包。`themes/` 是两端共享的唯一主题源。
 
 ```text
 themes/ ───────────────▶ crates/skin-core ─────────▶ apps/desktop

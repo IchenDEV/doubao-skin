@@ -14,14 +14,14 @@ fn temporary_test_dir() -> PathBuf {
 #[test]
 fn finds_bundled_themes_from_gui_and_resource_cli_locations() {
     let root = temporary_test_dir();
-    let contents = root.join("豆包主题.app/Contents");
+    let contents = root.join("豆皮.app/Contents");
     let themes = contents.join("Resources/themes");
     fs::create_dir_all(contents.join("MacOS")).unwrap();
     fs::create_dir_all(contents.join("Resources/bin")).unwrap();
     fs::create_dir_all(&themes).unwrap();
 
     assert_eq!(
-        bundled_themes_dir_for_executable(&contents.join("MacOS/豆包主题")),
+        bundled_themes_dir_for_executable(&contents.join("MacOS/豆皮")),
         Some(themes.clone())
     );
     assert_eq!(

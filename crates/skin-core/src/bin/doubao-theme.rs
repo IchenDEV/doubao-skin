@@ -473,7 +473,7 @@ fn usage() -> &'static str {
     concat!(
         "doubao-theme ",
         env!("CARGO_PKG_VERSION"),
-        " — 豆包主题命令行工具\n\n\
+        " — 豆皮命令行工具\n\n\
 用法：\n\
   doubao-theme list [--json]\n\
   doubao-theme create <theme-dir> --name <名称> [--description <描述>] [--accent <#RRGGBB>] [--appearance light|dark|both] [--author <作者>]\n\

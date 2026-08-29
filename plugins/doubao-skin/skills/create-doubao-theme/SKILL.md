@@ -13,7 +13,7 @@ Resolve one executable before doing any work, in this order:
 
 1. Use the exact path in `DOUBAO_THEME_CLI` when it is set.
 2. Use `doubao-theme` from `PATH` when available.
-3. Use `/Applications/豆包主题.app/Contents/Resources/bin/doubao-theme` when it exists.
+3. Use `/Applications/豆皮.app/Contents/Resources/bin/doubao-theme` when it exists.
 4. In this repository, use `cargo run -p skin-core --bin doubao-theme --`.
 
 If none is available, suggest installing the standalone CLI:

@@ -49,6 +49,6 @@ Keep the encrypted recovery `.p12` outside the repository with mode `0600`; keep
 - Verify the real desktop window and native apply workflow.
 - Confirm theme and artwork provenance.
 - Create and push the version tag.
-- Download both release packages and verify their checksums. Run `hdiutil verify` on the DMG, mount it read-only, confirm it contains “豆包主题.app” and `Applications -> /Applications`, verify the mounted app with `./scripts/verify-macos-signature.sh <app> <certificate-sha256>`, then test a clean install.
+- Download both release packages and verify their checksums. Run `hdiutil verify` on the DMG, mount it read-only, confirm it contains “豆皮.app” and `Applications -> /Applications`, verify the mounted app with `./scripts/verify-macos-signature.sh <app> <certificate-sha256>`, then test a clean install.
 - Confirm `Contents/Resources/bin/doubao-theme --help` runs and both bundled Skill directories pass validation.
 - Extract the standalone CLI tarball, verify `doubao-theme --version` prints the expected version, and confirm `shasum -a 256 -c` against the sidecar checksum.
