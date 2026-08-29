@@ -15,6 +15,7 @@ APP_VERSION=${APP_VERSION:-$(awk -F '"' '/^version =/ { print $2; exit }' "$REPO
 CODESIGN_IDENTITY=${CODESIGN_IDENTITY:--}
 CODESIGN_KEYCHAIN=${CODESIGN_KEYCHAIN:-}
 BUILD_MODE=${1:-host}
+DEPLOY_TARGET=${MACOSX_DEPLOYMENT_TARGET:-12.0}
 DEFAULT_BUNDLED_THEMES="doubao-snack-giggle doubao-dessert-giggle gallery-whale-maid qq-light-blue pure-dark"
 BUNDLED_THEMES=${BUNDLED_THEMES:-$DEFAULT_BUNDLED_THEMES}
 APP_ICON_DIR="$REPO_DIR/assets/app-icon"
@@ -52,25 +53,25 @@ mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Resources/bin" "$BUNDLE/Cont
 for build_target in $TARGETS; do
   rustup target add "$build_target"
   if [ "$BUILD_MODE" = "host" ]; then
-    MACOSX_DEPLOYMENT_TARGET=13.0 cargo build \
+    MACOSX_DEPLOYMENT_TARGET="$DEPLOY_TARGET" cargo build \
       --manifest-path "$REPO_DIR/Cargo.toml" \
       --locked \
       --release \
       --package "$PACKAGE_NAME"
-    MACOSX_DEPLOYMENT_TARGET=13.0 cargo build \
+    MACOSX_DEPLOYMENT_TARGET="$DEPLOY_TARGET" cargo build \
       --manifest-path "$REPO_DIR/Cargo.toml" \
       --locked \
       --release \
       --package "$CLI_PACKAGE_NAME" \
       --bin "$CLI_EXECUTABLE_NAME"
   else
-    MACOSX_DEPLOYMENT_TARGET=13.0 cargo build \
+    MACOSX_DEPLOYMENT_TARGET="$DEPLOY_TARGET" cargo build \
       --manifest-path "$REPO_DIR/Cargo.toml" \
       --locked \
       --release \
       --package "$PACKAGE_NAME" \
       --target "$build_target"
-    MACOSX_DEPLOYMENT_TARGET=13.0 cargo build \
+    MACOSX_DEPLOYMENT_TARGET="$DEPLOY_TARGET" cargo build \
       --manifest-path "$REPO_DIR/Cargo.toml" \
       --locked \
       --release \
@@ -114,19 +115,27 @@ if [ -z "$ICON_DEVELOPER_DIR" ]; then
 fi
 
 ICON_PARTIAL_PLIST="$DIST_DIR/.AppIcon-partial.plist"
+actool_ok=false
 if [ -n "$ICON_DEVELOPER_DIR" ] && DEVELOPER_DIR="$ICON_DEVELOPER_DIR" xcrun actool \
   "$APP_ICON_SOURCE" \
   --compile "$BUNDLE/Contents/Resources" \
   --platform macosx \
-  --minimum-deployment-target 13.0 \
+  --minimum-deployment-target "$DEPLOY_TARGET" \
   --app-icon AppIcon \
   --output-partial-info-plist "$ICON_PARTIAL_PLIST" \
   --warnings \
   --notices; then
   rm -f "$ICON_PARTIAL_PLIST"
-  echo "Compiled adaptive app icon from AppIcon.icon"
+  if [ -f "$BUNDLE/Contents/Resources/AppIcon.icns" ] && [ -f "$BUNDLE/Contents/Resources/Assets.car" ]; then
+    actool_ok=true
+    echo "Compiled adaptive app icon from AppIcon.icon"
+  else
+    echo "actool returned 0 but icon files are missing; falling back to precompiled assets"
+  fi
 else
   rm -f "$ICON_PARTIAL_PLIST"
+fi
+if [ "$actool_ok" = false ]; then
   if [ ! -f "$APP_ICON_FALLBACK" ] || [ ! -f "$APP_ICON_ASSETS_FALLBACK" ]; then
     echo "building the adaptive app icon requires Icon Composer actool or checked-in AppIcon.icns and Assets.car" >&2
     exit 1
