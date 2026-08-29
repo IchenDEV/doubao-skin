@@ -1,9 +1,147 @@
 {
+  "$schema": "../../design/theme-standard/theme-v2.schema.json",
+  "schemaVersion": 2,
   "id": "codex-gruvbox",
   "name": "豆包暖木",
   "description": "温暖的棕金色，更有亲切感",
+  "version": "1.0.0",
+  "author": "豆包主题",
+  "preview": {
+    "image": "preview.jpg",
+    "aspectRatio": "16:9",
+    "appearance": "dark",
+    "accent": "#9e7018"
+  },
+  "store": {
+    "category": "codex",
+    "tags": [
+      "深色",
+      "编辑器",
+      "暖色"
+    ],
+    "sortOrder": 16
+  },
+  "appearance": "both",
+  "typography": {
+    "ui": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
+    "body": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
+    "code": "\"SFMono-Regular\", Menlo, Monaco, monospace",
+    "scale": 1,
+    "lineHeight": 1.56
+  },
+  "layout": {
+    "density": "comfortable",
+    "sidebarWidth": 248,
+    "chatMaxWidth": 880,
+    "composerMaxWidth": 740,
+    "selfMessageMaxWidth": 380,
+    "chatMargin": 28
+  },
+  "composer": {
+    "background": "#504945",
+    "border": "1px solid rgba(215,153,33,0.28)",
+    "textColor": "#d5c4a1",
+    "placeholderColor": "rgba(213,196,161,0.52)",
+    "caretColor": "rgba(215,153,33,1)",
+    "iconColor": "rgba(213,196,161,0.72)",
+    "sendButtonBackground": "rgba(215,153,33,1)",
+    "sendButtonIconColor": "#1d2021",
+    "radius": 18,
+    "minHeight": 52,
+    "maxHeight": 260,
+    "padding": 12,
+    "gap": 8,
+    "iconSize": 20
+  },
+  "content": {
+    "chatBackground": "#282828",
+    "userMessageBackground": "rgba(215,153,33,1)",
+    "userMessageText": "#1d2021",
+    "assistantMessageBackground": "#504945",
+    "assistantMessageText": "#d5c4a1",
+    "codeBackground": "#282828",
+    "codeHeaderBackground": "#32302f",
+    "selectionColor": "rgba(215,153,33,0.24)",
+    "scrollbarColor": "rgba(215,153,33,0.26)",
+    "scrollbarHoverColor": "rgba(215,153,33,0.42)"
+  },
+  "effects": {
+    "radiusScale": 1,
+    "shadow": "0 12px 32px rgba(0,0,0,.28)",
+    "blur": 10,
+    "motion": "gentle",
+    "transitionMs": 150
+  },
   "derivedFrom": "Gruvbox Dark",
   "sourceUrl": "https://github.com/morhetz/gruvbox",
   "sourceCommit": "5d15b2765f59754d7ac263c88a0f6e3e58124951",
-  "license": "MIT/X11"
+  "license": "MIT/X11",
+  "variants": {
+    "light": {
+      "composer": {
+        "background": "rgba(255,255,255,0.96)",
+        "border": "1px solid rgba(158,112,24,0.28)",
+        "textColor": "#202124",
+        "placeholderColor": "rgba(32,33,36,0.56)",
+        "caretColor": "#9e7018",
+        "iconColor": "rgba(32,33,36,0.78)",
+        "sendButtonBackground": "#9e7018",
+        "sendButtonIconColor": "#ffffff",
+        "radius": 18,
+        "minHeight": 52,
+        "maxHeight": 260,
+        "padding": 12,
+        "gap": 8,
+        "iconSize": 20
+      },
+      "content": {
+        "chatBackground": "rgba(248,249,251,0.88)",
+        "userMessageBackground": "#9e7018",
+        "userMessageText": "#ffffff",
+        "assistantMessageBackground": "rgba(255,255,255,0.94)",
+        "assistantMessageText": "#202124",
+        "codeBackground": "rgba(32,33,36,0.07)",
+        "codeHeaderBackground": "rgba(32,33,36,0.11)",
+        "selectionColor": "rgba(158,112,24,0.22)",
+        "scrollbarColor": "rgba(158,112,24,0.24)",
+        "scrollbarHoverColor": "rgba(158,112,24,0.4)"
+      },
+      "icons": {
+        "main": "icons/main.svg"
+      }
+    },
+    "dark": {
+      "composer": {
+        "background": "#504945",
+        "border": "1px solid rgba(215,153,33,0.28)",
+        "textColor": "#d5c4a1",
+        "placeholderColor": "rgba(213,196,161,0.52)",
+        "caretColor": "rgba(215,153,33,1)",
+        "iconColor": "rgba(213,196,161,0.72)",
+        "sendButtonBackground": "rgba(215,153,33,1)",
+        "sendButtonIconColor": "#1d2021",
+        "radius": 18,
+        "minHeight": 52,
+        "maxHeight": 260,
+        "padding": 12,
+        "gap": 8,
+        "iconSize": 20
+      },
+      "content": {
+        "chatBackground": "#282828",
+        "userMessageBackground": "rgba(215,153,33,1)",
+        "userMessageText": "#1d2021",
+        "assistantMessageBackground": "#504945",
+        "assistantMessageText": "#d5c4a1",
+        "codeBackground": "#282828",
+        "codeHeaderBackground": "#32302f",
+        "selectionColor": "rgba(215,153,33,0.24)",
+        "scrollbarColor": "rgba(215,153,33,0.26)",
+        "scrollbarHoverColor": "rgba(215,153,33,0.42)"
+      },
+      "icons": {
+        "main": "icons/main.svg"
+      }
+    }
+  }
 }

@@ -1,0 +1,23 @@
+[package]
+name = "doubao-skin-desktop"
+version.workspace = true
+edition.workspace = true
+license = "GPL-3.0-or-later"
+rust-version.workspace = true
+description = "Native macOS desktop app for 豆包主题"
+publish = false
+
+[[bin]]
+name = "doubao-skin"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.104"
+skin-core = { path = "../../crates/skin-core" }
+log = "0.4.34"
+gpui = { git = "https://github.com/zed-industries/zed", rev = "c8e44cfa7bda9b2e22c8d6934d78969352e7f61a" }
+gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "c8e44cfa7bda9b2e22c8d6934d78969352e7f61a", features = ["runtime_shaders", "font-kit"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "=0.26.0"
+objc = "0.2.7"

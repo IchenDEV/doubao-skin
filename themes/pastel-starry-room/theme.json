@@ -1,0 +1,148 @@
+{
+  "$schema": "../../design/theme-standard/theme-v2.schema.json",
+  "schemaVersion": 2,
+  "id": "pastel-starry-room",
+  "name": "星光书房",
+  "description": "星光书桌与蓝紫伙伴，安静又温柔",
+  "version": "1.0.0",
+  "author": "豆包主题",
+  "preview": {
+    "image": "preview.jpg",
+    "aspectRatio": "16:9",
+    "appearance": "light",
+    "accent": "#867ac1"
+  },
+  "store": {
+    "category": "brand",
+    "tags": [
+      "浅色",
+      "蓝紫",
+      "角色"
+    ],
+    "sortOrder": 23
+  },
+  "appearance": "both",
+  "background": "bg.jpg",
+  "veil": 0.04,
+  "typography": {
+    "ui": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
+    "body": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
+    "code": "\"SFMono-Regular\", Menlo, Monaco, monospace",
+    "scale": 1.01,
+    "lineHeight": 1.62
+  },
+  "layout": {
+    "density": "spacious",
+    "sidebarWidth": 260,
+    "chatMaxWidth": 960,
+    "composerMaxWidth": 780,
+    "selfMessageMaxWidth": 420,
+    "chatMargin": 32
+  },
+  "composer": {
+    "background": "rgba(252,252,255,0.97)",
+    "border": "1px solid rgba(94,77,172,0.28)",
+    "textColor": "#292d55",
+    "placeholderColor": "rgba(41,45,85,0.60)",
+    "caretColor": "rgba(94,77,172,1)",
+    "iconColor": "rgba(41,45,85,0.82)",
+    "sendButtonBackground": "rgba(94,77,172,1)",
+    "sendButtonIconColor": "#ffffff",
+    "radius": 22,
+    "minHeight": 52,
+    "maxHeight": 260,
+    "padding": 14,
+    "gap": 10,
+    "iconSize": 20
+  },
+  "content": {
+    "chatBackground": "rgba(229,231,249,0.18)",
+    "userMessageBackground": "rgba(94,77,172,1)",
+    "userMessageText": "#ffffff",
+    "assistantMessageBackground": "rgba(252,252,255,0.97)",
+    "assistantMessageText": "#292d55",
+    "codeBackground": "#ececf8",
+    "codeHeaderBackground": "#dedff1",
+    "selectionColor": "rgba(94,77,172,0.24)",
+    "scrollbarColor": "rgba(94,77,172,0.26)",
+    "scrollbarHoverColor": "rgba(94,77,172,0.42)"
+  },
+  "effects": {
+    "radiusScale": 1.15,
+    "shadow": "0 12px 34px rgba(65,43,50,.14)",
+    "blur": 18,
+    "motion": "gentle",
+    "transitionMs": 180
+  },
+  "inspiredBy": "User-provided colorful anime ensemble reference",
+  "sourceSnapshot": "2026-08-28",
+  "artwork": "Original ImageGen background; no source characters, text, or branding copied",
+  "variants": {
+    "light": {
+      "composer": {
+        "background": "rgba(252,252,255,0.97)",
+        "border": "1px solid rgba(94,77,172,0.28)",
+        "textColor": "#292d55",
+        "placeholderColor": "rgba(41,45,85,0.60)",
+        "caretColor": "rgba(94,77,172,1)",
+        "iconColor": "rgba(41,45,85,0.82)",
+        "sendButtonBackground": "rgba(94,77,172,1)",
+        "sendButtonIconColor": "#ffffff",
+        "radius": 22,
+        "minHeight": 52,
+        "maxHeight": 260,
+        "padding": 14,
+        "gap": 10,
+        "iconSize": 20
+      },
+      "content": {
+        "chatBackground": "rgba(229,231,249,0.18)",
+        "userMessageBackground": "rgba(94,77,172,1)",
+        "userMessageText": "#ffffff",
+        "assistantMessageBackground": "rgba(252,252,255,0.97)",
+        "assistantMessageText": "#292d55",
+        "codeBackground": "#ececf8",
+        "codeHeaderBackground": "#dedff1",
+        "selectionColor": "rgba(94,77,172,0.24)",
+        "scrollbarColor": "rgba(94,77,172,0.26)",
+        "scrollbarHoverColor": "rgba(94,77,172,0.42)"
+      },
+      "icons": {
+        "main": "icons/main.svg"
+      }
+    },
+    "dark": {
+      "composer": {
+        "background": "rgba(29,31,37,0.96)",
+        "border": "1px solid rgba(134,122,193,0.38)",
+        "textColor": "#f7f8fa",
+        "placeholderColor": "rgba(247,248,250,0.58)",
+        "caretColor": "#867ac1",
+        "iconColor": "rgba(247,248,250,0.82)",
+        "sendButtonBackground": "#867ac1",
+        "sendButtonIconColor": "#ffffff",
+        "radius": 22,
+        "minHeight": 52,
+        "maxHeight": 260,
+        "padding": 14,
+        "gap": 10,
+        "iconSize": 20
+      },
+      "content": {
+        "chatBackground": "rgba(18,20,25,0.88)",
+        "userMessageBackground": "#867ac1",
+        "userMessageText": "#ffffff",
+        "assistantMessageBackground": "rgba(29,31,37,0.94)",
+        "assistantMessageText": "#f7f8fa",
+        "codeBackground": "rgba(0,0,0,0.30)",
+        "codeHeaderBackground": "rgba(0,0,0,0.42)",
+        "selectionColor": "rgba(134,122,193,0.28)",
+        "scrollbarColor": "rgba(134,122,193,0.28)",
+        "scrollbarHoverColor": "rgba(134,122,193,0.46)"
+      },
+      "icons": {
+        "main": "icons/main.svg"
+      }
+    }
+  }
+}

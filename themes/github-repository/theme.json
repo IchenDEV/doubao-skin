@@ -1,0 +1,150 @@
+{
+  "$schema": "../../design/theme-standard/theme-v2.schema.json",
+  "appearance": "both",
+  "author": "豆包主题",
+  "background": {
+    "type": "gradient",
+    "gradient": "linear-gradient(155deg, #0d1117 0%, #161b22 58%, #0d1117 100%)",
+    "opacity": 1,
+    "veil": 0,
+    "animation": "none"
+  },
+  "composer": {
+    "background": "#161b22",
+    "border": "1px solid #30363d",
+    "textColor": "#c9d1d9",
+    "placeholderColor": "#8b949e",
+    "caretColor": "#2f81f7",
+    "iconColor": "#8b949e",
+    "sendButtonBackground": "#2f81f7",
+    "sendButtonIconColor": "#ffffff",
+    "radius": 10,
+    "minHeight": 50,
+    "maxHeight": 240,
+    "padding": 12,
+    "gap": 8,
+    "iconSize": 20
+  },
+  "content": {
+    "chatBackground": "#0d1117",
+    "userMessageBackground": "#1f6feb",
+    "userMessageText": "#ffffff",
+    "assistantMessageBackground": "#161b22",
+    "assistantMessageText": "#c9d1d9",
+    "codeBackground": "#0d1117",
+    "codeHeaderBackground": "#21262d",
+    "selectionColor": "rgba(47,129,247,0.28)",
+    "scrollbarColor": "rgba(139,148,158,0.28)",
+    "scrollbarHoverColor": "rgba(139,148,158,0.46)"
+  },
+  "description": "深灰层级配合蓝绿状态色，专注利落",
+  "derivedFrom": "GitHub Primer Primitives",
+  "effects": {
+    "radiusScale": 0.65,
+    "shadow": "0 8px 24px rgba(1,4,9,0.34)",
+    "blur": 0,
+    "motion": "reduced",
+    "transitionMs": 120
+  },
+  "id": "github-repository",
+  "layout": {
+    "chatMargin": 24,
+    "chatMaxWidth": 960,
+    "composerMaxWidth": 780,
+    "density": "compact",
+    "selfMessageMaxWidth": 420,
+    "sidebarWidth": 252
+  },
+  "name": "代码仓库",
+  "preview": {
+    "accent": "#2f81f7",
+    "appearance": "dark",
+    "aspectRatio": "16:9",
+    "image": "preview.jpg"
+  },
+  "schemaVersion": 2,
+  "store": {
+    "category": "brand",
+    "sortOrder": 27,
+    "tags": [
+      "深色",
+      "开发者",
+      "代码",
+      "小圆角"
+    ]
+  },
+  "surfaceOpacity": 0.98,
+  "typography": {
+    "body": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", sans-serif",
+    "code": "ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace",
+    "lineHeight": 1.55,
+    "scale": 0.98,
+    "ui": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", sans-serif"
+  },
+  "variants": {
+    "dark": {
+      "composer": {
+        "background": "#161b22",
+        "border": "1px solid #30363d",
+        "textColor": "#c9d1d9",
+        "placeholderColor": "#8b949e",
+        "caretColor": "#2f81f7",
+        "iconColor": "#8b949e",
+        "sendButtonBackground": "#2f81f7",
+        "sendButtonIconColor": "#ffffff",
+        "radius": 10,
+        "minHeight": 50,
+        "maxHeight": 240,
+        "padding": 12,
+        "gap": 8,
+        "iconSize": 20
+      },
+      "content": {
+        "chatBackground": "#0d1117",
+        "userMessageBackground": "#1f6feb",
+        "userMessageText": "#ffffff",
+        "assistantMessageBackground": "#161b22",
+        "assistantMessageText": "#c9d1d9",
+        "codeBackground": "#0d1117",
+        "codeHeaderBackground": "#21262d",
+        "selectionColor": "rgba(47,129,247,0.28)",
+        "scrollbarColor": "rgba(139,148,158,0.28)",
+        "scrollbarHoverColor": "rgba(139,148,158,0.46)"
+      }
+    },
+    "light": {
+      "composer": {
+        "background": "#ffffff",
+        "border": "1px solid #d0d7de",
+        "textColor": "#1f2328",
+        "placeholderColor": "#656d76",
+        "caretColor": "#0969da",
+        "iconColor": "#656d76",
+        "sendButtonBackground": "#0969da",
+        "sendButtonIconColor": "#ffffff",
+        "radius": 10,
+        "minHeight": 50,
+        "maxHeight": 240,
+        "padding": 12,
+        "gap": 8,
+        "iconSize": 20
+      },
+      "content": {
+        "chatBackground": "#ffffff",
+        "userMessageBackground": "#0969da",
+        "userMessageText": "#ffffff",
+        "assistantMessageBackground": "#f6f8fa",
+        "assistantMessageText": "#1f2328",
+        "codeBackground": "#f6f8fa",
+        "codeHeaderBackground": "#eaeef2",
+        "selectionColor": "rgba(9,105,218,0.20)",
+        "scrollbarColor": "rgba(87,96,106,0.26)",
+        "scrollbarHoverColor": "rgba(87,96,106,0.44)"
+      }
+    }
+  },
+  "version": "1.0.0",
+  "sourceUrl": "https://github.com/primer/primitives",
+  "sourceCommit": "30cb00c65d789d6ad4850f8a4fd172276e143226",
+  "license": "MIT"
+}

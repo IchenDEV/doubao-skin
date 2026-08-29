@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+members = ["crates/skin-core", "apps/desktop"]
+default-members = ["crates/skin-core", "apps/desktop"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+rust-version = "1.97.1"
+
+[profile.release]
+debug = false
+# Explicitly disabling strip avoids malformed proc-macro dylibs with Rust 1.97.1 and Apple ld.
+strip = "none"
+lto = "thin"

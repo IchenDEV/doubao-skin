@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflow:
+    name: Development workflow
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate artifact chain and policy evals
+        run: ./scripts/check.sh workflow
+      - name: Enforce the pull request gate
+        if: ${{ github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' }}
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: ./scripts/devflow check-pr
+
+  rust:
+    name: Rust workspace
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust toolchain
+        run: |
+          rustup show
+          rustup component add rustfmt clippy
+      - name: Reject tracked Python sources
+        run: |
+          if [ -n "$(git ls-files '*.py')" ]; then
+            git ls-files '*.py'
+            exit 1
+          fi
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Run tests
+        run: cargo test --workspace --all-targets --locked
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Check packaging script
+        run: bash -n scripts/build-macos.sh
+
+  web:
+    name: Web application
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v2
+        with:
+          version: 12.0.0
+          runtime: node@24.20.0
+          cache: true
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+          install: false
+      - run: pnpm --dir apps/web install --frozen-lockfile
+      - run: pnpm --dir apps/web check
+      - run: pnpm --dir apps/web audit --audit-level=high
+      - run: node --check apps/web/scripts/sync-themes.mjs

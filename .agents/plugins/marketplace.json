@@ -1,0 +1,20 @@
+{
+  "name": "doubao-skin",
+  "interface": {
+    "displayName": "豆包主题"
+  },
+  "plugins": [
+    {
+      "name": "doubao-skin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/doubao-skin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

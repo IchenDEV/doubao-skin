@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://doubao-work.local/theme-v2.schema.json",
+  "title": "豆包主题包 v2",
+  "type": "object",
+  "required": ["id", "name", "description"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "name": { "type": "string", "minLength": 2, "maxLength": 16 },
+    "description": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+      "description": "主题包版本，用于商店更新判断。"
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "主题作者或发布者。"
+    },
+    "preview": {
+      "type": "object",
+      "description": "随主题包分发的商店与主题列表预览资源。",
+      "properties": {
+        "image": { "type": "string" },
+        "aspectRatio": { "const": "16:9" },
+        "appearance": { "enum": ["light", "dark"] },
+        "accent": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+      },
+      "required": ["image", "aspectRatio", "appearance", "accent"],
+      "additionalProperties": false
+    },
+    "store": {
+      "type": "object",
+      "description": "主题商店分类与发现信息；本地安装不依赖这些字段。",
+      "properties": {
+        "category": {
+          "enum": ["pure", "atmosphere", "gallery", "codex", "brand", "misc"]
+        },
+        "tags": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 16 }
+        },
+        "sortOrder": { "type": "integer", "minimum": 0, "maximum": 9999 }
+      },
+      "required": ["category", "tags", "sortOrder"],
+      "additionalProperties": false
+    },
+    "appearance": {
+      "enum": ["light-only", "dark-only", "both"],
+      "default": "dark-only",
+      "description": "主题支持的外观：仅浅色、仅深色，或同时适配并跟随所选客户端。"
+    },
+    "mode": {
+      "enum": ["dark", "light", "auto"],
+      "default": "dark",
+      "deprecated": true,
+      "description": "旧版兼容字段；新主题请使用 appearance。"
+    },
+    "background": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "enum": ["image", "video", "gradient"] },
+            "src": { "type": "string" },
+            "poster": { "type": "string" },
+            "gradient": { "type": "string" },
+            "fit": { "enum": ["cover", "contain", "fill", "none", "scale-down"] },
+            "position": { "type": "string" },
+            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+            "veil": { "type": "number", "minimum": 0, "maximum": 1 },
+            "blur": { "type": "number", "minimum": 0, "maximum": 40 },
+            "animation": { "enum": ["none", "ken-burns", "drift", "pulse"] },
+            "durationSeconds": { "type": "number", "minimum": 2, "maximum": 120 }
+          },
+          "required": ["type"]
+        }
+      ]
+    },
+    "veil": { "type": "number", "minimum": 0, "maximum": 1 },
+    "surfaceOpacity": {
+      "type": "number",
+      "minimum": 0.35,
+      "maximum": 1,
+      "default": 0.68,
+      "description": "背景上方主要界面表面的不透明度；不影响文字、图标、菜单和强调按钮。"
+    },
+    "typography": {
+      "type": "object",
+      "properties": {
+        "ui": { "type": "string" },
+        "body": { "type": "string" },
+        "code": { "type": "string" },
+        "scale": { "type": "number", "minimum": 0.85, "maximum": 1.25 },
+        "lineHeight": { "type": "number", "minimum": 1.2, "maximum": 2 },
+        "assets": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "required": ["family", "src"],
+            "properties": {
+              "family": { "type": "string" },
+              "src": { "type": "string" },
+              "weight": { "type": "string", "default": "normal" },
+              "style": { "type": "string", "default": "normal" }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "density": { "enum": ["compact", "comfortable", "spacious"] },
+        "sidebarWidth": { "type": "number", "minimum": 180, "maximum": 360 },
+        "chatMaxWidth": { "type": "number", "minimum": 620, "maximum": 1200 },
+        "composerMaxWidth": { "type": "number", "minimum": 520, "maximum": 1000 },
+        "selfMessageMaxWidth": { "type": "number", "minimum": 220, "maximum": 720 },
+        "chatMargin": { "type": "number", "minimum": 8, "maximum": 64 }
+      }
+    },
+    "composer": {
+      "type": "object",
+      "properties": {
+        "background": { "type": "string" },
+        "border": { "type": "string" },
+        "textColor": { "type": "string" },
+        "placeholderColor": { "type": "string" },
+        "caretColor": { "type": "string" },
+        "iconColor": { "type": "string" },
+        "sendButtonBackground": { "type": "string" },
+        "sendButtonIconColor": { "type": "string" },
+        "radius": { "type": "number", "minimum": 0, "maximum": 40 },
+        "minHeight": { "type": "number", "minimum": 40, "maximum": 180 },
+        "maxHeight": { "type": "number", "minimum": 120, "maximum": 480 },
+        "padding": { "type": "number", "minimum": 4, "maximum": 32 },
+        "gap": { "type": "number", "minimum": 4, "maximum": 32 },
+        "iconSize": { "type": "number", "minimum": 14, "maximum": 32 }
+      }
+    },
+    "content": {
+      "type": "object",
+      "properties": {
+        "chatBackground": { "type": "string" },
+        "userMessageBackground": { "type": "string" },
+        "userMessageText": { "type": "string" },
+        "assistantMessageBackground": { "type": "string" },
+        "assistantMessageText": { "type": "string" },
+        "codeBackground": { "type": "string" },
+        "codeHeaderBackground": { "type": "string" },
+        "selectionColor": { "type": "string" },
+        "scrollbarColor": { "type": "string" },
+        "scrollbarHoverColor": { "type": "string" }
+      }
+    },
+    "icons": {
+      "type": "object",
+      "properties": {
+        "main": { "type": "string" },
+        "newTask": { "type": "string" },
+        "scheduled": { "type": "string" },
+        "skills": { "type": "string" },
+        "cloud": { "type": "string" },
+        "remote": { "type": "string" },
+        "conversation": { "type": "string" },
+        "project": { "type": "string" },
+        "confirm": { "type": "string" },
+        "connector": { "type": "string" },
+        "send": { "type": "string" },
+        "stop": { "type": "string" },
+        "attach": { "type": "string" },
+        "voice": { "type": "string" },
+        "tools": { "type": "string" },
+        "knowledge": { "type": "string" },
+        "moreSkills": { "type": "string" },
+        "dailyWork": { "type": "string" },
+        "contentCreation": { "type": "string" },
+        "research": { "type": "string" },
+        "design": { "type": "string" },
+        "readAloud": { "type": "string" },
+        "copy": { "type": "string" },
+        "sidebar": { "type": "string" }
+      }
+    },
+    "variants": {
+      "type": "object",
+      "description": "跟随所选客户端深浅色模式的局部覆盖；未填写的字段回退到主题顶层配置。",
+      "properties": {
+        "light": { "$ref": "#/$defs/appearanceVariant" },
+        "dark": { "$ref": "#/$defs/appearanceVariant" }
+      },
+      "additionalProperties": false
+    },
+    "effects": {
+      "type": "object",
+      "properties": {
+        "radiusScale": { "type": "number", "minimum": 0, "maximum": 2 },
+        "shadow": { "type": "string" },
+        "blur": { "type": "number", "minimum": 0, "maximum": 60 },
+        "motion": { "enum": ["normal", "gentle", "reduced", "none", "off"] },
+        "transitionMs": { "type": "integer", "minimum": 0, "maximum": 1000 }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["appearance"],
+        "properties": { "appearance": { "const": "both" } }
+      },
+      "then": {
+        "required": ["variants"],
+        "properties": { "variants": { "required": ["light", "dark"] } }
+      }
+    }
+  ],
+  "$defs": {
+    "appearanceVariant": {
+      "type": "object",
+      "properties": {
+        "composer": { "$ref": "#/properties/composer" },
+        "content": { "$ref": "#/properties/content" },
+        "icons": { "$ref": "#/properties/icons" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,9 +1,147 @@
 {
+  "$schema": "../../design/theme-standard/theme-v2.schema.json",
+  "schemaVersion": 2,
   "id": "codex-solarized",
   "name": "豆包深海",
   "description": "柔和的深蓝色，更适合专注",
+  "version": "1.0.0",
+  "author": "豆包主题",
+  "preview": {
+    "image": "preview.jpg",
+    "aspectRatio": "16:9",
+    "appearance": "dark",
+    "accent": "#227dbd"
+  },
+  "store": {
+    "category": "codex",
+    "tags": [
+      "深色",
+      "编辑器",
+      "蓝色"
+    ],
+    "sortOrder": 17
+  },
+  "appearance": "both",
+  "typography": {
+    "ui": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
+    "body": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
+    "code": "\"SFMono-Regular\", Menlo, Monaco, monospace",
+    "scale": 1,
+    "lineHeight": 1.56
+  },
+  "layout": {
+    "density": "comfortable",
+    "sidebarWidth": 248,
+    "chatMaxWidth": 880,
+    "composerMaxWidth": 740,
+    "selfMessageMaxWidth": 380,
+    "chatMargin": 28
+  },
+  "composer": {
+    "background": "#164650",
+    "border": "1px solid rgba(38,139,210,0.28)",
+    "textColor": "#eee8d5",
+    "placeholderColor": "rgba(147,161,161,0.52)",
+    "caretColor": "rgba(38,139,210,1)",
+    "iconColor": "rgba(147,161,161,0.72)",
+    "sendButtonBackground": "rgba(38,139,210,1)",
+    "sendButtonIconColor": "#001f27",
+    "radius": 18,
+    "minHeight": 52,
+    "maxHeight": 260,
+    "padding": 12,
+    "gap": 8,
+    "iconSize": 20
+  },
+  "content": {
+    "chatBackground": "#002b36",
+    "userMessageBackground": "rgba(38,139,210,1)",
+    "userMessageText": "#001f27",
+    "assistantMessageBackground": "#164650",
+    "assistantMessageText": "#eee8d5",
+    "codeBackground": "#002b36",
+    "codeHeaderBackground": "#073642",
+    "selectionColor": "rgba(38,139,210,0.24)",
+    "scrollbarColor": "rgba(38,139,210,0.26)",
+    "scrollbarHoverColor": "rgba(38,139,210,0.42)"
+  },
+  "effects": {
+    "radiusScale": 1,
+    "shadow": "0 12px 32px rgba(0,0,0,.28)",
+    "blur": 10,
+    "motion": "gentle",
+    "transitionMs": 150
+  },
   "derivedFrom": "Solarized Dark",
   "sourceUrl": "https://github.com/altercation/solarized",
   "sourceCommit": "62f656a02f93c5190a8753159e34b385588d5ff3",
-  "license": "MIT"
+  "license": "MIT",
+  "variants": {
+    "light": {
+      "composer": {
+        "background": "rgba(255,255,255,0.96)",
+        "border": "1px solid rgba(34,125,189,0.28)",
+        "textColor": "#202124",
+        "placeholderColor": "rgba(32,33,36,0.56)",
+        "caretColor": "#227dbd",
+        "iconColor": "rgba(32,33,36,0.78)",
+        "sendButtonBackground": "#227dbd",
+        "sendButtonIconColor": "#ffffff",
+        "radius": 18,
+        "minHeight": 52,
+        "maxHeight": 260,
+        "padding": 12,
+        "gap": 8,
+        "iconSize": 20
+      },
+      "content": {
+        "chatBackground": "rgba(248,249,251,0.88)",
+        "userMessageBackground": "#227dbd",
+        "userMessageText": "#ffffff",
+        "assistantMessageBackground": "rgba(255,255,255,0.94)",
+        "assistantMessageText": "#202124",
+        "codeBackground": "rgba(32,33,36,0.07)",
+        "codeHeaderBackground": "rgba(32,33,36,0.11)",
+        "selectionColor": "rgba(34,125,189,0.22)",
+        "scrollbarColor": "rgba(34,125,189,0.24)",
+        "scrollbarHoverColor": "rgba(34,125,189,0.4)"
+      },
+      "icons": {
+        "main": "icons/main.svg"
+      }
+    },
+    "dark": {
+      "composer": {
+        "background": "#164650",
+        "border": "1px solid rgba(38,139,210,0.28)",
+        "textColor": "#eee8d5",
+        "placeholderColor": "rgba(147,161,161,0.52)",
+        "caretColor": "rgba(38,139,210,1)",
+        "iconColor": "rgba(147,161,161,0.72)",
+        "sendButtonBackground": "rgba(38,139,210,1)",
+        "sendButtonIconColor": "#001f27",
+        "radius": 18,
+        "minHeight": 52,
+        "maxHeight": 260,
+        "padding": 12,
+        "gap": 8,
+        "iconSize": 20
+      },
+      "content": {
+        "chatBackground": "#002b36",
+        "userMessageBackground": "rgba(38,139,210,1)",
+        "userMessageText": "#001f27",
+        "assistantMessageBackground": "#164650",
+        "assistantMessageText": "#eee8d5",
+        "codeBackground": "#002b36",
+        "codeHeaderBackground": "#073642",
+        "selectionColor": "rgba(38,139,210,0.24)",
+        "scrollbarColor": "rgba(38,139,210,0.26)",
+        "scrollbarHoverColor": "rgba(38,139,210,0.42)"
+      },
+      "icons": {
+        "main": "icons/main.svg"
+      }
+    }
+  }
 }

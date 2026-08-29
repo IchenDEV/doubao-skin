@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "apply-doubao-theme",
+      "type": "skill-md",
+      "description": "Safely list, validate, install, apply, restore, and manage offline builds of themes for the DoubaoWork desktop app.",
+      "url": "/.well-known/agent-skills/apply-doubao-theme/SKILL.md",
+      "digest": "sha256:ed462da5c8df7f9e689e8ed0c3d898b2e209be8784ff2fba56866b677c301675"
+    },
+    {
+      "name": "create-doubao-theme",
+      "type": "skill-md",
+      "description": "Create, refine, validate, preview, and package themes for the DoubaoWork desktop app from natural-language visual requirements.",
+      "url": "/.well-known/agent-skills/create-doubao-theme/SKILL.md",
+      "digest": "sha256:7589d5bf5401c324ceea46e1012fa52c95938cb5d1aeca7207bb3a6945d8a812"
+    }
+  ]
+}

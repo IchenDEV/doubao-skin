@@ -1,0 +1,15 @@
+{
+  "name": "doubao-skin",
+  "owner": {
+    "name": "IchenDEV",
+    "url": "https://github.com/IchenDEV"
+  },
+  "description": "Create and apply themes for the DoubaoWork macOS app.",
+  "plugins": [
+    {
+      "name": "doubao-skin",
+      "description": "Create and apply themes for the DoubaoWork macOS app.",
+      "source": "./plugins/doubao-skin"
+    }
+  ]
+}

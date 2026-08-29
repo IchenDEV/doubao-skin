@@ -1,1 +1,97 @@
 /* no palette overrides — dark mode only */
+
+/* Light appearance */
+html[data-skin][data-theme=light],
+html[data-skin][data-theme=light] body {
+  --N00:#ffffff;
+  --N50:#f7f8fa;
+  --N100:#eef0f3;
+  --N200:#dfe2e7;
+  --N500:#858b96;
+  --N700:#4b5059;
+  --N900:#202124;
+  --N950:#15161a;
+  --s-color-bg-body:rgba(248,249,251,.88);
+  --s-color-bg-dialogs:rgba(255,255,255,.98);
+  --s-color-bg-secondary:rgba(238,240,243,.94);
+  --s-color-bg-base:rgba(223,226,231,.86);
+  --s-color-bg-tertiary:rgba(244,245,247,.94);
+  --s-color-bg-primary:rgba(255,255,255,.96);
+  --s-color-bg-content-base:rgba(248,249,251,.90);
+  --s-color-bg-float:rgba(255,255,255,.98);
+  --dbx-bg-base-web:rgba(223,226,231,.86);
+  --dbx-bg-body-web:rgba(248,249,251,.94);
+  --dbx-bg-body-white:rgba(255,255,255,.96);
+  --dbx-bg-body-mac:rgba(248,249,251,.94);
+  --dbx-bg-float:rgba(255,255,255,.98);
+  --s-color-text-primary:#202124;
+  --dbx-text-primary:rgba(32,33,36,.90);
+  --dbx-text-secondary:rgba(32,33,36,.72);
+  --dbx-text-markdown:rgba(32,33,36,.90);
+  --B500:#3370eb;
+  --B600:#2c60ca;
+  --semi-color-primary:#3370eb;
+  --semi-color-primary-hover:#2c60ca;
+  --semi-color-primary-light-default:rgba(51,112,235,0.2);
+  --semi-color-primary-disabled:rgba(51,112,235,0.36);
+}
+
+/* Complete light surface tokens */
+html[data-skin][data-theme=light],
+html[data-skin][data-theme=light] body {
+  --N00:#ffffff;--N00-raw:255,255,255;
+  --N50:#f7f8fa;--N50-raw:247,248,250;
+  --N100:#eef0f3;--N100-raw:238,240,243;
+  --N200:#dfe2e7;--N200-raw:223,226,231;
+  --N300:#c9cdd4;--N300-raw:201,205,212;
+  --N350:#bcc1c9;--N350-raw:188,193,201;
+  --N400:#aeb3bc;--N400-raw:174,179,188;
+  --N500:#858b96;--N500-raw:133,139,150;
+  --N600:#656b75;--N600-raw:101,107,117;
+  --N650:#565c66;--N650-raw:86,92,102;
+  --N700:#4b5059;--N700-raw:75,80,89;
+  --N800:#34383f;--N800-raw:52,56,63;
+  --N900:#202124;--N900-raw:32,33,36;
+  --N950:#15161a;--N950-raw:21,22,26;
+  --s-color-bg-body:#f8f9fb;--s-color-bg-body-raw:248,249,251;
+  --s-color-bg-dialogs:#ffffff;--s-color-bg-dialogs-raw:255,255,255;
+  --s-color-bg-secondary:#eef0f3;--s-color-bg-secondary-raw:238,240,243;
+  --s-color-bg-invert-secondary:#202124;--s-color-bg-invert-secondary-raw:32,33,36;
+  --s-color-bg-static-black-secondary:#202124;--s-color-bg-static-black-secondary-raw:32,33,36;
+  --s-color-bg-base:#dfe2e7;--s-color-bg-base-raw:223,226,231;
+  --s-color-bg-tertiary:#f4f5f7;--s-color-bg-tertiary-raw:244,245,247;
+  --s-color-bg-invert-tertiary:#34383f;--s-color-bg-invert-tertiary-raw:52,56,63;
+  --s-color-bg-static-black-tertiary:#34383f;--s-color-bg-static-black-tertiary-raw:52,56,63;
+  --s-color-bg-quaternary:#eef0f3;--s-color-bg-quaternary-raw:238,240,243;
+  --s-color-bg-invert-quaternary:#4b5059;--s-color-bg-invert-quaternary-raw:75,80,89;
+  --s-color-bg-static-black-quaternary:#4b5059;--s-color-bg-static-black-quaternary-raw:75,80,89;
+  --s-color-bg-primary:#ffffff;--s-color-bg-primary-raw:255,255,255;
+  --s-color-bg-invert-primary:#15161a;--s-color-bg-invert-primary-raw:21,22,26;
+  --s-color-bg-static-black-primary:#15161a;--s-color-bg-static-black-primary-raw:21,22,26;
+  --s-color-bg-content-base:#f8f9fb;--s-color-bg-content-base-raw:248,249,251;
+  --s-color-bg-float:#ffffff;--s-color-bg-float-raw:255,255,255;
+  --dbx-bg-base-web:#dfe2e7;--dbx-bg-base-web-raw:223,226,231;
+  --dbx-bg-base-2:#eef0f3;--dbx-bg-base-2-raw:238,240,243;
+  --dbx-bg-base-5:#f4f5f7;--dbx-bg-base-5-raw:244,245,247;
+  --dbx-bg-body-web:#f8f9fb;--dbx-bg-body-web-raw:248,249,251;
+  --dbx-bg-body-white:#ffffff;--dbx-bg-body-white-raw:255,255,255;
+  --dbx-bg-body-mac:#f8f9fb;--dbx-bg-body-mac-raw:248,249,251;
+  --dbx-bg-browser-mac:#eef0f3;--dbx-bg-browser-mac-raw:238,240,243;
+  --dbx-bg-browser-win:#eef0f3;--dbx-bg-browser-win-raw:238,240,243;
+  --dbx-bg-float:#ffffff;--dbx-bg-float-raw:255,255,255;
+  --s-color-text-primary:#202124;
+  --s-color-text-primary-raw:32,33,36;
+  --s-color-text-secondary:rgba(32,33,36,.84);
+  --s-color-text-tertiary:rgba(32,33,36,.64);
+  --s-color-text-quaternary:rgba(32,33,36,.48);
+  --s-color-text-disable:rgba(32,33,36,.24);
+  --dbx-text-primary:rgba(32,33,36,.92);
+  --color-dbx-text-primary:rgba(32,33,36,.92);
+  --dbx-text-secondary:rgba(32,33,36,.72);
+  --color-dbx-text-secondary:rgba(32,33,36,.72);
+  --dbx-text-tertiary:rgba(32,33,36,.58);
+  --dbx-text-disable:rgba(32,33,36,.30);
+  --color-dbx-text-disable:rgba(32,33,36,.30);
+  --dbx-text-markdown:rgba(32,33,36,.92);
+  --dbx-code-text:rgba(32,33,36,.92);
+}

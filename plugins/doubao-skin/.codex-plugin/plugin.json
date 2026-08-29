@@ -1,0 +1,35 @@
+{
+  "name": "doubao-skin",
+  "version": "0.1.0",
+  "description": "Create and apply themes for the DoubaoWork macOS app.",
+  "author": {
+    "name": "IchenDEV",
+    "url": "https://github.com/IchenDEV"
+  },
+  "homepage": "https://doubao-skin.idevlab.dev/guide#skills",
+  "repository": "https://github.com/IchenDEV/doubao-skin",
+  "license": "MIT",
+  "keywords": [
+    "doubao",
+    "theme",
+    "macos"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "豆包主题",
+    "shortDescription": "创建并安装豆包工作主题",
+    "longDescription": "为 macOS 版豆包工作创建符合项目规范的主题，并将已有主题安全地安装到本地应用。",
+    "developerName": "IchenDEV",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://doubao-skin.idevlab.dev/guide#skills",
+    "defaultPrompt": [
+      "为豆包工作创建一套新主题。",
+      "把这个豆包主题安装到我的 Mac。"
+    ],
+    "brandColor": "#5B7CFA"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "skin": {
+    "backdropCount": 0,
+    "content": "rgba(255,255,255,0.374)",
+    "id": "gallery-whale-maid",
+    "page": "rgba(189,153,153,0.374)",
+    "sidebar": "rgba(255,255,255,0.51)",
+    "styleCount": 1,
+    "surfaceOpacity": "0.68",
+    "target": "doubao-work",
+    "theme": "light"
+  },
+  "large": []
+}

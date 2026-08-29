@@ -1,0 +1,64 @@
+name: Product health
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: product-health
+  cancel-in-progress: false
+
+jobs:
+  gallery:
+    name: Public gallery
+    runs-on: ubuntu-24.04
+    env:
+      GALLERY_URL: https://doubao-skin.idevlab.dev
+      DOWNLOAD_URL: https://github.com/IchenDEV/doubao-skin/releases/latest/download/Doubao-Skin-macOS-universal.zip
+    steps:
+      - name: Check public routes
+        id: health
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --max-time 30 --output /dev/null "$GALLERY_URL/"
+          curl --fail --location --retry 2 --max-time 30 --output /dev/null "$GALLERY_URL/guide"
+          curl --fail --location --retry 2 --max-time 30 --output /dev/null "$GALLERY_URL/contribute"
+          curl --fail --location --retry 2 --max-time 30 --output /dev/null "$GALLERY_URL/themes/violet-night"
+          curl --fail --location --retry 2 --max-time 30 --output /dev/null "$GALLERY_URL/robots.txt"
+          curl --fail --location --retry 2 --max-time 30 --output /dev/null "$GALLERY_URL/sitemap.xml"
+          curl --fail --location --retry 2 --max-time 30 \
+            "$GALLERY_URL/themes/catalog.json" \
+            | jq --exit-status \
+              '.schemaVersion == 1 and (.themes | length > 0) and any(.themes[]; .id == "violet-night")' \
+              > /dev/null
+          curl --fail --head --location --retry 2 --max-time 30 --output /dev/null \
+            "$DOWNLOAD_URL"
+
+      - name: Open one deduplicated incident
+        if: ${{ steps.health.outcome == 'failure' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          title='[Incident]: 主题画廊健康检查失败'
+          existing=$(gh issue list --repo "$REPOSITORY" --state open \
+            --search '主题画廊健康检查失败 in:title' --json number --jq '.[0].number // empty')
+          if [ -z "$existing" ]; then
+            body=$(printf '%s\n\n%s\n\n%s\n' \
+              '定时检查发现主题画廊页面、SEO 端点、目录、已知主题详情或 GitHub universal 安装包不可用。' \
+              "证据：$RUN_URL" \
+              '分诊后运行 `./scripts/devflow incident gallery-health monitor`，提交 incident 与 intent Artifact。')
+            gh issue create --repo "$REPOSITORY" --title "$title" --body "$body"
+          fi
+
+      - name: Fail when health check failed
+        if: ${{ steps.health.outcome == 'failure' }}
+        run: exit 1

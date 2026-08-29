@@ -1,0 +1,35 @@
+{
+  "name": "@doubao-skin/web",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "license": "MIT",
+  "packageManager": "pnpm@12.0.0",
+  "engines": {
+    "node": ">=24.20.0 <25",
+    "pnpm": "12.0.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "sync": "node scripts/sync-themes.mjs && node scripts/sync-skills.mjs",
+    "test:filters": "node --test scripts/theme-filters.test.mjs",
+    "typecheck": "tsc --noEmit",
+    "check": "node --test scripts/theme-filters.test.mjs scripts/skill-discovery.test.mjs && node scripts/sync-skills.mjs --check && tsc --noEmit && next build"
+  },
+  "dependencies": {
+    "better-sqlite3": "13.0.3",
+    "next": "16.3.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "sharp": "0.35.4"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "typescript": "7.0.2"
+  }
+}

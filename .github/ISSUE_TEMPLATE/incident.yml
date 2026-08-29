@@ -1,0 +1,55 @@
+name: Production incident
+description: Record a production, release, privacy, or availability incident without exposing private data.
+title: "[Incident]: "
+body:
+  - type: markdown
+    attributes:
+      value: Do not include access tokens, cookies, account identifiers, conversation content, or private request captures.
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical — data exposure, destructive behavior, or release-control failure
+        - High — major workflow unavailable or unsafe
+        - Medium — degraded behavior with a workaround
+        - Low — limited impact or early warning
+    validations:
+      required: true
+  - type: input
+    id: detected
+    attributes:
+      label: Detection time and source
+      placeholder: 2026-08-29 01:00 +08:00, Product health run URL
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Detection evidence
+      description: Include exact status codes, versions, or redacted logs.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: User impact
+    validations:
+      required: true
+  - type: textarea
+    id: containment
+    attributes:
+      label: Containment or rollback
+      description: State what has been done and what still requires approval.
+  - type: textarea
+    id: followup
+    attributes:
+      label: Follow-up intent
+      description: After triage, run `./scripts/devflow incident <slug> issue` and link the committed artifact here.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed credentials, account data, and private conversation content.
+          required: true

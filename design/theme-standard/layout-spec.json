@@ -1,6 +1,6 @@
 {
   "name": "doubao-theme-picker",
-  "version": 1,
+  "version": 4,
   "baseUnit": 4,
   "spacing": {
     "1": 4,
@@ -44,14 +44,42 @@
     "resizable": true
   },
   "shell": {
-    "titlebarHeight": 52,
+    "titlebarHeight": 72,
+    "compactTitlebarHeight": 72,
+    "controlGap": 12,
+    "windowChromeToTitleGap": 24,
+    "titlebarRegions": {
+      "leading": "product-name",
+      "center": "target-switcher",
+      "trailing": [],
+      "centerAlignment": "window"
+    },
+    "targetSwitcher": {
+      "items": ["豆包", "豆包工作"],
+      "width": 224,
+      "height": 36,
+      "contextLabelVisible": false
+    },
+    "sourceSwitcher": {
+      "items": ["我的主题", "主题商店"],
+      "location": "sidebar",
+      "height": 36,
+      "compactMode": "leading-content-region"
+    },
+    "search": {
+      "location": "sidebar",
+      "width": "fill",
+      "height": 36,
+      "compactMode": "same-row-as-source-switcher",
+      "shortcut": "Command-F"
+    },
     "regions": {
       "themeList": {
         "wide": {
           "start": 1,
           "span": 3,
           "minWidth": 220,
-          "idealWidth": 240,
+          "idealWidth": 276,
           "maxWidth": 280
         },
         "regular": {
@@ -80,30 +108,95 @@
           "span": 4,
           "minWidth": 0
         }
+      },
+      "themeStore": {
+        "wide": {
+          "columns": 4,
+          "cardWidth": 244,
+          "gutter": 16
+        },
+        "compact": {
+          "columns": 3,
+          "cardWidth": 212,
+          "gutter": 16
+        }
       }
     }
   },
   "workspace": {
     "contentPadding": 24,
     "sectionGap": 20,
+    "packageImport": {
+      "acceptedType": ".zip",
+      "desktopTargetHeight": 86,
+      "compactTargetHeight": 42,
+      "dropScope": "entire-window",
+      "secondaryAction": "选择文件…"
+    },
     "previewAspectRatio": "16:9",
     "previewMinHeight": 320,
     "actionRow": {
-      "height": 64,
+      "height": 72,
       "titleSpan": 6,
       "actionSpan": 3,
+      "auxiliaryControl": {
+        "name": "surfaceOpacity",
+        "width": 180,
+        "visibility": "background-themes-only",
+        "compactMode": "before-actions"
+      },
       "compactMode": "stack"
+    },
+    "themePreview": {
+      "columns": 12,
+      "gutter": 12,
+      "sidebar": {
+        "start": 1,
+        "span": 3,
+        "minWidth": 120,
+        "maxWidth": 280
+      },
+      "conversation": {
+        "start": 4,
+        "span": 9,
+        "minWidth": 420,
+        "maxWidth": 1100
+      },
+      "messageMaxWidthPercent": {
+        "min": 56,
+        "default": 72,
+        "max": 88
+      },
+      "composerMaxWidth": {
+        "min": 560,
+        "default": 750,
+        "max": 920
+      },
+      "compactMode": "sidebar-rail"
     }
   },
   "verticalRhythm": {
-    "themeRowHeight": 44,
-    "controlHeight": 28,
-    "primaryControlHeight": 32,
+    "themeRowHeight": 50,
+    "themeThumbnailSize": 38,
+    "controlHeight": 32,
+    "primaryControlHeight": 36,
     "sectionGap": 20
   },
   "alignment": [
     "Theme names share one leading edge.",
+    "Search, preview and action controls use one 32 to 36 pixel control scale.",
+    "Theme source switching stays in the leading sidebar; the selected source opens in the detail region.",
+    "The target switcher is centered on the window, independent of the widths of the leading and trailing titlebar groups.",
+    "The sidebar source switcher and search field use the 12 pixel control gap.",
+    "Theme package installation stays in the sidebar drop target and Command-O; the titlebar has no duplicate install action.",
+    "The product title starts 24 pixels after the traffic-light group.",
+    "Every local theme row shows a real background thumbnail or the theme main icon before falling back to a color tile.",
+    "The package drop target remains compact while the entire window accepts Finder drops.",
+    "The remote store uses image-led cards and never exposes a catalog URL in the product UI.",
     "Preview, description and action row share the same left and right bounds.",
+    "The background opacity control stays grouped with actions and never reduces the theme description below its minimum width.",
+    "Preview sidebar, message blocks and composer align to the preview's 12-column grid.",
+    "Background art is decorative and never determines content bounds.",
     "The primary action stays visible without scrolling at the default window size.",
     "No log, console or technical status region is present."
   ],

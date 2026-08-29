@@ -1,0 +1,52 @@
+{
+  "name": "doubao-theme-library",
+  "version": 2,
+  "baseUnit": 4,
+  "spacing": {
+    "1": 4,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "6": 24,
+    "8": 32,
+    "12": 48,
+    "16": 64
+  },
+  "breakpoints": {
+    "mobile": { "maxWidth": 699, "columns": 4, "margin": 20, "gutter": 12 },
+    "tablet": { "minWidth": 700, "maxWidth": 919, "columns": 8, "margin": 32, "gutter": 16 },
+    "desktop": { "minWidth": 920, "columns": 12, "margin": 48, "gutter": 20 }
+  },
+  "shell": {
+    "sidebar": {
+      "desktop": { "width": 264, "behavior": "sticky-left" },
+      "tablet": { "height": 72, "behavior": "topbar" },
+      "mobile": { "height": 64, "behavior": "topbar" }
+    },
+    "content": {
+      "maxWidth": 1296,
+      "desktopPadding": 48,
+      "tabletPadding": 32,
+      "mobilePadding": 20
+    }
+  },
+  "reading": {
+    "maxWidth": 760,
+    "wideSectionMaxWidth": 980
+  },
+  "themeList": {
+    "desktopColumns": [140, "fluid", 112, 112, 40],
+    "rowMinHeight": 100,
+    "preview": { "width": 124, "height": 72 },
+    "mobileBehavior": "hide column labels and type; reduce preview; keep view action visible"
+  },
+  "alignment": [
+    "Title, search, result count, column labels and theme rows share the same left and right bounds.",
+    "Theme thumbnails, names, type labels and actions each share a stable column edge.",
+    "Desktop uses exactly one 264px left sidebar; it becomes a compact top bar below 920px.",
+    "Type and series filters appear only in the navigation surface and combine with AND semantics.",
+    "Guide and contribution prose stays within a 760px reading column.",
+    "The list remains open; no outer card or card grid is introduced."
+  ],
+  "exceptions": []
+}

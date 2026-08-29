@@ -1,0 +1,150 @@
+{
+  "$schema": "../../design/theme-standard/theme-v2.schema.json",
+  "appearance": "both",
+  "author": "豆包主题",
+  "background": {
+    "type": "gradient",
+    "gradient": "linear-gradient(145deg, #f7f3ea 0%, #fffcf5 52%, #f2e8dc 100%)",
+    "opacity": 1,
+    "veil": 0,
+    "animation": "none"
+  },
+  "composer": {
+    "background": "#fffcf5",
+    "border": "1px solid #ddd4c8",
+    "textColor": "#2d2926",
+    "placeholderColor": "rgba(45,41,38,0.52)",
+    "caretColor": "#d97757",
+    "iconColor": "#6f655e",
+    "sendButtonBackground": "#d97757",
+    "sendButtonIconColor": "#ffffff",
+    "radius": 22,
+    "minHeight": 54,
+    "maxHeight": 240,
+    "padding": 14,
+    "gap": 10,
+    "iconSize": 20
+  },
+  "content": {
+    "chatBackground": "rgba(247,243,234,0.94)",
+    "userMessageBackground": "#d97757",
+    "userMessageText": "#ffffff",
+    "assistantMessageBackground": "#fffcf5",
+    "assistantMessageText": "#2d2926",
+    "codeBackground": "#eee7dc",
+    "codeHeaderBackground": "#e5dccf",
+    "selectionColor": "rgba(217,119,87,0.22)",
+    "scrollbarColor": "rgba(111,101,94,0.24)",
+    "scrollbarHoverColor": "rgba(111,101,94,0.42)"
+  },
+  "description": "暖米白与陶土橙安静柔和，适合长时间阅读",
+  "effects": {
+    "radiusScale": 1.15,
+    "shadow": "0 10px 30px rgba(72,54,42,0.12)",
+    "blur": 8,
+    "motion": "gentle",
+    "transitionMs": 180
+  },
+  "id": "claude-warm",
+  "layout": {
+    "chatMargin": 32,
+    "chatMaxWidth": 880,
+    "composerMaxWidth": 760,
+    "density": "comfortable",
+    "selfMessageMaxWidth": 420,
+    "sidebarWidth": 252
+  },
+  "name": "Claude 暖橙",
+  "preview": {
+    "accent": "#d97757",
+    "appearance": "light",
+    "aspectRatio": "16:9",
+    "image": "preview.jpg"
+  },
+  "schemaVersion": 2,
+  "store": {
+    "category": "brand",
+    "sortOrder": 28,
+    "tags": [
+      "浅色",
+      "暖色",
+      "阅读",
+      "圆角"
+    ]
+  },
+  "surfaceOpacity": 0.96,
+  "typography": {
+    "body": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
+    "code": "ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace",
+    "lineHeight": 1.68,
+    "scale": 1.02,
+    "ui": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif"
+  },
+  "variants": {
+    "dark": {
+      "composer": {
+        "background": "#2a2521",
+        "border": "1px solid #4a423b",
+        "textColor": "#f4ede3",
+        "placeholderColor": "rgba(244,237,227,0.56)",
+        "caretColor": "#e58a69",
+        "iconColor": "rgba(244,237,227,0.76)",
+        "sendButtonBackground": "#e58a69",
+        "sendButtonIconColor": "#1f1c1a",
+        "radius": 22,
+        "minHeight": 54,
+        "maxHeight": 240,
+        "padding": 14,
+        "gap": 10,
+        "iconSize": 20
+      },
+      "content": {
+        "chatBackground": "rgba(31,28,26,0.96)",
+        "userMessageBackground": "#e58a69",
+        "userMessageText": "#1f1c1a",
+        "assistantMessageBackground": "#2a2521",
+        "assistantMessageText": "#f4ede3",
+        "codeBackground": "#181513",
+        "codeHeaderBackground": "#352e29",
+        "selectionColor": "rgba(229,138,105,0.26)",
+        "scrollbarColor": "rgba(244,237,227,0.22)",
+        "scrollbarHoverColor": "rgba(244,237,227,0.40)"
+      }
+    },
+    "light": {
+      "composer": {
+        "background": "#fffcf5",
+        "border": "1px solid #ddd4c8",
+        "textColor": "#2d2926",
+        "placeholderColor": "rgba(45,41,38,0.52)",
+        "caretColor": "#d97757",
+        "iconColor": "#6f655e",
+        "sendButtonBackground": "#d97757",
+        "sendButtonIconColor": "#ffffff",
+        "radius": 22,
+        "minHeight": 54,
+        "maxHeight": 240,
+        "padding": 14,
+        "gap": 10,
+        "iconSize": 20
+      },
+      "content": {
+        "chatBackground": "rgba(247,243,234,0.94)",
+        "userMessageBackground": "#d97757",
+        "userMessageText": "#ffffff",
+        "assistantMessageBackground": "#fffcf5",
+        "assistantMessageText": "#2d2926",
+        "codeBackground": "#eee7dc",
+        "codeHeaderBackground": "#e5dccf",
+        "selectionColor": "rgba(217,119,87,0.22)",
+        "scrollbarColor": "rgba(111,101,94,0.24)",
+        "scrollbarHoverColor": "rgba(111,101,94,0.42)"
+      }
+    }
+  },
+  "version": "1.0.0",
+  "inspiredBy": "Claude product interface",
+  "sourceUrl": "https://www.anthropic.com/claude",
+  "sourceAccessedAt": "2026-08-29",
+  "license": "Original adaptation; no Anthropic assets included"
+}

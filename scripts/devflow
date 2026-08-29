@@ -1,0 +1,474 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+WORKFLOW_DIR=${DEVFLOW_WORKFLOW_DIR:-"$REPO_ROOT/workflow"}
+TEMPLATE_DIR="$REPO_ROOT/workflow/templates"
+CHANGES_DIR="$WORKFLOW_DIR/changes"
+INCIDENTS_DIR="$WORKFLOW_DIR/incidents"
+EVALS_DIR="$WORKFLOW_DIR/evals"
+TODAY=${DEVFLOW_DATE:-$(date +%Y-%m-%d)}
+
+fail() {
+  echo "devflow: $*" >&2
+  exit 1
+}
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./scripts/devflow new <slug> [source] [risk]
+  ./scripts/devflow approve <change-id> <intent|spec|plan> <human-approver>
+  ./scripts/devflow design <change-id>
+  ./scripts/devflow plan <change-id>
+  ./scripts/devflow verify <change-id>
+  ./scripts/devflow incident <slug> [source]
+  ./scripts/devflow add-eval <slug> [origin]
+  ./scripts/devflow validate
+  ./scripts/devflow check-pr
+
+Approval is still a human decision. After a human explicitly confirms the
+current artifact, an agent may use `approve` to record that decision, approver,
+and date. The command records a decision; it never makes one.
+EOF
+}
+
+metadata() {
+  file=$1
+  key=$2
+  awk -v wanted="$key" '
+    NR == 1 && $0 == "---" { in_frontmatter = 1; next }
+    in_frontmatter && $0 == "---" { exit }
+    in_frontmatter {
+      line = $0
+      separator = index(line, ":")
+      if (separator == 0) next
+      current = substr(line, 1, separator - 1)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", current)
+      if (current == wanted) {
+        value = substr(line, separator + 1)
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+        if (value ~ /^".*"$/) value = substr(value, 2, length(value) - 2)
+        print value
+        exit
+      }
+    }
+  ' "$file"
+}
+
+require_metadata() {
+  file=$1
+  key=$2
+  value=$(metadata "$file" "$key")
+  [ -n "$value" ] || fail "$file: missing metadata '$key'"
+  case "$value" in
+    "[fill]"|pending|TBD|TODO) fail "$file: metadata '$key' is still a placeholder" ;;
+  esac
+  printf '%s' "$value"
+}
+
+require_present() {
+  file=$1
+  key=$2
+  value=$(metadata "$file" "$key")
+  [ -n "$value" ] || fail "$file: missing metadata '$key'"
+  printf '%s' "$value"
+}
+
+require_heading() {
+  file=$1
+  heading=$2
+  grep -Eq "^## ${heading}[[:space:]]*$" "$file" || fail "$file: missing section '## $heading'"
+}
+
+require_no_placeholders() {
+  file=$1
+  if grep -En '\[fill\]|(^|[^[:alnum:]_])(TODO|TBD)([^[:alnum:]_]|$)|待补|待定' "$file" >/dev/null; then
+    fail "$file: accepted artifacts cannot contain placeholders"
+  fi
+}
+
+require_complete_sections() {
+  file=$1
+  if ! awk '
+    /^## / {
+      if (seen && !has_content) missing = 1
+      seen = 1
+      has_content = 0
+      next
+    }
+    seen && $0 !~ /^[[:space:]]*$/ { has_content = 1 }
+    END {
+      if (seen && !has_content) missing = 1
+      exit missing
+    }
+  ' "$file"; then
+    fail "$file: every required section must contain evidence or a decision"
+  fi
+}
+
+require_status() {
+  file=$1
+  expected=$2
+  actual=$(metadata "$file" status)
+  [ "$actual" = "$expected" ] || fail "$file: expected status '$expected', found '${actual:-missing}'"
+}
+
+validate_approval() {
+  file=$1
+  approved_by=$(require_metadata "$file" approved_by)
+  approved_at=$(require_metadata "$file" approved_at)
+  echo "$approved_at" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' || fail "$file: approved_at must use YYYY-MM-DD"
+  require_no_placeholders "$file"
+  require_complete_sections "$file"
+
+  risk=$(metadata "$file" risk)
+  owner=$(metadata "$file" owner)
+  if { [ "$risk" = high ] || [ "$risk" = critical ]; } && [ "$approved_by" = "$owner" ]; then
+    fail "$file: high and critical risk require an approver other than the owner"
+  fi
+}
+
+validate_common() {
+  file=$1
+  expected_stage=$2
+  allowed_statuses=$3
+  expected_id=$4
+
+  [ -f "$file" ] || fail "$file: artifact does not exist"
+  [ "$(metadata "$file" stage)" = "$expected_stage" ] || fail "$file: stage must be '$expected_stage'"
+  [ "$(metadata "$file" id)" = "$expected_id" ] || fail "$file: id must match directory '$expected_id'"
+  require_present "$file" owner >/dev/null
+  created=$(require_metadata "$file" created)
+  echo "$created" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' || fail "$file: created must use YYYY-MM-DD"
+
+  status=$(metadata "$file" status)
+  case " $allowed_statuses " in
+    *" $status "*) ;;
+    *) fail "$file: invalid status '${status:-missing}'" ;;
+  esac
+}
+
+validate_change() {
+  change_dir=$1
+  change_id=$(basename "$change_dir")
+  echo "$change_id" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$' || fail "$change_dir: invalid change id"
+  intent="$change_dir/intent.md"
+  spec="$change_dir/spec.md"
+  plan="$change_dir/plan.md"
+  verification="$change_dir/verification.md"
+
+  validate_common "$intent" intent "draft accepted rejected" "$change_id"
+  require_metadata "$intent" source >/dev/null
+  risk=$(require_metadata "$intent" risk)
+  case "$risk" in low|medium|high|critical) ;; *) fail "$intent: invalid risk '$risk'" ;; esac
+  for heading in "Problem" "Proposed outcome" "Affected users and systems" "Constraints" "Out of scope" "Success signals" "Open questions" "Decision"; do
+    require_heading "$intent" "$heading"
+  done
+  [ "$(metadata "$intent" status)" != accepted ] || validate_approval "$intent"
+
+  if [ -f "$spec" ]; then
+    require_status "$intent" accepted
+    validate_common "$spec" spec "draft accepted rejected" "$change_id"
+    [ "$(metadata "$spec" based_on)" = intent.md ] || fail "$spec: based_on must be intent.md"
+    [ "$(metadata "$spec" risk)" = "$risk" ] || fail "$spec: risk must match intent.md"
+    for heading in "Requirements" "User experience" "Technical design" "Security and privacy" "Alternatives and non-goals" "Areas of concern" "Acceptance criteria" "Decision"; do
+      require_heading "$spec" "$heading"
+    done
+    [ "$(metadata "$spec" status)" != accepted ] || validate_approval "$spec"
+  fi
+
+  if [ -f "$plan" ]; then
+    [ -f "$spec" ] || fail "$plan: spec.md is required"
+    require_status "$spec" accepted
+    validate_common "$plan" plan "draft accepted rejected" "$change_id"
+    [ "$(metadata "$plan" based_on)" = spec.md ] || fail "$plan: based_on must be spec.md"
+    [ "$(metadata "$plan" risk)" = "$risk" ] || fail "$plan: risk must match intent.md"
+    for heading in "Files and ownership" "Order of work" "Test-first proof" "Visual or integration proof" "Risks and mitigations" "Rollback" "Deviations" "Decision"; do
+      require_heading "$plan" "$heading"
+    done
+    [ "$(metadata "$plan" status)" != accepted ] || validate_approval "$plan"
+  fi
+
+  if [ -f "$verification" ]; then
+    [ -f "$plan" ] || fail "$verification: plan.md is required"
+    require_status "$plan" accepted
+    validate_common "$verification" verification "pending passed failed" "$change_id"
+    [ "$(metadata "$verification" based_on)" = plan.md ] || fail "$verification: based_on must be plan.md"
+    mode=$(require_metadata "$verification" verification_mode)
+    case "$mode" in fresh-context|human|pair) ;; *) fail "$verification: invalid verification_mode '$mode'" ;; esac
+    for heading in "Automated checks" "Behavioral evidence" "Visual evidence" "Security and privacy evidence" "Deviations and residual risk" "Verdict"; do
+      require_heading "$verification" "$heading"
+    done
+    if [ "$(metadata "$verification" status)" = passed ]; then
+      require_metadata "$verification" commit >/dev/null
+      verified_by=$(require_metadata "$verification" verified_by)
+      verified_at=$(require_metadata "$verification" verified_at)
+      echo "$verified_at" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' || fail "$verification: verified_at must use YYYY-MM-DD"
+      if [ "$mode" = fresh-context ] && [ "$verified_by" = "$(metadata "$verification" owner)" ]; then
+        fail "$verification: fresh-context verifier must differ from the implementation owner"
+      fi
+      require_no_placeholders "$verification"
+      require_complete_sections "$verification"
+    fi
+  fi
+}
+
+validate_eval() {
+  file=$1
+  eval_id=$(basename "$file" .md)
+  echo "$eval_id" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$' || fail "$file: invalid eval id"
+  validate_common "$file" eval "draft active retired" "$eval_id"
+  require_metadata "$file" origin >/dev/null
+  for heading in "Scenario" "Expected behavior" "Automated oracle" "Manual oracle" "Regression history"; do
+    require_heading "$file" "$heading"
+  done
+  if [ "$(metadata "$file" status)" = active ]; then
+    require_metadata "$file" last_run >/dev/null
+    require_no_placeholders "$file"
+    require_complete_sections "$file"
+  fi
+}
+
+validate_incident() {
+  incident_dir=$1
+  incident_id=$(basename "$incident_dir")
+  echo "$incident_id" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$' || fail "$incident_dir: invalid incident id"
+  file="$incident_dir/incident.md"
+  validate_common "$file" incident "open mitigated closed" "$incident_id"
+  severity=$(require_metadata "$file" severity)
+  case "$severity" in low|medium|high|critical) ;; *) fail "$file: invalid severity '$severity'" ;; esac
+  detected_at=$(require_metadata "$file" detected_at)
+  echo "$detected_at" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' || fail "$file: detected_at must use YYYY-MM-DD"
+  require_metadata "$file" source >/dev/null
+  for heading in "Detection evidence" "User impact" "Timeline" "Containment and recovery" "Root cause" "Follow-up"; do
+    require_heading "$file" "$heading"
+  done
+
+  if [ "$(metadata "$file" status)" = closed ]; then
+    linked_intent=$(require_metadata "$file" linked_intent)
+    regression_eval=$(require_metadata "$file" regression_eval)
+    closed_at=$(require_metadata "$file" closed_at)
+    echo "$closed_at" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' || fail "$file: closed_at must use YYYY-MM-DD"
+    [ -f "$REPO_ROOT/$linked_intent" ] || [ -f "$WORKFLOW_DIR/${linked_intent#workflow/}" ] || fail "$file: linked_intent does not exist"
+    [ -f "$REPO_ROOT/$regression_eval" ] || [ -f "$WORKFLOW_DIR/${regression_eval#workflow/}" ] || fail "$file: regression_eval does not exist"
+    require_no_placeholders "$file"
+    require_complete_sections "$file"
+  fi
+}
+
+render_template() {
+  template=$1
+  destination=$2
+  id=$3
+  title=$4
+  source=$5
+  risk=$6
+  sed \
+    -e "s|{{ID}}|$id|g" \
+    -e "s|{{DATE}}|$TODAY|g" \
+    -e "s|{{TITLE}}|$title|g" \
+    -e "s|{{SOURCE}}|$source|g" \
+    -e "s|{{RISK}}|$risk|g" \
+    "$template" > "$destination"
+}
+
+validate_slug() {
+  slug=$1
+  echo "$slug" | grep -Eq '^[a-z0-9]+(-[a-z0-9]+)*$' || fail "slug must use lowercase letters, numbers, and single hyphens"
+}
+
+title_from_slug() {
+  echo "$1" | tr '-' ' '
+}
+
+new_change() {
+  slug=$1
+  source=${2:-user}
+  risk=${3:-medium}
+  validate_slug "$slug"
+  case "$source" in user|issue|incident|monitor) ;; *) fail "source must be user, issue, incident, or monitor" ;; esac
+  case "$risk" in low|medium|high|critical) ;; *) fail "risk must be low, medium, high, or critical" ;; esac
+  id="$TODAY-$slug"
+  destination="$CHANGES_DIR/$id"
+  [ ! -e "$destination" ] || fail "$destination already exists"
+  mkdir -p "$destination"
+  render_template "$TEMPLATE_DIR/intent.md" "$destination/intent.md" "$id" "$(title_from_slug "$slug")" "$source" "$risk"
+  echo "$destination/intent.md"
+}
+
+add_stage() {
+  stage=$1
+  change_id=$2
+  change_dir="$CHANGES_DIR/$change_id"
+  [ -d "$change_dir" ] || fail "$change_dir does not exist"
+  validate_change "$change_dir"
+  risk=$(metadata "$change_dir/intent.md" risk)
+  case "$stage" in
+    spec) prerequisite="$change_dir/intent.md"; destination="$change_dir/spec.md" ;;
+    plan) prerequisite="$change_dir/spec.md"; destination="$change_dir/plan.md" ;;
+    verification) prerequisite="$change_dir/plan.md"; destination="$change_dir/verification.md" ;;
+    *) fail "unknown stage '$stage'" ;;
+  esac
+  [ -f "$prerequisite" ] || fail "$prerequisite does not exist"
+  require_status "$prerequisite" accepted
+  [ ! -e "$destination" ] || fail "$destination already exists"
+  title=${change_id#????-??-??-}
+  render_template "$TEMPLATE_DIR/$stage.md" "$destination" "$change_id" "$(title_from_slug "$title")" user "$risk"
+  echo "$destination"
+}
+
+approve_stage() {
+  change_id=$1
+  stage=$2
+  approver=$3
+  change_dir="$CHANGES_DIR/$change_id"
+  [ -d "$change_dir" ] || fail "$change_dir does not exist"
+  case "$stage" in
+    intent|spec|plan) file="$change_dir/$stage.md" ;;
+    *) fail "approval stage must be intent, spec, or plan" ;;
+  esac
+  [ -f "$file" ] || fail "$file does not exist"
+  [ -n "$approver" ] || fail "human approver must not be empty"
+  case "$approver" in
+    *\"*|*\\*) fail "human approver must not contain quotes or backslashes" ;;
+  esac
+  if printf '%s' "$approver" | LC_ALL=C grep -q '[[:cntrl:]]'; then
+    fail "human approver must not contain control characters"
+  fi
+
+  validate_change "$change_dir"
+  require_status "$file" draft
+  require_no_placeholders "$file"
+  require_complete_sections "$file"
+  risk=$(metadata "$file" risk)
+  owner=$(metadata "$file" owner)
+  if { [ "$risk" = high ] || [ "$risk" = critical ]; } && [ "$approver" = "$owner" ]; then
+    fail "$file: high and critical risk require an approver other than the owner"
+  fi
+
+  temporary=$(mktemp "${file}.XXXXXX")
+  awk -v approver="$approver" -v approved_at="$TODAY" '
+    NR == 1 && $0 == "---" { in_frontmatter = 1 }
+    in_frontmatter && $0 == "status: draft" { print "status: accepted"; next }
+    in_frontmatter && $0 == "approved_by: \"\"" { print "approved_by: \"" approver "\""; next }
+    in_frontmatter && $0 == "approved_at: \"\"" { print "approved_at: \"" approved_at "\""; next }
+    { print }
+    in_frontmatter && NR > 1 && $0 == "---" { in_frontmatter = 0 }
+  ' "$file" > "$temporary"
+  mv "$temporary" "$file"
+  validate_change "$change_dir"
+  echo "devflow: recorded $stage approval by $approver on $TODAY"
+}
+
+new_incident() {
+  slug=$1
+  source=${2:-monitor}
+  validate_slug "$slug"
+  case "$source" in user|issue|monitor) ;; *) fail "incident source must be user, issue, or monitor" ;; esac
+  id="$TODAY-$slug"
+  incident_dir="$INCIDENTS_DIR/$id"
+  change_dir="$CHANGES_DIR/$id"
+  [ ! -e "$incident_dir" ] || fail "$incident_dir already exists"
+  [ ! -e "$change_dir" ] || fail "$change_dir already exists"
+  mkdir -p "$incident_dir" "$change_dir"
+  title=$(title_from_slug "$slug")
+  render_template "$TEMPLATE_DIR/incident.md" "$incident_dir/incident.md" "$id" "$title" "$source" medium
+  render_template "$TEMPLATE_DIR/intent.md" "$change_dir/intent.md" "$id" "$title" incident high
+  echo "$incident_dir/incident.md"
+  echo "$change_dir/intent.md"
+}
+
+new_eval() {
+  slug=$1
+  source=${2:-real-task}
+  validate_slug "$slug"
+  id="$TODAY-$slug"
+  destination="$EVALS_DIR/$id.md"
+  [ ! -e "$destination" ] || fail "$destination already exists"
+  mkdir -p "$EVALS_DIR"
+  render_template "$TEMPLATE_DIR/eval.md" "$destination" "$id" "$(title_from_slug "$slug")" "$source" low
+  echo "$destination"
+}
+
+validate_all() {
+  count=0
+  for path in "$CHANGES_DIR"/*; do
+    [ -d "$path" ] || continue
+    validate_change "$path"
+    count=$((count + 1))
+  done
+  for path in "$INCIDENTS_DIR"/*; do
+    [ -d "$path" ] || continue
+    validate_incident "$path"
+    count=$((count + 1))
+  done
+  for path in "$EVALS_DIR"/*.md; do
+    [ -f "$path" ] || continue
+    [ "$(basename "$path")" = README.md ] && continue
+    validate_eval "$path"
+    count=$((count + 1))
+  done
+  echo "devflow: validated $count artifact set(s)"
+}
+
+check_pr() {
+  body=${PR_BODY:-}
+  [ -n "$body" ] || fail "PR_BODY is empty"
+  change_path=$(printf '%s\n' "$body" | grep -Eo 'workflow/changes/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*' | head -1 || true)
+  [ -n "$change_path" ] || fail "PR body must link a workflow/changes/<id> artifact"
+  change_id=$(basename "$change_path")
+  change_dir="$CHANGES_DIR/$change_id"
+  validate_change "$change_dir"
+  require_status "$change_dir/intent.md" accepted
+  require_status "$change_dir/spec.md" accepted
+  require_status "$change_dir/plan.md" accepted
+  require_status "$change_dir/verification.md" passed
+  echo "devflow: PR gate passed for $change_id"
+}
+
+command=${1:-}
+case "$command" in
+  new)
+    [ $# -ge 2 ] || { usage; exit 1; }
+    new_change "$2" "${3:-user}" "${4:-medium}"
+    ;;
+  approve)
+    [ $# -eq 4 ] || { usage; exit 1; }
+    approve_stage "$2" "$3" "$4"
+    ;;
+  design)
+    [ $# -eq 2 ] || { usage; exit 1; }
+    add_stage spec "$2"
+    ;;
+  plan)
+    [ $# -eq 2 ] || { usage; exit 1; }
+    add_stage plan "$2"
+    ;;
+  verify)
+    [ $# -eq 2 ] || { usage; exit 1; }
+    add_stage verification "$2"
+    ;;
+  incident)
+    [ $# -ge 2 ] || { usage; exit 1; }
+    new_incident "$2" "${3:-monitor}"
+    ;;
+  add-eval)
+    [ $# -ge 2 ] || { usage; exit 1; }
+    new_eval "$2" "${3:-real-task}"
+    ;;
+  validate)
+    validate_all
+    ;;
+  check-pr)
+    check_pr
+    ;;
+  -h|--help|help)
+    usage
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac

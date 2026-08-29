@@ -1,8 +1,28 @@
-# dev artifacts (local working files, backups, screenshots, venv)
-work/
-__pycache__/
-*.pyc
-.DS_Store
+# Local working files and generated output
+/work/
+/dist/
+**/.DS_Store
 
-# rust build artifacts
-app/target/
+# Local UI captures
+/design/theme-standard/skin-tool-modern.png
+/docs/app-ui.png
+/docs/screenshot*.png
+/docs/skin-tool-*.png
+
+# Rust
+/target/
+
+# Web
+/apps/web/node_modules/
+/apps/web/.next/
+/apps/web/.vercel/
+/apps/web/next-env.d.ts
+/apps/web/*.tsbuildinfo
+/apps/web/public/downloads/*.zip
+
+# Editors and local environment
+.idea/
+.vscode/
+.env
+.env.*
+!.env.example

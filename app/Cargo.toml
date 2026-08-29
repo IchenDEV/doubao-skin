@@ -1,6 +1,0 @@
-[workspace]
-resolver = "2"
-members = ["skin-core", "skin-ui"]
-
-[profile.release]
-debug = false

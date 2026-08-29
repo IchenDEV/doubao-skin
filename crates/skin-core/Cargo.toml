@@ -1,0 +1,17 @@
+[package]
+name = "skin-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Native theme core for Doubao and DoubaoWork; model bridge for DoubaoWork"
+publish = false
+
+[dependencies]
+flate2 = "1.1.10"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+image = { version = "0.25.10", default-features = false, features = ["jpeg", "png"] }
+sha2 = "0.11.0"
+ureq = { version = "3.4.0", default-features = false, features = ["rustls"] }
+zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
