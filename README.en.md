@@ -38,7 +38,7 @@ Download the latest build from [GitHub Releases](https://github.com/IchenDEV/dou
 - `Doubao-Skin-macOS-universal.zip`: unzip and run directly.
 - `.sha256`: SHA-256 checksums for each package.
 
-If macOS blocks the first launch, right-click the app and choose **Open**.
+If macOS blocks the first launch, go to **System Settings → Privacy & Security**, scroll down to “Security”, click **Open Anyway**, and enter your admin password.
 
 Release packages use one continuous community self-signed certificate. They are not Apple-notarized; future versions retain this signing identity unless an announced security rotation is required.
 
