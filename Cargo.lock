@@ -1380,7 +1380,7 @@ dependencies = [
 
 [[package]]
 name = "doubao-skin-desktop"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "anyhow",
  "cocoa 0.26.0",
@@ -4896,7 +4896,7 @@ checksum = "8ee5873ec9cce0195efcb7a4e9507a04cd49aec9c83d0389df45b1ef7ba2e649"
 
 [[package]]
 name = "skin-core"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "flate2",
  "image",
