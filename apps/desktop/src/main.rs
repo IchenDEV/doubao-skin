@@ -781,11 +781,7 @@ impl SkinApp {
         let Some(theme_id) = theme_id else {
             return;
         };
-        if let Some(index) = self
-            .themes
-            .iter()
-            .position(|row| row.theme.id == theme_id)
-        {
+        if let Some(index) = self.themes.iter().position(|row| row.theme.id == theme_id) {
             self.source_view = SourceView::Library;
             self.selected = index;
             self.query.clear();
@@ -1613,11 +1609,7 @@ impl SkinApp {
         list.into_any_element()
     }
 
-    fn render_store_sidebar_item(
-        &self,
-        index: usize,
-        cx: &mut Context<Self>,
-    ) -> gpui::AnyElement {
+    fn render_store_sidebar_item(&self, index: usize, cx: &mut Context<Self>) -> gpui::AnyElement {
         let colors = self.colors;
         let row = &self.store_rows[index];
         let selected = index == self.store_selected;
@@ -1656,12 +1648,7 @@ impl SkinApp {
                     .flex()
                     .items_center()
                     .justify_center()
-                    .child(
-                        div()
-                            .size(px(12.))
-                            .rounded_full()
-                            .bg(rgb(accent)),
-                    ),
+                    .child(div().size(px(12.)).rounded_full().bg(rgb(accent))),
             )
             .child(
                 div()
@@ -2069,8 +2056,7 @@ impl SkinApp {
             .themes
             .iter()
             .any(|theme| theme.theme.id == row.theme.id);
-        let installing =
-            self.installing_store_theme.as_deref() == Some(row.theme.id.as_str());
+        let installing = self.installing_store_theme.as_deref() == Some(row.theme.id.as_str());
         let accent = parse_store_accent(row.theme.accent.as_deref());
         let store_selected = self.store_selected;
         div()
@@ -2108,16 +2094,13 @@ impl SkinApp {
                             .text_color(rgb(colors.text))
                             .child(row.theme.name.clone()),
                     )
-                    .child(
-                        div()
-                            .text_sm()
-                            .text_color(rgb(colors.muted))
-                            .child(if row.theme.description.is_empty() {
-                                row.theme.category.clone()
-                            } else {
-                                row.theme.description.clone()
-                            }),
-                    )
+                    .child(div().text_sm().text_color(rgb(colors.muted)).child(
+                        if row.theme.description.is_empty() {
+                            row.theme.category.clone()
+                        } else {
+                            row.theme.description.clone()
+                        },
+                    ))
                     .child(
                         div()
                             .flex()
@@ -3095,9 +3078,9 @@ impl Render for SkinApp {
                                                 } else {
                                                     "刷新"
                                                 })
-                                                .on_click(cx.listener(|this, _event, _window, cx| {
-                                                    this.load_store(cx)
-                                                })),
+                                                .on_click(cx.listener(
+                                                    |this, _event, _window, cx| this.load_store(cx),
+                                                )),
                                         ),
                                 )
                                 .child(self.render_store_sidebar_list(cx))

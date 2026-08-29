@@ -151,18 +151,16 @@ jobs:
               dist/doubao-theme-macOS-universal.tar.gz \
               dist/doubao-theme-macOS-universal.tar.gz.sha256 \
               --verify-tag \
-              --notes "$(cat <<'RELEASE_NOTES'
-Community self-signed release. This package is not Apple-notarized; if macOS blocks first launch, right-click the app and choose Open.
-
-## CLI quick install
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
-```
-
-Or download `doubao-theme-macOS-universal.tar.gz` and extract manually.
-RELEASE_NOTES
-              )" \
+              --notes-file <(printf '%s\n' \
+                "Community self-signed release. This package is not Apple-notarized; if macOS blocks first launch, right-click the app and choose Open." \
+                "" \
+                "## CLI quick install" \
+                "" \
+                '```bash' \
+                "curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh" \
+                '```' \
+                "" \
+                'Or download `doubao-theme-macOS-universal.tar.gz` and extract manually.') \
               --title "Doubao Skin $GITHUB_REF_NAME"
           fi
       - name: Remove temporary signing material
