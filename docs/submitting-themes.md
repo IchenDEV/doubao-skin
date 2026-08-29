@@ -22,10 +22,18 @@ Claude Code（在 Claude Code 中输入）：
 /plugin install doubao-skin@doubao-skin
 ```
 
-然后调用 `$create-doubao-theme` 描述颜色、明暗、气质和使用场景。源码用户也可以直接运行：
+然后调用 `$create-doubao-theme` 描述颜色、明暗、气质和使用场景。
+
+没有安装插件的用户可以先安装独立 CLI：
 
 ```bash
-cargo run -p skin-core --bin doubao-theme -- create themes/<theme-id> \
+curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
+```
+
+然后直接运行：
+
+```bash
+doubao-theme create themes/<theme-id> \
   --name "主题名称" \
   --description "一句自然语言描述" \
   --accent "#3370eb" \
@@ -33,13 +41,15 @@ cargo run -p skin-core --bin doubao-theme -- create themes/<theme-id> \
   --author "作者名称"
 ```
 
+源码用户也可以使用 `cargo run -p skin-core --bin doubao-theme --` 替代 `doubao-theme`。
+
 生成器会创建 v2 `theme.json`、基础 `theme.css` 和 1200 × 675 `preview.jpg`，不会覆盖非空目录。
 
 ## 3. 检查和预览
 
 ```bash
-cargo run -p skin-core --bin doubao-theme -- check themes/<theme-id>
-cargo run -p skin-core --bin doubao-theme -- preview themes/<theme-id>
+doubao-theme check themes/<theme-id>
+doubao-theme preview themes/<theme-id>
 ```
 
 检查必须通过。请同时实际查看预览；合成预览不能替代在无私人内容的豆包工作窗口中进行的应用验证。
@@ -67,9 +77,7 @@ corepack pnpm --dir apps/web sync
 使用一个新的输出路径：
 
 ```bash
-cargo run -p skin-core --bin doubao-theme -- pack \
-  themes/<theme-id> \
-  dist/<theme-id>.doubao-skin.zip
+doubao-theme pack themes/<theme-id> dist/<theme-id>.doubao-skin.zip
 ```
 
 如需安装或应用，请使用 `$apply-doubao-theme`。安装、应用、恢复、离线构建和删除都有副作用，Skill 会在执行前说明准确目标并等待确认。

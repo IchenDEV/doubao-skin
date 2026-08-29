@@ -4,6 +4,12 @@ All notable changes are recorded here. This project follows Semantic Versioning 
 
 ## Unreleased
 
+### Added
+
+- Standalone CLI distribution: `doubao-theme-macOS-universal.tar.gz` published as a separate release asset.
+- One-line CLI installer: `curl -fsSL .../install-cli.sh | sh`.
+- `doubao-theme --version` flag.
+
 ## 0.1.0 - 2026-08-29
 
 ### Added

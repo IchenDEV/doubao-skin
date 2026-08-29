@@ -84,16 +84,34 @@ Claude Code：
 
 ## Rust CLI
 
-`doubao-theme` 不依赖 Node.js、Python 或 GPUI：
+`doubao-theme` 是一个独立的命令行工具，不依赖 Node.js、Python 或 GPUI。
+
+### 安装
+
+一行命令安装（需要 macOS）：
 
 ```bash
-cargo run -p skin-core --bin doubao-theme -- list
-cargo run -p skin-core --bin doubao-theme -- create themes/my-theme \
+curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
+```
+
+安装脚本从 GitHub Release 下载预编译的 universal 二进制，验证校验和，并放到 `/usr/local/bin`。可通过 `INSTALL_DIR` 变量指定安装位置，通过 `VERSION` 变量指定版本：
+
+```bash
+VERSION=v0.1.0 INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
+```
+
+也可以从 [GitHub Releases](https://github.com/IchenDEV/doubao-skin/releases/latest) 手动下载 `doubao-theme-macOS-universal.tar.gz` 解压。
+
+### 用法
+
+```bash
+doubao-theme list
+doubao-theme create themes/my-theme \
   --name "我的主题" --description "安静耐看的深色主题" \
   --accent "#5b7ee5" --appearance both --author "本地用户"
-cargo run -p skin-core --bin doubao-theme -- check themes/my-theme
-cargo run -p skin-core --bin doubao-theme -- preview themes/my-theme
-cargo run -p skin-core --bin doubao-theme -- pack themes/my-theme dist/my-theme.doubao-skin.zip
+doubao-theme check themes/my-theme
+doubao-theme preview themes/my-theme
+doubao-theme pack themes/my-theme dist/my-theme.doubao-skin.zip
 ```
 
 完整命令还包括 `install`、`apply`、`restore`、`build` 和 `remove-build`。运行 `doubao-theme --help` 查看参数。

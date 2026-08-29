@@ -13,6 +13,8 @@ git push origin v0.1.0
 
 The workflow tests the workspace, builds Apple Silicon and Intel versions of both the GUI and `doubao-theme`, combines each binary into the universal app, bundles the two repository Skills, signs the bundle, uploads ZIP and DMG packages with both checksums as workflow artifacts, and creates or updates the matching GitHub Release. A manual workflow run builds artifacts but does not create a GitHub Release.
 
+Each release also publishes a standalone CLI tarball (`doubao-theme-macOS-universal.tar.gz`) with its SHA-256 checksum. This lets users install only the CLI without the desktop app.
+
 ## Bundled themes
 
 Release builds include five themes by default to keep the download small: 馋嘴豆包、甜点偷笑、鲸鱼娘、QQ 轻蓝和纯暗。The complete theme library remains in the repository and theme store.
@@ -49,3 +51,4 @@ Keep the encrypted recovery `.p12` outside the repository with mode `0600`; keep
 - Create and push the version tag.
 - Download both release packages and verify their checksums. Run `hdiutil verify` on the DMG, mount it read-only, confirm it contains “豆包主题.app” and `Applications -> /Applications`, verify the mounted app with `./scripts/verify-macos-signature.sh <app> <certificate-sha256>`, then test a clean install.
 - Confirm `Contents/Resources/bin/doubao-theme --help` runs and both bundled Skill directories pass validation.
+- Extract the standalone CLI tarball, verify `doubao-theme --version` prints the expected version, and confirm `shasum -a 256 -c` against the sidecar checksum.

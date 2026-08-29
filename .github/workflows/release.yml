@@ -101,6 +101,8 @@ jobs:
           ./scripts/verify-macos-signature.sh "dist/豆包主题.app" "$MACOS_CERTIFICATE_SHA256"
           (cd dist && shasum -a 256 -c Doubao-Skin-macOS-universal.zip.sha256)
           (cd dist && shasum -a 256 -c Doubao-Skin-macOS-universal.dmg.sha256)
+          (cd dist && shasum -a 256 -c doubao-theme-macOS-universal.tar.gz.sha256)
+          dist/豆包主题.app/Contents/Resources/bin/doubao-theme --version
           verify_dir=$(mktemp -d "$RUNNER_TEMP/doubao-skin-release-verify.XXXXXX")
           mount_dir=$(mktemp -d "$RUNNER_TEMP/doubao-skin-release-mount.XXXXXX")
           cleanup() {
@@ -123,6 +125,8 @@ jobs:
             dist/Doubao-Skin-macOS-universal.zip.sha256
             dist/Doubao-Skin-macOS-universal.dmg
             dist/Doubao-Skin-macOS-universal.dmg.sha256
+            dist/doubao-theme-macOS-universal.tar.gz
+            dist/doubao-theme-macOS-universal.tar.gz.sha256
           if-no-files-found: error
       - name: Publish GitHub Release
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
@@ -135,6 +139,8 @@ jobs:
               dist/Doubao-Skin-macOS-universal.zip.sha256 \
               dist/Doubao-Skin-macOS-universal.dmg \
               dist/Doubao-Skin-macOS-universal.dmg.sha256 \
+              dist/doubao-theme-macOS-universal.tar.gz \
+              dist/doubao-theme-macOS-universal.tar.gz.sha256 \
               --clobber
           else
             gh release create "$GITHUB_REF_NAME" \
@@ -142,8 +148,21 @@ jobs:
               dist/Doubao-Skin-macOS-universal.zip.sha256 \
               dist/Doubao-Skin-macOS-universal.dmg \
               dist/Doubao-Skin-macOS-universal.dmg.sha256 \
+              dist/doubao-theme-macOS-universal.tar.gz \
+              dist/doubao-theme-macOS-universal.tar.gz.sha256 \
               --verify-tag \
-              --notes "Community self-signed release. This package is not Apple-notarized; if macOS blocks first launch, right-click the app and choose Open." \
+              --notes "$(cat <<'RELEASE_NOTES'
+Community self-signed release. This package is not Apple-notarized; if macOS blocks first launch, right-click the app and choose Open.
+
+## CLI quick install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
+```
+
+Or download `doubao-theme-macOS-universal.tar.gz` and extract manually.
+RELEASE_NOTES
+              )" \
               --title "Doubao Skin $GITHUB_REF_NAME"
           fi
       - name: Remove temporary signing material

@@ -56,3 +56,5 @@ Commit generated changes under `apps/web/data` and `apps/web/public/themes` with
 ```
 
 The script builds with the lockfile, creates an app bundle, copies themes, the `doubao-theme` CLI, `create-doubao-theme` and `apply-doubao-theme` Skills, and license notices, and signs the bundle. It then writes ZIP and DMG packages plus an independent SHA-256 checksum for each under `dist/`. The DMG contains the same signed app and an `Applications` symlink.
+
+The script also produces a standalone CLI tarball (`doubao-theme-macOS-{arch}.tar.gz`) containing just the `doubao-theme` binary and license, with its own SHA-256 checksum. This allows users to install only the CLI without the desktop app.
