@@ -213,6 +213,19 @@ verified_at: ""
   missing). Consequently the new Windows-only registry-view code still needs
   the repository-mandated native Windows CI rerun rather than local
   cross-target evidence.
+- Native CI run
+  [`33326541149`](https://github.com/IchenDEV/doubao-skin/actions/runs/33326541149)
+  is for follow-up commit `0201305d427e701ae0aaca63b87ca45cfc28205a`.
+  Rust workspace, Web application, and native Windows x64, x86, and ARM64 jobs
+  all succeeded. The x64 runner passed all 34 Windows-applicable core tests,
+  including both mixed-bitness registry-view regressions, before packaging.
+- The same run built and uploaded separate Desktop and CLI archives for every
+  Windows architecture. The produced files are
+  `Doubao-Skin-Windows-{x64,x86,arm64}.zip` and
+  `doubao-skin-cli-Windows-{x64,x86,arm64}.zip`; GitHub reports the enclosing
+  artifacts at 10,760,984, 10,159,629, and 10,278,575 bytes respectively.
+  Its sole failed job is still Development workflow, where `check-pr`
+  correctly rejects this verification's truthful `pending` status.
 
 ## Behavioral evidence
 
@@ -368,8 +381,8 @@ verified_at: ""
   injects distinct fake entries, asserts the Registry64/Registry32 visit order,
   and proves paths from both views are collected. A Windows-only test also
   checks the enum-to-`KEY_WOW64_*` mapping. The 36-test core suite passes
-  locally; native Windows compilation and the Windows-only assertion remain
-  pending on the next CI run.
+  locally; native Windows x64 run `33326541149` passed both Windows-only
+  registry assertions and all 34 Windows-applicable core tests.
 - The first independent pass also found that `CHANGELOG.md` called the packages
   cross-compiled and retained the old CLI binary name. The follow-up worktree
   now says the packages are built on native Windows runners and describes the
@@ -380,10 +393,10 @@ verified_at: ""
   change. The 1440x1000 and 390x844 evidence is for the Web guide, not the
   native window. This remains an evidence gap under the repository's native UI
   definition of done.
-- The ARP fix, CHANGELOG correction, and `portability.sh` fallback audited
-  above remain uncommitted and therefore were not present in run
-  `33323010961`. After the final worktree is committed, CI must rerun the three
-  native Windows builds and retain replacement artifacts for that new commit.
+- The ARP fix, CHANGELOG correction, and `portability.sh` fallback were not
+  present in the earlier audited run `33323010961`. They are committed in the
+  follow-up and run `33326541149` now supplies replacement native Windows
+  artifacts for x64, x86, and ARM64.
 
 ## Verdict
 
@@ -410,13 +423,12 @@ the guest VM.
 
 ### Independent fresh-context verdict on 2026-08-31
 
-`pending`. Native Windows compilation, package naming, PE resources, and
-Desktop/CLI archive separation are proven for x64, x86, and ARM64 at the
-audited HEAD. The initial ARP and CHANGELOG findings are fixed in the current
-worktree, and the complete local gate plus the no-`rg` portability check pass.
-A final pass still requires native Windows CI and replacement artifacts for
-the new commit and inspectable normal/narrow native-window validation of the
-latest package. The current VMware control channel can read the guest display
-but reports `noWindowsAvailable` for click and keypress operations, so that
-visual gate cannot be completed in this audit without a working interactive
-guest channel.
+`pending`. Native Windows compilation, package naming, PE resources,
+Desktop/CLI archive separation, and the mixed-bitness registry regressions are
+now proven for x64, x86, and ARM64 at follow-up commit `0201305`. The complete
+local gate plus the no-`rg` portability check also pass. A final pass still
+requires inspectable normal/narrow native-window validation of the latest
+package. The current VMware control channel can read the guest display but
+reports `noWindowsAvailable` for click and keypress operations, so that visual
+gate cannot be completed in this audit without a working interactive guest
+channel.
