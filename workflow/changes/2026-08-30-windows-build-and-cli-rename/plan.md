@@ -17,7 +17,8 @@ approved_at: "2026-08-31"
 - `scripts/package.sh` — 桌面、CLI、Scoop 与签名校验的唯一公开打包入口
 - `scripts/package/` — 按产物职责分组的内部实现；Windows 入口只允许在 Windows 主机执行
 - `scripts/checks/` — 工作流与跨平台静态回归检查
-- `.github/workflows/ci.yml` — Windows 编译检查作业
+- `scripts/devflow`, `scripts/checks/devflow.sh`, `docs/development-workflow.md` — Draft/Ready PR 门禁、状态矩阵与流程文档
+- `.github/workflows/ci.yml` — Windows 编译检查作业与 PR 状态事件传参
 - `.github/workflows/release.yml` — 独立桌面/CLI 矩阵、Scoop 清单与统一发布门禁
 - `Cargo.toml` — 移除 gpui_windows 本地 patch
 - `apps/desktop/Cargo.toml` — 二进制名改为 doubao-skin-app
@@ -60,6 +61,7 @@ approved_at: "2026-08-31"
 14. 全仓库兼容性审计：用户数据目录改用跨平台目录 API；live/offline 能力在进入路径和系统命令前明确分流；移除示例中的外部 `curl` 依赖；Windows 不注册 macOS 菜单和快捷键
 15. 将脚本整理为 `package/` 与 `checks/` 两组并保留单一 `scripts/package.sh` 入口；将 CI 与 release 的 Windows 构建迁移到 `windows-2025` 原生 runner
 16. 将发布候选统一为 `0.4.0`；在 `lipo` 合并后重签 macOS universal CLI，普通 CI 用 ad-hoc 签名检查结构，Release 与 App 共用长期身份和固定证书指纹
+17. 修复 Draft PR 的 CI 门禁：为 `devflow check-pr` 加入受 GitHub PR 事件驱动的 Draft 状态，回归覆盖 pending/failed/passed 组合；推送后等待并检查完整远端 CI，Ready PR 仍严格要求 verification passed
 
 ## Test-first proof
 
@@ -67,6 +69,7 @@ approved_at: "2026-08-31"
 - 在修复 Windows 实时注入前加入随机源和首次注入超时回归；测试先因缺少超时实现而编译失败，再完成修复。
 - 运行 `./scripts/check.sh workflow` 验证 SDLC 工件。
 - 修复前解包 universal CLI 后运行 `codesign --verify --strict`，确认 `lipo` 输出报 `code object is not signed at all`；修复后要求双架构、严格签名、校验和、归档内容和精确的 `doubao-skin 0.4.0` 版本断言全部通过。
+- 修复 Draft 门禁前，用当前 PR 的 `Development workflow` 失败记录确认 `pending` 被无差别拒绝；先扩展 `scripts/checks/devflow.sh` 覆盖 Draft/Ready 状态矩阵，再修改 `scripts/devflow` 与 CI 事件传参，并以新的 GitHub PR checks 作为绿灯证据。
 
 ## Visual or integration proof
 
@@ -90,6 +93,7 @@ approved_at: "2026-08-31"
 - 早期方案曾从 Windows runner 改回 macOS + xwin；用户随后明确否决该方向，要求远端 CI 必须在 Windows runner 上编译 Windows 版本。最终删除 xwin 与 GPUI 临时补丁链，只保留 Windows 原生构建。
 - 实际打包发现完整包与 CLI 包只差大小写会在 macOS/Windows 上互相覆盖；CLI-only 包改为 `doubao-skin-cli-Windows-<arch>.zip`。
 - i686 的 psm 汇编对象不带 SafeSEH 表，仅该架构关闭 SafeSEH 链接检查；ARM64 的 ring 构建脚本固定调用 clang，因此仅该架构改用 clang 参数风格。
+- 当前 PR 是 Draft，verification 因仍缺最终 Windows 实窗证据而真实保持 `pending`。原 PR 门禁把该状态当作任何阶段都必须失败；按用户纠正，将 Draft/Ready 分层修复保留在本变更内，而不是另建 change。
 - 首轮 Windows 实机测试暴露四项跨平台缺口：GPUI 透明标题栏在 Windows 隐藏了原生控件；盘符路径字符串被识别为 URI；live 模式仍硬编码 macOS 应用路径与进程命令；PE 仅有 manifest、没有图标资源。用户明确要求在同一变更内修复并重打包。
 - 第二轮 Windows 实机截图确认原生窗口控件、图标、主题图片和应用检测已恢复；按用户反馈移除标题栏里与内容区重复的“豆皮”文字，保留系统图标与窗口控件。
 - 用户随后澄清要求不是取消 CLI，而是桌面与 CLI 使用互不嵌套的两条安装链。桌面包继续保持单入口且不内嵌 CLI/Skills；独立 CLI 恢复为多平台 Release 资产，Windows 由 Scoop 发现安装，macOS/Linux 使用独立安装脚本。Windows 的内部 Cargo GUI 产物仍名为 `doubao-skin-app` 以避开源码 CLI 冲突，但发布时复制为唯一桌面入口 `doubao-skin.exe`。

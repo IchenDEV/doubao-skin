@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review, converted_to_draft]
 
 permissions:
   contents: read
@@ -24,6 +25,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' }}
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
+          PR_IS_DRAFT: ${{ github.event.pull_request.draft }}
         run: ./scripts/devflow check-pr
 
   rust:

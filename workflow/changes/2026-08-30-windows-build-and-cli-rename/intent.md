@@ -26,6 +26,7 @@ approved_at: "2026-08-31"
 6. 删除 GPUI vendored patch 与 macOS 交叉编译备用链，只保留上游 GPUI 和 Windows 原生构建。
 7. 将桌面源码按 app、ui、preview、store 分组，避免单目录平铺大量文件。
 8. 为 `v0.4.0` 统一工作区、Web 与插件版本；macOS universal CLI 在 `lipo` 合并后复用桌面 App 的长期稳定社区签名身份。
+9. PR CI 区分开发中的 Draft 与准备合并的 Ready 状态：Draft 允许验证真实保持 `pending`，Ready 继续强制最终验证通过；创建或更新 PR 后必须检查远端 CI 结果。
 
 ## Affected users and systems
 
@@ -56,6 +57,7 @@ approved_at: "2026-08-31"
 - `doubao-skin-cli-macOS-universal.tar.gz` 同时包含 x86_64/ARM64，严格签名校验通过，证书指纹与同版本 App 相同。
 - 现有 macOS 构建和测试不受影响。
 - workflow validate 通过。
+- Draft PR 不因预期中的 `pending` verification 被误报为实现失败，同时 Ready PR 的合并门禁保持 fail-closed。
 
 ## Open questions
 
@@ -63,4 +65,4 @@ approved_at: "2026-08-31"
 
 ## Decision
 
-用户在 2026-08-30 明确要求修复审查问题、移除现有 gpui_windows vendored patch、整理桌面源码分组并产出 Windows 测试包；随后澄清桌面与 CLI 必须是互不嵌套的两条独立安装链，而不是取消 CLI 分发，并要求 Scoop 与 Web 平台识别覆盖多操作系统安装入口。2026-08-31，用户进一步明确准备发布 `v0.4.0`，要求先确保该版本正确，并让 macOS CLI 临时复用 App 已有的稳定自签名方案。
+用户在 2026-08-30 明确要求修复审查问题、移除现有 gpui_windows vendored patch、整理桌面源码分组并产出 Windows 测试包；随后澄清桌面与 CLI 必须是互不嵌套的两条独立安装链，而不是取消 CLI 分发，并要求 Scoop 与 Web 平台识别覆盖多操作系统安装入口。2026-08-31，用户进一步明确准备发布 `v0.4.0`，要求先确保该版本正确，并让 macOS CLI 临时复用 App 已有的稳定自签名方案。用户随后指出当前 PR 的 CI 仍未通过，因此 Draft/Ready 门禁修复属于本需求尚未完成的工作，不应拆成另一条 Intent/Spec。

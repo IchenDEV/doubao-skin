@@ -30,6 +30,7 @@ approved_at: "2026-08-31"
 14. Web 下载页必须只在浏览器本地检测平台，不上传用户代理信息；推荐 macOS 或对应 Windows 架构，同时保留全部桌面版本的手动下载链接。
 15. macOS universal CLI 必须在合并 x86_64 与 ARM64 切片后重新签名；Release 使用与 App 相同的长期社区身份和固定 SHA-256 证书指纹，普通 CI 使用 ad-hoc 身份验证签名结构但不得访问生产密钥。
 16. `v0.4.0` 的 Cargo 工作区、Web 包和 Codex/Claude 插件清单版本必须一致；Tag 校验继续以 Cargo 工作区版本为权威来源。
+17. PR CI 必须从 GitHub Pull Request 事件读取 Draft 状态。Draft PR 仍校验 change 链接、Intent/Spec/Plan 审批、工件结构，并拒绝明确失败的 verification，但允许 verification 保持 `pending`；非 Draft PR 必须继续要求 verification 为 `passed`。
 
 ## User experience
 
@@ -50,6 +51,7 @@ approved_at: "2026-08-31"
 - Windows 目标应用解析优先使用显式覆盖和默认用户目录，再读取卸载注册表与常用程序目录；运行控制使用目标 EXE、`taskkill` 和 CDP 参数，不调用 macOS 命令。
 - 桌面构建脚本从现有产品图标生成的 `.ico` 编译 PE 资源；Windows 打包脚本在归档前强制检查资源表。
 - 跨平台目录使用 `dirs` API；平台进程和应用发现集中在 `live/platform.rs`，macOS 离线克隆实现集中在 `build/macos.rs`，并由编译期模块边界隔离。
+- `scripts/devflow check-pr` 接收由 CI 注入的 Draft 状态，只在 Draft + `pending` 的组合下延后最终 verification 门禁；无效状态、`failed` verification、未审批上游工件和 Ready + `pending` 均失败。
 
 ## Security and privacy
 
@@ -81,7 +83,8 @@ approved_at: "2026-08-31"
 - Windows 标题栏、盘符路径资源分类、双应用默认目录及注册表身份隔离有回归测试。
 - 每个 Windows GUI EXE 在归档前通过 PE `ICON`/`GROUP_ICON` 和 GUI subsystem 检查。
 - `scripts/checks/portability.sh` 对直接平台目录环境变量、硬编码 `/Applications`、相对数据目录、运行时外部 `curl`、平台命令越界和大小写路径碰撞进行静态回归检查。
+- workflow harness 覆盖 Draft + pending 通过、Draft + failed 失败、Ready + pending 失败、Ready + passed 通过；当前 PR 推送后必须等待并检查实际 GitHub CI，而不是只报告本地结果。
 
 ## Decision
 
-用户在 2026-08-30 明确确认上述构建目标；同日实机测试发现无图标、无关闭按钮、预置主题图片空白和目标应用误报未安装，并明确要求修复后重新产出测试包。后续用户明确废止“macOS 交叉编译作为 CI”的方案，要求整理多语言脚本并由远端真实 Windows 设备完成 Windows 编译验证。2026-08-31 用户明确指定下一版本为 `0.4.0`，并要求 macOS CLI 的临时签名处理与 App 保持一致。
+用户在 2026-08-30 明确确认上述构建目标；同日实机测试发现无图标、无关闭按钮、预置主题图片空白和目标应用误报未安装，并明确要求修复后重新产出测试包。后续用户明确废止“macOS 交叉编译作为 CI”的方案，要求整理多语言脚本并由远端真实 Windows 设备完成 Windows 编译验证。2026-08-31 用户明确指定下一版本为 `0.4.0`，并要求 macOS CLI 的临时签名处理与 App 保持一致；当前 Draft PR 因真实 `pending` verification 标红后，用户明确要求把 CI 门禁修复并入本需求并在 PR 后检查远端 CI。

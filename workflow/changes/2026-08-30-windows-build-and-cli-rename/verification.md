@@ -328,6 +328,32 @@ verified_at: ""
   Rust workspace, Web application, native Windows Desktop/CLI x64, x86, and
   ARM64, plus the ordinary universal macOS CLI job all succeeded. Its sole red
   job remains the truthful pending development-workflow verdict.
+- CI run
+  [`33330906465`](https://github.com/IchenDEV/doubao-skin/actions/runs/33330906465)
+  reproduced the same policy defect at exact PR HEAD
+  `53373ef29be5feaadd40102c25ba49d5b642d071`: Rust, Web, Vercel, and native
+  Windows x64/x86/ARM64 all succeeded, while Development workflow alone failed
+  because the Draft PR's truthful `pending` verification was treated as a
+  Ready-for-merge verdict.
+- Before changing `scripts/devflow`, the extended workflow harness failed on
+  its new Draft + `pending` case with `expected status 'passed', found
+  'pending'`. After the fix, `./scripts/check.sh workflow` passes a matrix that
+  permits Draft + `pending`/`passed`, rejects Draft + `failed`, rejects Ready +
+  `pending`, permits Ready + `passed`, retains the upstream plan-approval gate,
+  and fails closed on a missing, empty, or invalid Draft state. Running the
+  gate against PR #10's actual body passes with
+  `PR_IS_DRAFT=true` and fails with `PR_IS_DRAFT=false` while this verification
+  remains pending.
+- GitHub's official workflow event reference confirms that `pull_request`
+  defaults to only `opened`, `synchronize`, and `reopened`. CI now explicitly
+  listens for `ready_for_review`, `converted_to_draft`, and `edited` as well as
+  the original events, so switching a Draft to Ready reruns the strict gate and
+  editing the linked change cannot reuse stale results.
+- `./scripts/check.sh all` passes after the policy fix: workflow artifact and
+  policy checks, portability, 11 desktop tests, 37 core tests, 13 Rust
+  integration tests, formatting, Clippy with warnings denied, 15 Web tests,
+  generated Skill consistency, TypeScript, the 42-route production build, and
+  the high-severity dependency audit all succeeded.
 
 ## Behavioral evidence
 

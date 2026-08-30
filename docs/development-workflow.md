@@ -112,7 +112,7 @@ The PR body must contain a path such as:
 workflow/changes/2026-08-29-improve-theme-install
 ```
 
-CI validates that the intent, spec, and plan are accepted and that verification passed. Dependabot remains exempt from the product artifact chain but still runs code checks. Review follows `REVIEW.md`; agent findings inform the decision but never approve the PR.
+CI always validates that the intent, spec, and plan are accepted. A Draft PR may keep verification `pending` while work or evidence is incomplete, but an explicit `failed` verdict still blocks it. Moving the PR to Ready reruns the gate and requires verification to be `passed`. Dependabot remains exempt from the product artifact chain but still runs code checks. Review follows `REVIEW.md`; agent findings inform the decision but never approve the PR.
 
 Configure the GitHub repository with:
 
