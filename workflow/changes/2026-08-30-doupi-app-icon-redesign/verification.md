@@ -26,6 +26,7 @@ verified_at: ""
 - The Default and Dark Icon Composer exports were mechanically resized into both iconsets and the xcassets app-icon set; no Rust, Info.plist, build-script, theme, metadata, or component source was changed.
 - At the user's later direction, the approved Default export was also mechanically resized to `apps/web/src/app/icon.png` (128×128 RGBA, SHA-256 `c46d8c8f4bf49664dcdf23fbec7067391b757796bd7970b2db644b33a3a78c29`) and `apps/web/public/app-icon.png` (256×256 RGBA, SHA-256 `6e3576e1640a908491b05ba7da26a740415b768400696a15680492e4663fddc2`).
 - `pnpm --dir apps/web sync` and `./scripts/check.sh web` passed: 9 tests passed, TypeScript passed, and the Next.js 16.3.3 production build generated the static `/icon.png` route. The sync command's unrelated theme database/catalog/package rewrites were discarded after confirming those paths were clean before this task.
+- The Chinese and English READMEs now reference the tracked 256×256 website icon, describe the shared layered yuba identity, and retain only the two current product screenshots required by `docs/README.md`. All four local image references exist.
 
 ## Behavioral evidence
 
@@ -45,6 +46,7 @@ verified_at: ""
 - `evidence/icon-small-sizes.png` compares Default, Dark, and Mono at 16/32/64 px. At 32 and 64 px the layered sheets and folded edge remain clear. At 16 px the stacked silhouette survives but fine wrinkles and the literal food-material cue are necessarily reduced; this remains a human-review point rather than an asserted pass.
 - Finder and About-panel screenshots confirm that the system loaded the new bundle icon. Dock and app-switcher screenshots are not available, so the full system-surface acceptance criterion is not yet satisfied.
 - In-app Browser screenshots at the default desktop viewport and 390×844 show the folded-yuba mark centered and unclipped in the existing header shell. The page identity, meaningful DOM, absence of framework overlays, console health, resource loading, desktop layout, narrow layout, and one navigation interaction all passed.
+- `docs/images/app.png` now shows the verified current 豆皮 desktop window, and `docs/images/gallery.png` shows the verified current website with the folded-yuba mark. Both were visually reopened after replacement; the screenshots contain no clipping or unrelated private content.
 
 ## Security and privacy evidence
 
@@ -60,6 +62,7 @@ verified_at: ""
 - Finder and About are verified, but Dock and app-switcher visual captures remain unverified because the Computer Use Dock request timed out and the app-switcher overlay could not be held for capture. The 16 px rendering also loses material texture and should be judged by a human in context.
 - Packaging generated local ZIP, DMG, tar, and checksum outputs as part of the existing build script, but no tag, release, upload, publication, or production approval action was performed.
 - The accepted intent/spec originally excluded the website favicon. The user later explicitly requested the website icon update and then explicitly rejected a separate intent. Following the repository's established implementation-deviation pattern, the accepted historical artifacts were not rewritten; this verification records the newer instruction, which only synchronizes the two existing website icon files and does not broaden into PWA, social, theme, or deployment work.
+- The user subsequently requested a README update. The bilingual README hero, one feature bullet, and the two existing current-product screenshots were updated in the same brand-identity scope; download claims, release links, deployment instructions, and other documentation were not changed.
 
 ## Verdict
 

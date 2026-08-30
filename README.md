@@ -2,6 +2,8 @@
 
 [简体中文](README.md) · [English](README.en.md)
 
+<img src="apps/web/public/app-icon.png" alt="豆皮图标" width="112" height="112">
+
 # 豆皮
 
 **给 macOS 版「豆包」与「豆包工作」换一套真正好用的主题。**
@@ -29,6 +31,7 @@
 - Rust CLI、Codex 插件与 Claude Code 插件共用同一套主题工具链。
 - live 注入与离线克隆两种模式；官方 App 本体始终保持不变。
 - 网站提供组合筛选、深色模式、主题详情、使用指南和投稿说明。
+- 桌面应用与网站共用同一组分层豆皮图标，并适配浅色、深色与单色系统外观。
 
 ## 下载与使用
 

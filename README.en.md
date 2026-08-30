@@ -2,6 +2,8 @@
 
 [简体中文](README.md) · [English](README.en.md)
 
+<img src="apps/web/public/app-icon.png" alt="Doubao Skin yuba icon" width="112" height="112">
+
 # Doubao Skin
 
 **A native theme manager for the macOS versions of Doubao and Doubao Work.**
@@ -29,6 +31,7 @@
 - One Rust toolchain shared by the desktop app, CLI, Codex plugin, and Claude Code plugin.
 - Live injection and offline-clone modes while the official app bundle remains untouched.
 - Responsive website with compound filters, dark mode, theme details, guides, and contribution documentation.
+- One layered yuba identity shared by the desktop app and website, with default, dark, and monochrome system appearances.
 
 ## Download and use
 
