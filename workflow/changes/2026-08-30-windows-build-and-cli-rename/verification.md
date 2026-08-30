@@ -5,7 +5,7 @@ status: pending
 owner: "Codex implementation agent"
 created: "2026-08-30"
 based_on: plan.md
-commit: "fe03836c4b4545a6c1fce5037f06138dcd45926a"
+commit: "c7570538df2061827ed9bdb6b567c4bef77cdb64"
 risk: "critical"
 verification_mode: "human"
 verified_by: ""
@@ -272,11 +272,62 @@ verified_at: ""
   download URL correctly remains unavailable until publication. All five
   existing signing-secret names required by the Release workflow are present,
   but their values were neither read nor exposed.
-- This macOS host does not currently have the community release identity in its
-  login keychain. Local evidence therefore proves the universal package and
-  signature structure only; the stable certificate fingerprint remains a
-  production-environment Release gate and must not be claimed before that job
-  succeeds.
+
+### v0.4.0 protected Release dry run
+
+- Manual Release run
+  [`33329814684`](https://github.com/IchenDEV/doubao-skin/actions/runs/33329814684)
+  succeeded for exact branch HEAD
+  `c7570538df2061827ed9bdb6b567c4bef77cdb64`. Because the ref was a branch,
+  tag validation and `Publish GitHub Release` were skipped by their existing
+  guards. No tag or Release was created.
+- The protected macOS job imported the stable community certificate once,
+  tested the workspace, then signed and verified both the universal App and
+  universal CLI with the same identity, temporary keychain, and pinned
+  certificate SHA-256. Its App and CLI package checks, artifact uploads, and
+  signing-material cleanup all succeeded.
+- The eleven unexpired dry-run artifact directories were downloaded and
+  independently checked. Every sidecar passed. The package SHA-256 values are:
+  - macOS App ZIP:
+    `3be391e187ce565f6471354750fa240ff1ac76ecfd72308acd5906ba9569f1b7`
+  - macOS App DMG:
+    `7e7c6d1a53a017993515c01840a4a4acfdc87ae7dda04e19db1aadca3aeb9c15`
+  - macOS universal CLI:
+    `3db482a9f4668e2777ee9e2cc2e66316df63f22f2d35ca4a0df98fb52f253f9a`
+  - Windows Desktop x64/x86/ARM64:
+    `5093290ebc92661c9a246a3a9b5cd678923e518823214151cd52b57ffce5e6c0`,
+    `1bc220f5bbad2bff79aa5e3fb797b9a405c708566a7ae3b39f236fee5b1c992c`,
+    and `d3e52fbce66d09a58d8dffb22ec84c9fbedddd5bb0350f053bd171e71956c185`
+  - Windows CLI x64/x86/ARM64:
+    `7cbe4a5047cc9f3558809c26466e054baf624f5c64c71bffe839d316e34f52a9`,
+    `2402df24f7f6b90c6befb05acbaa312422750af43b7d807fee5f141691e215e5`,
+    and `cf9ff78a6be5c5f298a3fcc5f7b1639a2affccb5b81917aa82e59e54b21b14d2`
+  - Linux CLI x64/ARM64:
+    `4e80136aa7200ba72dae64a3792859506537e199fcf0251a047e6c835e78b18f`
+    and `3526b67e6af3c06536e8927cc7ca29d9049211416f198cb6630e93a17d3a24cb`
+- The App extracted from both ZIP and DMG and the CLI extracted from its
+  tarball all match stable certificate SHA-256
+  `6EF66DA353E5593DC972FC399DBE3594C1D0D3F0B5BFC8BBBFC5629E2656AD35`.
+  The App and CLI contain x86_64 and ARM64 slices; the App reports version
+  `0.4.0`, and the CLI prints exactly `doubao-skin 0.4.0`. The App contains no
+  embedded CLI or Skill directory.
+- Native Linux x64 and ARM64 logs print exactly `doubao-skin 0.4.0`. The
+  downloaded Linux archives contain exactly `doubao-skin` and `LICENSE` with
+  the expected ELF architecture. All three Windows CLI binaries contain the
+  compile-time `doubao-skin 0.4.0` version string and their archives contain
+  exactly the executable and `LICENSE`.
+- All three downloaded Windows Desktop executables independently passed ICON,
+  GROUP_ICON, and GUI-subsystem inspection and match x86-64, Intel 80386, and
+  AArch64 respectively. The Scoop artifact reports version `0.4.0`; its x64,
+  x86, and ARM64 URLs exactly name the corresponding CLI assets under
+  `/releases/download/v0.4.0/`, and every manifest hash matches the downloaded
+  CLI sidecar.
+- CI run
+  [`33329388172`](https://github.com/IchenDEV/doubao-skin/actions/runs/33329388172)
+  is also for exact HEAD `c7570538df2061827ed9bdb6b567c4bef77cdb64`.
+  Rust workspace, Web application, native Windows Desktop/CLI x64, x86, and
+  ARM64, plus the ordinary universal macOS CLI job all succeeded. Its sole red
+  job remains the truthful pending development-workflow verdict.
 
 ## Behavioral evidence
 
@@ -406,14 +457,15 @@ verified_at: ""
   dialog is dismissed. This repository must not redistribute or synthesize the
   proprietary DLL, so a completely clean startup remains blocked by the
   official ARM64 installation rather than by the theme package.
-- These packages are unsigned ZIPs, not MSI/MSIX installers. Release
-  publication was not run. The native Windows package gate passed, while final
-  verification status still requires the repository-mandated human or
-  fresh-context verdict.
-- Linux x64 and ARM64 CLI jobs are configured on native GitHub-hosted runners,
-  but their archives were not built on this macOS host. Their final package
-  evidence therefore remains the remote release matrix rather than this local
-  verification run.
+- The Windows packages are unsigned ZIPs, not MSI/MSIX installers. The
+  protected Release workflow was exercised as a non-publishing branch dry run;
+  no production tag or GitHub Release was created. The native Windows package
+  gate passed, while final verification status still requires the repository-
+  mandated human or fresh-context verdict.
+- Linux x64 and ARM64 CLI archives were built on native GitHub-hosted runners,
+  not this macOS host. Their package evidence is the successful protected
+  Release matrix, downloaded sidecars and archive inspection, and exact
+  `doubao-skin 0.4.0` output captured in both native runner logs.
 - A local Linux target check was attempted twice. The macOS host has the Rust
   target installed but lacks both an `x86_64-linux-gnu-gcc` toolchain and a
   Linux C sysroot (`assert.h`), so `ring` could not be compiled here. This is a
@@ -459,12 +511,14 @@ traced to a Windows-incompatible WebSocket random source, repaired with native
 OS randomness, protected by regression tests, and rebuilt into all three
 single-entry Windows Desktop archives. The ARM64 VM now provides an additional
 real target-window pass for theme application and button state. Final verdict
-remains pending for three explicitly separated reasons: the current official
+remains pending for two explicitly separated reasons: the current official
 ARM64 Doubao install still reports its own missing `mcp_helper.dll` when
 launched with CDP; the latest native Windows package has not been recaptured at
-both normal and narrow window sizes; and the protected `v0.4.0` Release job has
-not yet proved the stable certificate fingerprint or published the Linux CLI
-assets and final download URLs.
+both normal and narrow window sizes. The non-publishing protected Release dry
+run has now proved the stable App/CLI certificate fingerprint, built all Linux
+and Windows CLI assets, and verified the final `v0.4.0` filename/URL mapping;
+the URLs intentionally remain unavailable until a human authorizes the tag and
+publication gate.
 
 The additional repository-wide compatibility audit removed generic-code
 dependencies on macOS user paths, `/dev/urandom`, external `curl`, and macOS
@@ -474,8 +528,10 @@ operations. Packaging is exposed through one dispatcher with grouped internal
 scripts, and the obsolete macOS Windows-cross/GPUI-patch path is gone. All
 three native Windows CI jobs now pass and retain downloadable test artifacts.
 The file stays `pending` until the remaining native-window evidence is recorded
-and the human-controlled production Release gate proves the final signed
-artifacts. This status is not a macOS/Windows compile failure.
+and a human records the final verdict. The protected Release dry run now proves
+the final signed artifacts; publication itself remains a separate human-
+controlled gate. This status is not a macOS/Windows compile or packaging
+failure.
 
 ### Independent fresh-context verdict on 2026-08-31
 
@@ -507,3 +563,7 @@ output is now a hard CI/Release assertion, and the changed critical artifacts
 were explicitly re-approved by `idevlab` on 2026-08-31. No remaining static
 implementation defect was reported; the unresolved items are the production
 signature/Release execution and native-window evidence described above.
+
+The later protected dry run `33329814684` resolves that audit's production-
+signature execution item without creating a tag or Release. Its remaining
+verdict dependency is the native-window evidence and final human approval.
