@@ -5,7 +5,7 @@ status: pending
 owner: "Codex implementation agent"
 created: "2026-08-30"
 based_on: plan.md
-commit: "7fd0c3ef6ba588868f6b2caed5105d33647ca4ae"
+commit: "fe03836c4b4545a6c1fce5037f06138dcd45926a"
 risk: "critical"
 verification_mode: "human"
 verified_by: ""
@@ -238,8 +238,9 @@ verified_at: ""
   archive passes its SHA-256 sidecar, contains exactly `doubao-skin` and
   `LICENSE`, verifies both x86_64 and ARM64 slices with `lipo`, passes strict
   ad-hoc signature verification with hardened runtime, and prints
-  `doubao-skin 0.4.0`. The final local archive hash for this pass is
-  `2969dccf6312cbdae96311959a499651b546b26be71f542070af6f89b3b15e0f`.
+  `doubao-skin 0.4.0`. After merging current `origin/main`, the final local
+  archive hash for this pass is
+  `bd9d575f6344ef19466cd0e9508c82e8c860b84f88063c5c4fc0b219c61ae41e`.
 - Ordinary macOS CI now repeats that package, content, architecture, signature,
   and version verification without production credentials. The Release job
   keeps the CLI in the same macOS job as the App, reuses the already imported
@@ -250,17 +251,23 @@ verified_at: ""
   `0.4.0`; Cargo remains the release tag authority. The Web gate and Release
   tag validation now reject a future version mismatch across those manifests.
 - `./scripts/check.sh all` passes on the `0.4.0` worktree: workflow policy and
-  portability, 11 desktop tests, 36 core tests, 13 Rust integration tests,
-  formatting, Clippy with warnings denied, 12 Web tests, Skill consistency,
-  TypeScript, the 38-route production build, and the high-severity dependency
+  portability, 11 desktop tests, 37 core tests, 13 Rust integration tests,
+  formatting, Clippy with warnings denied, 15 Web tests, Skill consistency,
+  TypeScript, the 42-route production build, and the high-severity dependency
   audit all succeeded.
 - `./scripts/package.sh desktop-macos --universal` also passes on the final
   versioned worktree. The App reports `CFBundleShortVersionString` `0.4.0`, its
   executable contains x86_64 and ARM64, strict ad-hoc bundle verification and
   both ZIP/DMG sidecars pass, and the App contains neither a CLI `bin/` nor a
   bundled Skill directory. The local ZIP and DMG hashes are respectively
-  `e09bd4be41cab29330452584f07909fa333ca0d77e7ec0ccbcf9e9ca1c786f49`
-  and `3504cfbbc4d0b5ef1275519a89ead8e3eab92835c05587b904f009b439c24bf5`.
+  `1e5d1234395f042797ed8a057eb0656ca6ae6171ddc9931e6937f00f2b4b8cca`
+  and `400400e931213e71e94bb9bf71398ff5c3bb1920afced808dafa03f00e81f2bf`.
+- The release branch was merged with `origin/main` at
+  `e783e46fe3b52be276019214cf3cfb1a4b0ee1ff` before final packaging. The
+  resolution preserves `0.4.0`, platform download tests, and version gates
+  alongside the newly merged icon and character-theme work. The generated Web
+  catalog was rebuilt from source and reports 34 themes and 34 installable
+  packages; the merged full gate above is the post-resolution result.
 - The `v0.4.0` tag and GitHub Release do not exist yet, so the new stable CLI
   download URL correctly remains unavailable until publication. All five
   existing signing-secret names required by the Release workflow are present,
