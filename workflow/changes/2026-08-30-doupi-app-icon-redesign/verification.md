@@ -1,14 +1,14 @@
 ---
 id: "2026-08-30-doupi-app-icon-redesign"
 stage: verification
-status: pending
+status: passed
 owner: "codex"
 created: "2026-08-30"
 based_on: plan.md
-commit: ""
-verification_mode: "fresh-context"
-verified_by: ""
-verified_at: ""
+commit: "475aa8aa68c744b43785daec71357e79f213aeb2"
+verification_mode: "human"
+verified_by: "idevlab"
+verified_at: "2026-08-30"
 ---
 
 # Verification: doupi app icon redesign
@@ -72,4 +72,4 @@ verified_at: ""
 
 ## Verdict
 
-Pending fresh-context or human verdict. Canonical Icon Composer editing, Default/Dark/Mono source evidence, Apple compilation, bundle integration, signing, launch, Finder, About-panel, website icon integration, production web build, desktop browser, narrow browser, navigation, two revised live-theme real-window captures, catalog/package consistency, and the narrowed privacy review pass. Full visual acceptance remains open for Dock, app switcher, and the human judgment of literal recognition at 16 px.
+Passed by human verifier `idevlab` on 2026-08-30. Canonical Icon Composer editing, Default/Dark/Mono source evidence, Apple compilation, bundle integration, signing, launch, Finder, About-panel, website icon integration, production web build, desktop browser, narrow browser, navigation, two revised live-theme real-window captures, catalog/package consistency, and the narrowed privacy review passed. The verifier accepted the documented residual risk for unavailable Dock and app-switcher captures and reduced material detail at 16 px.
