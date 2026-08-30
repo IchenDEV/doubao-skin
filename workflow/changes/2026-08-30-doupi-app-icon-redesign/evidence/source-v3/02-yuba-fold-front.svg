@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="front" x1="270" y1="300" x2="760" y2="690" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF7C3"/>
+      <stop offset="0.52" stop-color="#F0C75E"/>
+      <stop offset="1" stop-color="#C77C26"/>
+    </linearGradient>
+    <linearGradient id="curl" x1="606" y1="548" x2="746" y2="708" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF0A6"/>
+      <stop offset="0.48" stop-color="#E5A73A"/>
+      <stop offset="1" stop-color="#9D561D"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Front sheet: broad and irregular, with no bread-like thick rim. -->
+  <path d="M283 337 C308 305 346 288 388 292 L716 315 C761 318 786 346 782 385 L750 647 C746 679 723 700 690 704 L337 724 C295 727 267 702 265 665 L258 548 L237 439 C229 399 246 367 283 337Z"
+        fill="url(#front)" stroke="#A85E1E" stroke-width="11" stroke-linejoin="round"/>
+
+  <!-- Folded lower-right corner exposes the underside and a thin doubled edge. -->
+  <path d="M577 684 C632 663 688 622 750 547 L750 647 C746 679 723 700 690 704 L572 711 C566 701 568 691 577 684Z"
+        fill="url(#curl)" stroke="#9E581D" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M579 683 C626 671 684 627 736 567" fill="none" stroke="#FFF3B2" stroke-opacity="0.88" stroke-width="12" stroke-linecap="round"/>
+  <path d="M590 701 C640 687 690 654 731 612" fill="none" stroke="#7F4418" stroke-opacity="0.42" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Material wrinkles and sparse pores. -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M302 385 C410 345 544 355 708 406" stroke="#FFF9D6" stroke-opacity="0.76" stroke-width="17"/>
+    <path d="M282 470 C399 432 557 444 729 499" stroke="#99601F" stroke-opacity="0.27" stroke-width="13"/>
+    <path d="M280 565 C393 533 535 541 667 576" stroke="#FFF0A5" stroke-opacity="0.60" stroke-width="12"/>
+    <path d="M304 638 C392 615 489 615 583 636" stroke="#A35F20" stroke-opacity="0.25" stroke-width="9"/>
+  </g>
+  <g fill="#9E5D20" opacity="0.33">
+    <ellipse cx="352" cy="438" rx="14" ry="9" transform="rotate(-11 352 438)"/>
+    <ellipse cx="470" cy="381" rx="11" ry="8" transform="rotate(17 470 381)"/>
+    <ellipse cx="613" cy="485" rx="15" ry="9" transform="rotate(-13 613 485)"/>
+    <ellipse cx="424" cy="545" rx="11" ry="7" transform="rotate(12 424 545)"/>
+    <ellipse cx="319" cy="595" rx="10" ry="7" transform="rotate(-8 319 595)"/>
+  </g>
+</svg>

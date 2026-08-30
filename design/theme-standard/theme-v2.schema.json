@@ -165,6 +165,7 @@
       "type": "object",
       "properties": {
         "main": { "type": "string" },
+        "search": { "type": "string" },
         "newTask": { "type": "string" },
         "scheduled": { "type": "string" },
         "skills": { "type": "string" },

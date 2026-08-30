@@ -2,6 +2,8 @@
 
 [简体中文](README.md) · [English](README.en.md)
 
+<img src="apps/web/public/app-icon.png" alt="Doubao Skin yuba icon" width="112" height="112">
+
 # Doubao Skin
 
 **A native theme manager for the macOS and Windows versions of Doubao and Doubao Work.**
@@ -20,6 +22,23 @@
 
 > macOS and Windows are supported. This is an independent project and does not modify the official Doubao or Doubao Work apps.
 
+## Real transformed pages
+
+These screenshots were captured from a real local Doubao Work window with themes applied in live mode. Only the author's avatar and identity, company name, and computer device name are redacted; the rest of the interface and content is unchanged. The unredacted captures are not included in the repository.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/images/doubao-work-qq-light-blue-redacted.png" alt="Redacted real Doubao Work window using the QQ Light Blue theme">
+      <br><sub>QQ Light Blue · Real conversation</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/images/doubao-work-starry-room-redacted.png" alt="Redacted real Doubao Work window using the Starry Room theme">
+      <br><sub>Starry Room · Conversation view</sub>
+    </td>
+  </tr>
+</table>
+
 ## Features
 
 - Native macOS and Windows app for browsing, previewing, installing, applying, and restoring themes.
@@ -29,6 +48,7 @@
 - One Rust toolchain shared by the desktop app, CLI, Codex plugin, and Claude Code plugin.
 - Live injection and offline-clone modes while the official app bundle remains untouched.
 - Responsive website with compound filters, dark mode, theme details, guides, and contribution documentation.
+- One layered yuba identity shared by the desktop app and website, with default, dark, and monochrome system appearances.
 
 ## Download and use
 

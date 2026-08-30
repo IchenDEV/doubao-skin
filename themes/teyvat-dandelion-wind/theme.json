@@ -1,0 +1,175 @@
+{
+  "$schema": "../../design/theme-standard/theme-v2.schema.json",
+  "schemaVersion": 2,
+  "id": "teyvat-dandelion-wind",
+  "name": "风与蒲公英",
+  "description": "非官方同人主题：温迪与琴守望风与蒲公英的蒙德",
+  "version": "1.1.0",
+  "author": "豆皮",
+  "preview": {
+    "image": "preview.jpg",
+    "aspectRatio": "16:9",
+    "appearance": "light",
+    "accent": "#248f88"
+  },
+  "store": {
+    "category": "gallery",
+    "tags": ["浅色", "原神同人", "蒙德", "角色", "彩色图标"],
+    "sortOrder": 31
+  },
+  "appearance": "both",
+  "background": {
+    "type": "image",
+    "src": "bg.jpg",
+    "fit": "cover",
+    "position": "center",
+    "opacity": 1,
+    "veil": 0.06,
+    "blur": 0,
+    "animation": "none"
+  },
+  "surfaceOpacity": 0.64,
+  "typography": {
+    "ui": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
+    "body": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
+    "code": "ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace",
+    "scale": 1.01,
+    "lineHeight": 1.64
+  },
+  "layout": {
+    "density": "comfortable",
+    "sidebarWidth": 258,
+    "chatMaxWidth": 900,
+    "composerMaxWidth": 770,
+    "selfMessageMaxWidth": 420,
+    "chatMargin": 30
+  },
+  "icons": {
+    "main": "icons/main.png",
+    "search": "icons/knowledge.png",
+    "newTask": "icons/new-task.png",
+    "scheduled": "icons/scheduled.png",
+    "skills": "icons/skills.png",
+    "cloud": "icons/cloud.png",
+    "remote": "icons/remote.png",
+    "conversation": "icons/conversation.png",
+    "project": "icons/project.png",
+    "confirm": "icons/send.png",
+    "connector": "icons/tools.png",
+    "send": "icons/send.png",
+    "stop": "icons/scheduled.png",
+    "attach": "icons/project.png",
+    "voice": "icons/voice.png",
+    "tools": "icons/tools.png",
+    "knowledge": "icons/knowledge.png",
+    "moreSkills": "icons/skills.png",
+    "dailyWork": "icons/daily-work.png",
+    "contentCreation": "icons/content-creation.png",
+    "research": "icons/knowledge.png",
+    "design": "icons/content-creation.png",
+    "readAloud": "icons/voice.png",
+    "copy": "icons/daily-work.png",
+    "sidebar": "icons/project.png"
+  },
+  "composer": {
+    "background": "rgba(249,255,252,0.92)",
+    "border": "1px solid rgba(45,137,130,0.30)",
+    "textColor": "#183c3d",
+    "placeholderColor": "rgba(24,60,61,0.56)",
+    "caretColor": "#248f88",
+    "iconColor": "#236c69",
+    "sendButtonBackground": "#248f88",
+    "sendButtonIconColor": "#ffffff",
+    "radius": 22,
+    "minHeight": 54,
+    "maxHeight": 240,
+    "padding": 14,
+    "gap": 10,
+    "iconSize": 20
+  },
+  "content": {
+    "chatBackground": "rgba(239,252,249,0.74)",
+    "userMessageBackground": "#257f79",
+    "userMessageText": "#ffffff",
+    "assistantMessageBackground": "rgba(250,255,253,0.92)",
+    "assistantMessageText": "#183c3d",
+    "codeBackground": "#dff3ef",
+    "codeHeaderBackground": "#cfe9e5",
+    "selectionColor": "rgba(36,143,136,0.22)",
+    "scrollbarColor": "rgba(35,108,105,0.24)",
+    "scrollbarHoverColor": "rgba(35,108,105,0.42)"
+  },
+  "effects": {
+    "radiusScale": 1.18,
+    "shadow": "0 12px 34px rgba(24,72,71,0.14)",
+    "blur": 18,
+    "motion": "gentle",
+    "transitionMs": 180
+  },
+  "variants": {
+    "light": {
+      "composer": {
+        "background": "rgba(249,255,252,0.92)",
+        "border": "1px solid rgba(45,137,130,0.30)",
+        "textColor": "#183c3d",
+        "placeholderColor": "rgba(24,60,61,0.56)",
+        "caretColor": "#248f88",
+        "iconColor": "#236c69",
+        "sendButtonBackground": "#248f88",
+        "sendButtonIconColor": "#ffffff",
+        "radius": 22,
+        "minHeight": 54,
+        "maxHeight": 240,
+        "padding": 14,
+        "gap": 10,
+        "iconSize": 20
+      },
+      "content": {
+        "chatBackground": "rgba(239,252,249,0.74)",
+        "userMessageBackground": "#257f79",
+        "userMessageText": "#ffffff",
+        "assistantMessageBackground": "rgba(250,255,253,0.92)",
+        "assistantMessageText": "#183c3d",
+        "codeBackground": "#dff3ef",
+        "codeHeaderBackground": "#cfe9e5",
+        "selectionColor": "rgba(36,143,136,0.22)",
+        "scrollbarColor": "rgba(35,108,105,0.24)",
+        "scrollbarHoverColor": "rgba(35,108,105,0.42)"
+      }
+    },
+    "dark": {
+      "composer": {
+        "background": "rgba(20,43,47,0.94)",
+        "border": "1px solid rgba(119,224,208,0.34)",
+        "textColor": "#ecfffa",
+        "placeholderColor": "rgba(236,255,250,0.58)",
+        "caretColor": "#75dbc9",
+        "iconColor": "#b8f3e8",
+        "sendButtonBackground": "#4fbcae",
+        "sendButtonIconColor": "#102a2d",
+        "radius": 22,
+        "minHeight": 54,
+        "maxHeight": 240,
+        "padding": 14,
+        "gap": 10,
+        "iconSize": 20
+      },
+      "content": {
+        "chatBackground": "rgba(11,29,34,0.82)",
+        "userMessageBackground": "#3ca99e",
+        "userMessageText": "#082426",
+        "assistantMessageBackground": "rgba(20,43,47,0.94)",
+        "assistantMessageText": "#ecfffa",
+        "codeBackground": "#0d2428",
+        "codeHeaderBackground": "#193a3e",
+        "selectionColor": "rgba(117,219,201,0.26)",
+        "scrollbarColor": "rgba(184,243,232,0.22)",
+        "scrollbarHoverColor": "rgba(184,243,232,0.40)"
+      }
+    }
+  },
+  "inspiredBy": "Venti, Jean, and Mondstadt from Genshin Impact; unofficial fan theme",
+  "sourceAccessedAt": "2026-08-30",
+  "artwork": "Newly generated ImageGen character fan art, environment, and icon illustrations; no official or community artwork bundled",
+  "license": "Original non-official fan adaptation; no endorsement or authorization claimed"
+}

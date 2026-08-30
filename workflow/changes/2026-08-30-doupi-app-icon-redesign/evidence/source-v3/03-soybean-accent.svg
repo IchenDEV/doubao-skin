@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bean" x1="657" y1="628" x2="820" y2="772" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF0A1"/>
+      <stop offset="0.55" stop-color="#E4AF3F"/>
+      <stop offset="1" stop-color="#A95F1C"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="724" y1="605" x2="817" y2="676" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#B5C969"/>
+      <stop offset="1" stop-color="#5E7434"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Small ingredient cue, intentionally secondary to the sheets. -->
+  <path d="M730 662 C752 623 791 605 829 616 C812 653 781 679 741 687Z" fill="url(#leaf)" stroke="#53692F" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M742 674 C765 657 787 640 811 624" fill="none" stroke="#E4EFA9" stroke-opacity="0.67" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="687" cy="694" rx="56" ry="44" transform="rotate(-18 687 694)" fill="url(#bean)" stroke="#9E571A" stroke-width="9"/>
+  <ellipse cx="768" cy="723" rx="59" ry="46" transform="rotate(15 768 723)" fill="url(#bean)" stroke="#9E571A" stroke-width="9"/>
+  <path d="M651 686 C671 672 693 669 711 678" fill="none" stroke="#FFF7C8" stroke-opacity="0.76" stroke-width="9" stroke-linecap="round"/>
+  <path d="M738 708 C758 695 780 697 798 710" fill="none" stroke="#FFF7C8" stroke-opacity="0.76" stroke-width="9" stroke-linecap="round"/>
+</svg>

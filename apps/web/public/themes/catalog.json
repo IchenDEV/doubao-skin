@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-29T15:19:07.415Z",
+  "generatedAt": "2026-08-30T18:50:43.929Z",
   "themes": [
     {
       "id": "violet-night",
@@ -399,8 +399,8 @@
       "iconUrl": "/themes/qq-light-blue.icon.svg",
       "accent": "#5099d6",
       "packageUrl": "/themes/packages/qq-light-blue.doubao-skin.zip",
-      "sha256": "16fe18af41b783363d2aa3b0c38fa8437e5efaca02b4b46a35b3ecc84bf3a72c",
-      "packageSize": 150331
+      "sha256": "fc5459e6db7dbc2ae45ef89e04dd8c7735d01e6aad2749cbe9fc8aa07d15352c",
+      "packageSize": 155732
     },
     {
       "id": "gallery-whale-maid",
@@ -479,14 +479,14 @@
       "iconUrl": "/themes/pastel-starry-room.icon.svg",
       "accent": "#867ac1",
       "packageUrl": "/themes/packages/pastel-starry-room.doubao-skin.zip",
-      "sha256": "fb4641553a64ba3c7159205fe3f1c2625892598a77710364f33202f22837bbc3",
-      "packageSize": 670129
+      "sha256": "a66d248de8b8e37a7bc6803faaf37728417a2e43b92e31f2030d355202f289da",
+      "packageSize": 672673
     },
     {
       "id": "doubao-snack-giggle",
       "name": "馋嘴豆包",
       "description": "豆包盯着零食流口水，伙伴们笑成一团",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": "豆皮",
       "category": "brand",
       "tags": [
@@ -499,14 +499,14 @@
       "iconUrl": "/themes/doubao-snack-giggle.icon.png",
       "accent": "#d66a45",
       "packageUrl": "/themes/packages/doubao-snack-giggle.doubao-skin.zip",
-      "sha256": "0e6ea3675e543d46ed5daf0bd805db5843126cf9477ac5267d4a973aba7e1626",
-      "packageSize": 1032073
+      "sha256": "a7fe6d2334898c90aa4bec3ed9a3a15a91b2242a162e789062bcf363e9cb74e1",
+      "packageSize": 1855208
     },
     {
       "id": "doubao-dessert-giggle",
       "name": "甜点偷笑",
       "description": "豆包馋上水果蛋糕，伙伴们在旁偷笑",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": "豆皮",
       "category": "brand",
       "tags": [
@@ -519,8 +519,8 @@
       "iconUrl": "/themes/doubao-dessert-giggle.icon.png",
       "accent": "#b06c88",
       "packageUrl": "/themes/packages/doubao-dessert-giggle.doubao-skin.zip",
-      "sha256": "af9b24813968c2c8c3be9450e58fa99c494aa26feb050e47c992f5896ad3e403",
-      "packageSize": 1061215
+      "sha256": "f09699ec7355734e768ebc004dbf9291b90196d3b9d6f5f44c3e6e238aa5b400",
+      "packageSize": 1959760
     },
     {
       "id": "huaxia-blue",
@@ -605,6 +605,94 @@
       "packageUrl": "/themes/packages/machine-overseer.doubao-skin.zip",
       "sha256": "ec4df6c89050b69995f25255fcc8c909968f3c424c563425af9a625b56361b66",
       "packageSize": 1165029
+    },
+    {
+      "id": "teyvat-dandelion-wind",
+      "name": "风与蒲公英",
+      "description": "非官方同人主题：温迪与琴守望风与蒲公英的蒙德",
+      "version": "1.1.0",
+      "author": "豆皮",
+      "category": "gallery",
+      "tags": [
+        "浅色",
+        "原神同人",
+        "蒙德",
+        "角色",
+        "彩色图标"
+      ],
+      "previewUrl": "/themes/teyvat-dandelion-wind.preview.jpg",
+      "thumbnailUrl": "/themes/teyvat-dandelion-wind.preview.card.jpg",
+      "iconUrl": "/themes/teyvat-dandelion-wind.icon.png",
+      "accent": "#248f88",
+      "packageUrl": "/themes/packages/teyvat-dandelion-wind.doubao-skin.zip",
+      "sha256": "fffd8d2e221589c2ab941cc0c2e5ce24ff385861b5c63dbadc3fd18705b49bb4",
+      "packageSize": 1947051
+    },
+    {
+      "id": "teyvat-liyue-lanterns",
+      "name": "璃月华灯",
+      "description": "非官方同人主题：钟离与胡桃共赏璃月华灯",
+      "version": "1.1.0",
+      "author": "豆皮",
+      "category": "gallery",
+      "tags": [
+        "深色",
+        "原神同人",
+        "璃月",
+        "角色",
+        "彩色图标"
+      ],
+      "previewUrl": "/themes/teyvat-liyue-lanterns.preview.jpg",
+      "thumbnailUrl": "/themes/teyvat-liyue-lanterns.preview.card.jpg",
+      "iconUrl": "/themes/teyvat-liyue-lanterns.icon.png",
+      "accent": "#d89a32",
+      "packageUrl": "/themes/packages/teyvat-liyue-lanterns.doubao-skin.zip",
+      "sha256": "242127e3e1b35627f0a228743e85e93374042ddfcc8e81e79b148b63f1d52d7d",
+      "packageSize": 1642884
+    },
+    {
+      "id": "gugugaga-administrator",
+      "name": "咕嘎管理员",
+      "description": "非官方同人主题：熟悉的企鹅服咕嘎管理员坐镇暖金指挥室",
+      "version": "1.2.0",
+      "author": "豆皮",
+      "category": "gallery",
+      "tags": [
+        "深色",
+        "咕咕嘎嘎",
+        "企鹅",
+        "工业",
+        "彩色图标"
+      ],
+      "previewUrl": "/themes/gugugaga-administrator.preview.jpg",
+      "thumbnailUrl": "/themes/gugugaga-administrator.preview.card.jpg",
+      "iconUrl": "/themes/gugugaga-administrator.icon.png",
+      "accent": "#f2b827",
+      "packageUrl": "/themes/packages/gugugaga-administrator.doubao-skin.zip",
+      "sha256": "2c1a4dde4e80a95b96905aea5b6eb2a6e44a6fa023bd47270a29da5ea5809377",
+      "packageSize": 1093616
+    },
+    {
+      "id": "gugugaga-snowfield",
+      "name": "咕嘎雪原",
+      "description": "非官方同人主题：熟悉的企鹅服咕嘎管理员驻守静谧雪原前哨",
+      "version": "1.2.0",
+      "author": "豆皮",
+      "category": "gallery",
+      "tags": [
+        "浅色",
+        "咕咕嘎嘎",
+        "企鹅",
+        "雪原",
+        "彩色图标"
+      ],
+      "previewUrl": "/themes/gugugaga-snowfield.preview.jpg",
+      "thumbnailUrl": "/themes/gugugaga-snowfield.preview.card.jpg",
+      "iconUrl": "/themes/gugugaga-snowfield.icon.png",
+      "accent": "#e97b32",
+      "packageUrl": "/themes/packages/gugugaga-snowfield.doubao-skin.zip",
+      "sha256": "778e6dc9f7002841d60aea74ab1491f4182b6cbb2b558a88aacbe4258d42ccbb",
+      "packageSize": 1071065
     }
   ]
 }

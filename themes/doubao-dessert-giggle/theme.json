@@ -4,7 +4,7 @@
   "id": "doubao-dessert-giggle",
   "name": "甜点偷笑",
   "description": "豆包馋上水果蛋糕，伙伴们在旁偷笑",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "豆皮",
   "preview": {
     "image": "preview.jpg",
@@ -39,6 +39,33 @@
     "composerMaxWidth": 780,
     "selfMessageMaxWidth": 420,
     "chatMargin": 32
+  },
+  "icons": {
+    "main": "icons/main-anime.png",
+    "search": "icons/search.png",
+    "newTask": "icons/new-task.png",
+    "scheduled": "icons/scheduled.png",
+    "skills": "icons/skills.png",
+    "cloud": "icons/cloud.png",
+    "remote": "icons/remote.png",
+    "conversation": "icons/conversation.png",
+    "project": "icons/project.png",
+    "confirm": "icons/confirm.png",
+    "connector": "icons/tools.png",
+    "send": "icons/send.png",
+    "stop": "icons/stop.png",
+    "attach": "icons/attach.png",
+    "voice": "icons/voice.png",
+    "tools": "icons/tools.png",
+    "knowledge": "icons/knowledge.png",
+    "moreSkills": "icons/tools.png",
+    "dailyWork": "icons/daily-work.png",
+    "contentCreation": "icons/content-creation.png",
+    "research": "icons/knowledge.png",
+    "design": "icons/content-creation.png",
+    "readAloud": "icons/voice.png",
+    "copy": "icons/conversation.png",
+    "sidebar": "icons/sidebar.png"
   },
   "composer": {
     "background": "rgba(255,250,253,0.97)",
@@ -107,23 +134,6 @@
         "selectionColor": "rgba(150,59,96,0.24)",
         "scrollbarColor": "rgba(150,59,96,0.26)",
         "scrollbarHoverColor": "rgba(150,59,96,0.42)"
-      },
-      "icons": {
-        "main": "icons/main-anime.png",
-        "newTask": "icons/new-task.svg",
-        "scheduled": "icons/scheduled.svg",
-        "skills": "icons/skills.svg",
-        "cloud": "icons/cloud.svg",
-        "remote": "icons/remote.svg",
-        "conversation": "icons/conversation.svg",
-        "project": "icons/project.svg",
-        "confirm": "icons/confirm.svg",
-        "connector": "icons/connector.svg",
-        "send": "icons/send.svg",
-        "stop": "icons/stop.svg",
-        "attach": "icons/attach.svg",
-        "voice": "icons/voice.svg",
-        "tools": "icons/tools.svg"
       }
     },
     "dark": {
@@ -154,23 +164,6 @@
         "selectionColor": "rgba(176,108,136,0.28)",
         "scrollbarColor": "rgba(176,108,136,0.28)",
         "scrollbarHoverColor": "rgba(176,108,136,0.46)"
-      },
-      "icons": {
-        "main": "icons/main-anime.png",
-        "newTask": "icons/new-task.svg",
-        "scheduled": "icons/scheduled.svg",
-        "skills": "icons/skills.svg",
-        "cloud": "icons/cloud.svg",
-        "remote": "icons/remote.svg",
-        "conversation": "icons/conversation.svg",
-        "project": "icons/project.svg",
-        "confirm": "icons/confirm.svg",
-        "connector": "icons/connector.svg",
-        "send": "icons/send.svg",
-        "stop": "icons/stop.svg",
-        "attach": "icons/attach.svg",
-        "voice": "icons/voice.svg",
-        "tools": "icons/tools.svg"
       }
     }
   }
