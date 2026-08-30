@@ -516,7 +516,7 @@ ARM64 Doubao install still reports its own missing `mcp_helper.dll` when
 launched with CDP; the latest native Windows package has not been recaptured at
 both normal and narrow window sizes. The non-publishing protected Release dry
 run has now proved the stable App/CLI certificate fingerprint, built all Linux
-and Windows CLI assets, and verified the final `v0.4.0` filename/URL mapping;
+and Windows CLI assets, and verified the candidate `v0.4.0` filename/URL mapping;
 the URLs intentionally remain unavailable until a human authorizes the tag and
 publication gate.
 
@@ -529,9 +529,10 @@ scripts, and the obsolete macOS Windows-cross/GPUI-patch path is gone. All
 three native Windows CI jobs now pass and retain downloadable test artifacts.
 The file stays `pending` until the remaining native-window evidence is recorded
 and a human records the final verdict. The protected Release dry run now proves
-the final signed artifacts; publication itself remains a separate human-
-controlled gate. This status is not a macOS/Windows compile or packaging
-failure.
+the signed release candidates and release path at `c757053`; a real version tag
+will rebuild the artifacts, which must still be downloaded and checked against
+the release checklist. Publication remains a separate human-controlled gate.
+This status is not a macOS/Windows compile or packaging failure.
 
 ### Independent fresh-context verdict on 2026-08-31
 
@@ -566,4 +567,5 @@ signature/Release execution and native-window evidence described above.
 
 The later protected dry run `33329814684` resolves that audit's production-
 signature execution item without creating a tag or Release. Its remaining
-verdict dependency is the native-window evidence and final human approval.
+verdict dependencies are the native-window evidence, verification of the
+eventual tagged artifacts, and final human approval.
