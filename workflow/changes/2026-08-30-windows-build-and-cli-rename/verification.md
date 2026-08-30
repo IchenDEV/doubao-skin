@@ -567,5 +567,7 @@ signature/Release execution and native-window evidence described above.
 
 The later protected dry run `33329814684` resolves that audit's production-
 signature execution item without creating a tag or Release. Its remaining
-verdict dependencies are the native-window evidence, verification of the
-eventual tagged artifacts, and final human approval.
+current-change verdict dependencies are the native-window evidence and final
+human approval. Verification of the eventual tagged artifacts remains a later
+human-controlled production Release checklist item, not a prerequisite for
+this change's pre-merge verdict.
