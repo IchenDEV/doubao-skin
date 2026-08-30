@@ -1,4 +1,4 @@
-name: Release macOS app
+name: Release
 
 on:
   push:
@@ -13,8 +13,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  package:
+  validate-tag:
+    name: Validate release tag
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check semantic version and workspace match
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release tags must use semantic versioning, for example v0.1.0" >&2
+            exit 1
+          fi
+          workspace_version=$(awk -F '"' '/^version =/ { print $2; exit }' Cargo.toml)
+          if [[ "v$workspace_version" != "$GITHUB_REF_NAME" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match workspace version $workspace_version" >&2
+            exit 1
+          fi
+
+  macos:
     name: Universal macOS package
+    needs: [validate-tag]
+    if: ${{ always() && (needs.validate-tag.result == 'success' || needs.validate-tag.result == 'skipped') }}
     runs-on: macos-26
     environment:
       name: production
@@ -27,18 +47,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-      - name: Validate release tag
-        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        run: |
-          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
-            echo "Release tags must use semantic versioning, for example v0.1.0" >&2
-            exit 1
-          fi
-          workspace_version=$(awk -F '"' '/^version =/ { print $2; exit }' Cargo.toml)
-          if [[ "v$workspace_version" != "$GITHUB_REF_NAME" ]]; then
-            echo "Tag $GITHUB_REF_NAME does not match workspace version $workspace_version" >&2
-            exit 1
-          fi
       - name: Import stable community signing certificate
         env:
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
@@ -98,14 +106,14 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             export APP_VERSION="${GITHUB_REF_NAME#v}"
           fi
-          ./scripts/build-macos.sh --universal
+          ./scripts/package.sh desktop-macos --universal
       - name: Verify stable signatures and package checksums
         run: |
-          ./scripts/verify-macos-signature.sh "dist/豆皮.app" "$MACOS_CERTIFICATE_SHA256"
+          ./scripts/package.sh verify-macos "dist/豆皮.app" "$MACOS_CERTIFICATE_SHA256"
           (cd dist && shasum -a 256 -c Doubao-Skin-macOS-universal.zip.sha256)
           (cd dist && shasum -a 256 -c Doubao-Skin-macOS-universal.dmg.sha256)
-          (cd dist && shasum -a 256 -c doubao-theme-macOS-universal.tar.gz.sha256)
-          dist/豆皮.app/Contents/Resources/bin/doubao-theme --version
+          test ! -e "dist/豆皮.app/Contents/Resources/bin"
+          test ! -e "dist/豆皮.app/Contents/Resources/skills"
           verify_dir=$(mktemp -d "$RUNNER_TEMP/doubao-skin-release-verify.XXXXXX")
           mount_dir=$(mktemp -d "$RUNNER_TEMP/doubao-skin-release-mount.XXXXXX")
           cleanup() {
@@ -114,12 +122,12 @@ jobs:
           }
           trap cleanup EXIT HUP INT TERM
           ditto -x -k "dist/Doubao-Skin-macOS-universal.zip" "$verify_dir"
-          ./scripts/verify-macos-signature.sh "$verify_dir/豆皮.app" "$MACOS_CERTIFICATE_SHA256"
+          ./scripts/package.sh verify-macos "$verify_dir/豆皮.app" "$MACOS_CERTIFICATE_SHA256"
           hdiutil verify "dist/Doubao-Skin-macOS-universal.dmg"
           hdiutil attach "dist/Doubao-Skin-macOS-universal.dmg" -nobrowse -readonly -mountpoint "$mount_dir"
           test -d "$mount_dir/豆皮.app"
           test "$(readlink "$mount_dir/Applications")" = "/Applications"
-          ./scripts/verify-macos-signature.sh "$mount_dir/豆皮.app" "$MACOS_CERTIFICATE_SHA256"
+          ./scripts/package.sh verify-macos "$mount_dir/豆皮.app" "$MACOS_CERTIFICATE_SHA256"
       - uses: actions/upload-artifact@v7
         with:
           name: Doubao-Skin-macOS-universal
@@ -128,44 +136,7 @@ jobs:
             dist/Doubao-Skin-macOS-universal.zip.sha256
             dist/Doubao-Skin-macOS-universal.dmg
             dist/Doubao-Skin-macOS-universal.dmg.sha256
-            dist/doubao-theme-macOS-universal.tar.gz
-            dist/doubao-theme-macOS-universal.tar.gz.sha256
           if-no-files-found: error
-      - name: Publish GitHub Release
-        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" \
-              dist/Doubao-Skin-macOS-universal.zip \
-              dist/Doubao-Skin-macOS-universal.zip.sha256 \
-              dist/Doubao-Skin-macOS-universal.dmg \
-              dist/Doubao-Skin-macOS-universal.dmg.sha256 \
-              dist/doubao-theme-macOS-universal.tar.gz \
-              dist/doubao-theme-macOS-universal.tar.gz.sha256 \
-              --clobber
-          else
-            gh release create "$GITHUB_REF_NAME" \
-              dist/Doubao-Skin-macOS-universal.zip \
-              dist/Doubao-Skin-macOS-universal.zip.sha256 \
-              dist/Doubao-Skin-macOS-universal.dmg \
-              dist/Doubao-Skin-macOS-universal.dmg.sha256 \
-              dist/doubao-theme-macOS-universal.tar.gz \
-              dist/doubao-theme-macOS-universal.tar.gz.sha256 \
-              --verify-tag \
-              --notes-file <(printf '%s\n' \
-                "Community self-signed release. This package is not Apple-notarized; if macOS blocks first launch, right-click the app and choose Open." \
-                "" \
-                "## CLI quick install" \
-                "" \
-                '```bash' \
-                "curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh" \
-                '```' \
-                "" \
-                'Or download `doubao-theme-macOS-universal.tar.gz` and extract manually.') \
-              --title "Doubao Skin $GITHUB_REF_NAME"
-          fi
       - name: Remove temporary signing material
         if: ${{ always() }}
         run: |
@@ -176,3 +147,189 @@ jobs:
             "$RUNNER_TEMP"/doubao-skin-signing.*) rm -rf "$SIGNING_DIR" ;;
             *) : ;;
           esac
+
+  windows:
+    name: Windows ${{ matrix.label }}
+    needs: [validate-tag]
+    if: ${{ always() && (needs.validate-tag.result == 'success' || needs.validate-tag.result == 'skipped') }}
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            label: x64
+          - target: i686-pc-windows-msvc
+            label: x86
+          - target: aarch64-pc-windows-msvc
+            label: arm64
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust toolchain
+        shell: bash
+        run: |
+          rustup show
+          rustup target add ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          key: windows-${{ matrix.target }}
+      - name: Build and package
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            export APP_VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          ./scripts/package.sh desktop-windows ${{ matrix.target }}
+      - name: Verify package checksums
+        shell: bash
+        run: |
+          cd dist
+          sha256sum -c "Doubao-Skin-Windows-${{ matrix.label }}.zip.sha256"
+          test "$(unzip -Z1 "Doubao-Skin-Windows-${{ matrix.label }}.zip" | awk -F/ 'NF == 2 && tolower($0) ~ /\.exe$/ { count++ } END { print count + 0 }')" -eq 1
+          unzip -Z1 "Doubao-Skin-Windows-${{ matrix.label }}.zip" | grep -q '/doubao-skin\.exe$'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Doubao-Skin-Windows-${{ matrix.label }}
+          path: |
+            dist/Doubao-Skin-Windows-${{ matrix.label }}.zip
+            dist/Doubao-Skin-Windows-${{ matrix.label }}.zip.sha256
+          if-no-files-found: error
+
+  cli:
+    name: CLI ${{ matrix.label }}
+    needs: [validate-tag]
+    if: ${{ always() && (needs.validate-tag.result == 'success' || needs.validate-tag.result == 'skipped') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: macOS-universal
+            runner: macos-26
+            build: --universal-macos
+            asset: doubao-skin-cli-macOS-universal.tar.gz
+          - label: Linux-x64
+            runner: ubuntu-24.04
+            build: --host
+            asset: doubao-skin-cli-Linux-x64.tar.gz
+          - label: Linux-arm64
+            runner: ubuntu-24.04-arm
+            build: --host
+            asset: doubao-skin-cli-Linux-arm64.tar.gz
+          - label: Windows-x64
+            runner: windows-2025
+            build: x86_64-pc-windows-msvc
+            asset: doubao-skin-cli-Windows-x64.zip
+          - label: Windows-x86
+            runner: windows-2025
+            build: i686-pc-windows-msvc
+            asset: doubao-skin-cli-Windows-x86.zip
+          - label: Windows-arm64
+            runner: windows-2025
+            build: aarch64-pc-windows-msvc
+            asset: doubao-skin-cli-Windows-arm64.zip
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust toolchain
+        run: rustup show
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          key: cli-${{ matrix.label }}
+      - name: Build CLI package
+        shell: bash
+        run: ./scripts/package.sh cli ${{ matrix.build }}
+      - name: Verify CLI package checksum
+        shell: bash
+        run: |
+          cd dist
+          if command -v shasum >/dev/null 2>&1; then
+            shasum -a 256 -c "${{ matrix.asset }}.sha256"
+          else
+            sha256sum -c "${{ matrix.asset }}.sha256"
+          fi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: doubao-skin-cli-${{ matrix.label }}
+          path: |
+            dist/${{ matrix.asset }}
+            dist/${{ matrix.asset }}.sha256
+          if-no-files-found: error
+
+  scoop:
+    name: Scoop manifest
+    needs: [validate-tag, cli]
+    if: ${{ always() && (needs.validate-tag.result == 'success' || needs.validate-tag.result == 'skipped') && needs.cli.result == 'success' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: doubao-skin-cli-Windows-*
+          path: dist
+          merge-multiple: true
+      - name: Generate Scoop manifest from built CLI hashes
+        run: |
+          version=$(awk -F '"' '/^version =/ { print $2; exit }' Cargo.toml)
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          ./scripts/package.sh scoop "$version" dist
+          node -e 'JSON.parse(require("node:fs").readFileSync("dist/doubao-skin.json", "utf8"))'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: doubao-skin-scoop
+          path: dist/doubao-skin.json
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    if: ${{ always() && startsWith(github.ref, 'refs/tags/v') && needs.validate-tag.result == 'success' && needs.macos.result == 'success' && needs.windows.result == 'success' && needs.cli.result == 'success' && needs.scoop.result == 'success' }}
+    needs: [validate-tag, macos, windows, cli, scoop]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v7
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          release_files=()
+          for dir in Doubao-Skin-macOS-universal Doubao-Skin-Windows-x64 Doubao-Skin-Windows-x86 Doubao-Skin-Windows-arm64 doubao-skin-cli-* doubao-skin-scoop; do
+            if [ -d "$dir" ]; then
+              for f in "$dir"/*; do
+                [ -f "$f" ] && release_files+=("$f")
+              done
+            fi
+          done
+          if [ "${#release_files[@]}" -eq 0 ]; then
+            echo "No release files found" >&2
+            exit 1
+          fi
+          printf 'Uploading: %s\n' "${release_files[@]}"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "${release_files[@]}" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "${release_files[@]}" \
+              --verify-tag \
+              --title "Doubao Skin $GITHUB_REF_NAME" \
+              --notes "$(printf '%s\n' \
+                'Community self-signed release.' \
+                '' \
+                '### macOS' \
+                '' \
+                'The macOS package is not Apple-notarized; if macOS blocks first launch, right-click the app and choose Open.' \
+                '' \
+                '### Windows' \
+                '' \
+                'Download `Doubao-Skin-Windows-<arch>.zip`, extract it, and run `doubao-skin.exe`.' \
+                '' \
+                '### CLI' \
+                '' \
+                'The CLI is packaged separately from the desktop app.' \
+                '' \
+                'Windows: `scoop install https://github.com/IchenDEV/doubao-skin/releases/latest/download/doubao-skin.json`' \
+                '' \
+                'macOS/Linux: `curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh`')"
+          fi

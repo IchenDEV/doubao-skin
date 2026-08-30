@@ -1384,6 +1384,7 @@ version = "0.3.2"
 dependencies = [
  "anyhow",
  "cocoa 0.26.0",
+ "embed-resource",
  "gpui",
  "gpui_platform",
  "log",
@@ -4898,12 +4899,15 @@ checksum = "8ee5873ec9cce0195efcb7a4e9507a04cd49aec9c83d0389df45b1ef7ba2e649"
 name = "skin-core"
 version = "0.3.2"
 dependencies = [
+ "dirs",
  "flate2",
+ "getrandom 0.4.3",
  "image",
  "serde",
  "serde_json",
  "sha2 0.11.0",
  "ureq",
+ "windows-registry",
  "zip",
 ]
 

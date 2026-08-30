@@ -8,7 +8,7 @@ description = "Native macOS desktop app for 豆皮"
 publish = false
 
 [[bin]]
-name = "doubao-skin"
+name = "doubao-skin-app"
 path = "src/main.rs"
 
 [dependencies]
@@ -21,3 +21,6 @@ gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "c8e44cfa
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "=0.26.0"
 objc = "0.2.7"
+
+[build-dependencies]
+embed-resource = "3.0.11"

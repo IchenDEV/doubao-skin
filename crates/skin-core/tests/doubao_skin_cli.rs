@@ -4,7 +4,7 @@ use std::process::{Command, Output};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn binary() -> &'static str {
-    env!("CARGO_BIN_EXE_doubao-theme")
+    env!("CARGO_BIN_EXE_doubao-skin")
 }
 
 fn temporary_test_dir(label: &str) -> PathBuf {
@@ -13,7 +13,7 @@ fn temporary_test_dir(label: &str) -> PathBuf {
         .unwrap_or_default()
         .as_nanos();
     let path = std::env::temp_dir().join(format!(
-        "doubao-theme-cli-{label}-{}-{stamp}",
+        "doubao-skin-cli-{label}-{}-{stamp}",
         std::process::id()
     ));
     fs::create_dir_all(&path).unwrap();
@@ -37,7 +37,7 @@ fn help_and_argument_errors_use_the_stable_exit_contract() {
     let help = run(&root, &["--help"]);
     assert!(help.status.success());
     let help_text = String::from_utf8_lossy(&help.stdout);
-    assert!(help_text.contains("doubao-theme"));
+    assert!(help_text.contains("doubao-skin"));
     for command in [
         "list",
         "create",

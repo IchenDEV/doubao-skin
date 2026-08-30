@@ -50,8 +50,52 @@ jobs:
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Run tests
         run: cargo test --workspace --all-targets --locked
-      - name: Check packaging script
-        run: bash -n scripts/build-macos.sh
+      - name: Check packaging scripts
+        run: |
+          bash -n scripts/package.sh scripts/package/*.sh
+
+  windows:
+    name: Windows native ${{ matrix.label }}
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            label: x64
+          - target: i686-pc-windows-msvc
+            label: x86
+          - target: aarch64-pc-windows-msvc
+            label: arm64
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust toolchain
+        shell: bash
+        run: |
+          rustup show
+          rustup target add ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          key: windows-${{ matrix.target }}
+      - name: Run Windows core regressions
+        if: ${{ matrix.target == 'x86_64-pc-windows-msvc' }}
+        shell: bash
+        run: cargo test -p skin-core --lib --locked
+      - name: Build desktop and CLI packages on Windows
+        shell: bash
+        run: |
+          ./scripts/package.sh desktop-windows ${{ matrix.target }}
+          ./scripts/package.sh cli ${{ matrix.target }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Windows-native-${{ matrix.label }}
+          path: |
+            dist/Doubao-Skin-Windows-${{ matrix.label }}.zip
+            dist/Doubao-Skin-Windows-${{ matrix.label }}.zip.sha256
+            dist/doubao-skin-cli-Windows-${{ matrix.label }}.zip
+            dist/doubao-skin-cli-Windows-${{ matrix.label }}.zip.sha256
+          if-no-files-found: error
 
   web:
     name: Web application

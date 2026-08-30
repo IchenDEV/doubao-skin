@@ -10,7 +10,7 @@ fn temporary_test_dir(label: &str) -> PathBuf {
         .unwrap_or_default()
         .as_nanos();
     std::env::temp_dir().join(format!(
-        "doubao-theme-authoring-{label}-{}-{stamp}",
+        "doubao-skin-authoring-{label}-{}-{stamp}",
         std::process::id()
     ))
 }

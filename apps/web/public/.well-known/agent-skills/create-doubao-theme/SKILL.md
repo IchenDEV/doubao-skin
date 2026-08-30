@@ -11,16 +11,23 @@ Turn a user's visual direction into a valid Doubao theme without requiring them 
 
 Resolve one executable before doing any work, in this order:
 
-1. Use the exact path in `DOUBAO_THEME_CLI` when it is set.
-2. Use `doubao-theme` from `PATH` when available.
-3. Use `/Applications/豆皮.app/Contents/Resources/bin/doubao-theme` when it exists.
-4. In this repository, use `cargo run -p skin-core --bin doubao-theme --`.
+1. Use the exact path in `DOUBAO_SKIN_CLI` when it is set.
+2. Use `doubao-skin` from `PATH` when available.
+3. In this repository, use `cargo run -p skin-core --bin doubao-skin --`.
 
-If none is available, suggest installing the standalone CLI:
+If none is available, explain the exact target and ask before installing the standalone CLI. Use Scoop on Windows:
+
+```powershell
+scoop install https://github.com/IchenDEV/doubao-skin/releases/latest/download/doubao-skin.json
+```
+
+On macOS or Linux, use the platform-detecting installer:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
 ```
+
+Installing the CLI must not install, launch, or modify the desktop app. When this repository is already present, prefer `cargo run` instead of installing another copy.
 
 Never substitute a handwritten archive script.
 
@@ -32,7 +39,7 @@ Never substitute a handwritten archive script.
 4. Prefer a pure-color or CSS-gradient theme. Add images, fonts, or icons only when the user supplied them, their source and license are clear, or the current host has an explicitly available generation tool.
 5. Run:
 
-   `doubao-theme create <theme-dir> --name <name> --description <description> --accent <#RRGGBB> --appearance <light|dark|both> --author <author> --json`
+   `doubao-skin create <theme-dir> --name <name> --description <description> --accent <#RRGGBB> --appearance <light|dark|both> --author <author> --json`
 
 6. Make only request-specific edits to the generated `theme.json` and `theme.css`. Keep behavior in the theme package rather than app-specific branches.
 7. Run `check`, then `preview`, then `check` again. Inspect the generated 1200 × 675 preview when visual tools are available.

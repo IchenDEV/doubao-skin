@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 DEVFLOW="$REPO_ROOT/scripts/devflow"
 TEST_ROOT=$(mktemp -d)
 TEST_WORKFLOW="$TEST_ROOT/workflow"

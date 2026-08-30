@@ -4,7 +4,7 @@
 
 # Doubao Skin
 
-**A native theme manager for the macOS versions of Doubao and Doubao Work.**
+**A native theme manager for the macOS and Windows versions of Doubao and Doubao Work.**
 
 [Theme gallery](https://doubao-skin.idevlab.dev) · [Guide & downloads](https://doubao-skin.idevlab.dev/guide#download) · [Create & contribute](https://doubao-skin.idevlab.dev/contribute)
 
@@ -18,14 +18,14 @@
 
 ![Doubao Skin online gallery](docs/images/gallery.png)
 
-> macOS is supported today; Windows is planned. This is an independent project and does not modify the official Doubao or Doubao Work apps in `/Applications`.
+> macOS and Windows are supported. This is an independent project and does not modify the official Doubao or Doubao Work apps.
 
 ## Features
 
-- Native macOS app for browsing, previewing, installing, applying, and restoring themes.
+- Native macOS and Windows app for browsing, previewing, installing, applying, and restoring themes.
 - 30 built-in themes across solid colors, atmospheric backgrounds, editor palettes, and brand-inspired styles.
 - Online theme store with verifiable `.doubao-skin.zip` packages.
-- Universal ZIP and DMG packages for both Apple Silicon and Intel Macs.
+- Universal macOS ZIP/DMG plus separate Windows x64, x86, and ARM64 ZIPs.
 - One Rust toolchain shared by the desktop app, CLI, Codex plugin, and Claude Code plugin.
 - Live injection and offline-clone modes while the official app bundle remains untouched.
 - Responsive website with compound filters, dark mode, theme details, guides, and contribution documentation.
@@ -36,6 +36,9 @@ Download the latest build from [GitHub Releases](https://github.com/IchenDEV/dou
 
 - `Doubao-Skin-macOS-universal.dmg`: recommended; open it and drag the app to Applications.
 - `Doubao-Skin-macOS-universal.zip`: unzip and run directly.
+- `Doubao-Skin-Windows-x64.zip`: for most Windows PCs.
+- `Doubao-Skin-Windows-arm64.zip`: for Snapdragon and other ARM Windows PCs.
+- `Doubao-Skin-Windows-x86.zip`: for 32-bit Windows only.
 - `.sha256`: SHA-256 checksums for each package.
 
 If macOS blocks the first launch, go to **System Settings → Privacy & Security**, scroll down to “Security”, click **Open Anyway**, and enter your admin password.
@@ -47,7 +50,7 @@ Release packages use one continuous community self-signed certificate. They are 
 3. Pick a theme and review the preview.
 4. Select **Apply Theme**. Use **Restore Default** to undo it.
 
-The in-app store installs remote themes directly. You can also drag a local package into the window or import one with **Install Theme…** / `Command-O`. Installed themes live in `~/Library/Application Support/Doubao Skin/themes/`.
+The in-app store installs remote themes directly. You can also drag a local package into the window or import one with **Install Theme…**. Installed themes use the platform data directory: `~/Library/Application Support/Doubao Skin/themes/` on macOS, `%LOCALAPPDATA%\Doubao Skin\themes\` on Windows, and `$XDG_DATA_HOME/Doubao Skin/themes/` on Linux (falling back to `~/.local/share`).
 
 ## Themes
 
@@ -82,39 +85,39 @@ Claude Code:
 
 Plugin sources are under [`plugins/doubao-skin`](plugins/doubao-skin). The website also publishes an [Agent Skills Discovery Draft 0.2.0 index](https://doubao-skin.idevlab.dev/.well-known/agent-skills/index.json).
 
-## Rust CLI
+## Developer CLI
 
-`doubao-theme` is a standalone command-line tool that does not depend on Node.js, Python, or GPUI.
+`doubao-skin` supports theme development and plugin automation. It uses separate Release assets and is never bundled into the desktop package.
 
 ### Install
 
-One-line install (macOS only):
+On Windows, Scoop selects x64, x86, or ARM64 automatically:
+
+```powershell
+scoop install https://github.com/IchenDEV/doubao-skin/releases/latest/download/doubao-skin.json
+```
+
+On macOS or Linux, the installer detects the current platform and verifies the checksum:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
 ```
 
-The script downloads the prebuilt universal binary from GitHub Releases, verifies its checksum, and places it in `/usr/local/bin`. Set `INSTALL_DIR` to choose a different location, or `VERSION` to pin a specific release:
-
-```bash
-VERSION=v0.1.0 INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
-```
-
-You can also download `doubao-theme-macOS-universal.tar.gz` from [GitHub Releases](https://github.com/IchenDEV/doubao-skin/releases/latest) and extract it manually.
-
 ### Usage
 
 ```bash
-doubao-theme list
-doubao-theme create themes/my-theme \
+doubao-skin list
+doubao-skin create themes/my-theme \
   --name "My Theme" --description "A calm dark theme" \
   --accent "#5b7ee5" --appearance both --author "Local user"
-doubao-theme check themes/my-theme
-doubao-theme preview themes/my-theme
-doubao-theme pack themes/my-theme dist/my-theme.doubao-skin.zip
+doubao-skin check themes/my-theme
+doubao-skin preview themes/my-theme
+doubao-skin pack themes/my-theme dist/my-theme.doubao-skin.zip
 ```
 
-Additional commands include `install`, `apply`, `restore`, `build`, and `remove-build`. Run `doubao-theme --help` for the complete interface.
+`list`, `create`, `check`, `preview`, `pack`, and `install` are portable. `apply` and `restore` require the official macOS or Windows client; the offline-clone commands `build` and `remove-build` are macOS-only.
+
+Run `doubao-skin --help` for the complete interface.
 
 ## Build from source
 
@@ -128,10 +131,10 @@ Requirements: macOS, Rust 1.97.1+, Node.js 24.19+, and pnpm 12.
 cargo run -p doubao-skin-desktop
 
 # Build for the host architecture
-./scripts/build-macos.sh
+./scripts/package.sh desktop-macos
 
 # Build a universal Apple Silicon + Intel package
-./scripts/build-macos.sh --universal
+./scripts/package.sh desktop-macos --universal
 ```
 
 Website:
@@ -159,12 +162,12 @@ workflow            Artifact-driven delivery and verification records
 
 ## Create and contribute themes
 
-Use `doubao-theme create` or `$create-doubao-theme` to generate a `schemaVersion: 2` theme. See the [theme standard](design/theme-standard/README.md) and [JSON schema](design/theme-standard/theme-v2.schema.json).
+Use `doubao-skin create` or `$create-doubao-theme` to generate a `schemaVersion: 2` theme. See the [theme standard](design/theme-standard/README.md) and [JSON schema](design/theme-standard/theme-v2.schema.json).
 
 Before opening a pull request:
 
 ```bash
-cargo run -p skin-core --bin doubao-theme -- check themes/my-theme
+cargo run -p skin-core --bin doubao-skin -- check themes/my-theme
 corepack pnpm --dir apps/web sync
 ./scripts/check.sh all
 ```

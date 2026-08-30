@@ -2,15 +2,13 @@
 set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-REPO_DIR=$(dirname "$SCRIPT_DIR")
+REPO_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 DIST_DIR="$REPO_DIR/dist"
 APP_NAME="豆皮"
 BUNDLE="$DIST_DIR/$APP_NAME.app"
 LEGACY_BUNDLE="$DIST_DIR/Doubao Skin.app"
-EXECUTABLE_NAME="doubao-skin"
+EXECUTABLE_NAME="doubao-skin-app"
 PACKAGE_NAME="doubao-skin-desktop"
-CLI_EXECUTABLE_NAME="doubao-theme"
-CLI_PACKAGE_NAME="skin-core"
 APP_VERSION=${APP_VERSION:-$(awk -F '"' '/^version =/ { print $2; exit }' "$REPO_DIR/Cargo.toml")}
 CODESIGN_IDENTITY=${CODESIGN_IDENTITY:--}
 CODESIGN_KEYCHAIN=${CODESIGN_KEYCHAIN:-}
@@ -48,7 +46,7 @@ esac
 
 mkdir -p "$DIST_DIR"
 rm -rf "$BUNDLE" "$LEGACY_BUNDLE"
-mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Resources/bin" "$BUNDLE/Contents/Resources/licenses"
+mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Resources/licenses"
 
 for build_target in $TARGETS; do
   rustup target add "$build_target"
@@ -58,25 +56,12 @@ for build_target in $TARGETS; do
       --locked \
       --release \
       --package "$PACKAGE_NAME"
-    MACOSX_DEPLOYMENT_TARGET="$DEPLOY_TARGET" cargo build \
-      --manifest-path "$REPO_DIR/Cargo.toml" \
-      --locked \
-      --release \
-      --package "$CLI_PACKAGE_NAME" \
-      --bin "$CLI_EXECUTABLE_NAME"
   else
     MACOSX_DEPLOYMENT_TARGET="$DEPLOY_TARGET" cargo build \
       --manifest-path "$REPO_DIR/Cargo.toml" \
       --locked \
       --release \
       --package "$PACKAGE_NAME" \
-      --target "$build_target"
-    MACOSX_DEPLOYMENT_TARGET="$DEPLOY_TARGET" cargo build \
-      --manifest-path "$REPO_DIR/Cargo.toml" \
-      --locked \
-      --release \
-      --package "$CLI_PACKAGE_NAME" \
-      --bin "$CLI_EXECUTABLE_NAME" \
       --target "$build_target"
   fi
 done
@@ -86,15 +71,9 @@ if [ "$BUILD_MODE" = "--universal" ]; then
     "$REPO_DIR/target/aarch64-apple-darwin/release/$EXECUTABLE_NAME" \
     "$REPO_DIR/target/x86_64-apple-darwin/release/$EXECUTABLE_NAME" \
     -output "$BUNDLE/Contents/MacOS/$APP_NAME"
-  lipo -create \
-    "$REPO_DIR/target/aarch64-apple-darwin/release/$CLI_EXECUTABLE_NAME" \
-    "$REPO_DIR/target/x86_64-apple-darwin/release/$CLI_EXECUTABLE_NAME" \
-    -output "$BUNDLE/Contents/Resources/bin/$CLI_EXECUTABLE_NAME"
 else
   cp "$REPO_DIR/target/release/$EXECUTABLE_NAME" "$BUNDLE/Contents/MacOS/$APP_NAME"
-  cp "$REPO_DIR/target/release/$CLI_EXECUTABLE_NAME" "$BUNDLE/Contents/Resources/bin/$CLI_EXECUTABLE_NAME"
 fi
-chmod 755 "$BUNDLE/Contents/Resources/bin/$CLI_EXECUTABLE_NAME"
 
 cp "$REPO_DIR/apps/desktop/Info.plist" "$BUNDLE/Contents/Info.plist"
 
@@ -163,15 +142,6 @@ fi
 cp "$REPO_DIR/LICENSE" "$BUNDLE/Contents/Resources/licenses/MIT.txt"
 cp "$REPO_DIR/LICENSES/GPL-3.0-or-later.txt" "$BUNDLE/Contents/Resources/licenses/GPL-3.0-or-later.txt"
 cp "$REPO_DIR/THIRD_PARTY_NOTICES.md" "$BUNDLE/Contents/Resources/licenses/THIRD_PARTY_NOTICES.md"
-mkdir -p "$BUNDLE/Contents/Resources/skills"
-for skill_name in create-doubao-theme apply-doubao-theme; do
-  skill_source="$REPO_DIR/plugins/doubao-skin/skills/$skill_name"
-  if [ ! -f "$skill_source/SKILL.md" ]; then
-    echo "bundled Skill does not exist: $skill_name" >&2
-    exit 1
-  fi
-  cp -R "$skill_source" "$BUNDLE/Contents/Resources/skills/$skill_name"
-done
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $APP_VERSION" "$BUNDLE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${GITHUB_RUN_NUMBER:-1}" "$BUNDLE/Contents/Info.plist"
 
@@ -258,22 +228,7 @@ trap - EXIT HUP INT TERM
   shasum -a 256 "$DMG_BASENAME" > "$DMG_BASENAME.sha256"
 )
 
-CLI_TARBALL_BASENAME="doubao-theme-macOS-$ARCHIVE_LABEL.tar.gz"
-CLI_TARBALL="$DIST_DIR/$CLI_TARBALL_BASENAME"
-rm -f "$CLI_TARBALL" "$CLI_TARBALL.sha256"
-CLI_STAGING=$(mktemp -d "$DIST_DIR/.cli-staging.XXXXXX")
-cp "$BUNDLE/Contents/Resources/bin/$CLI_EXECUTABLE_NAME" "$CLI_STAGING/$CLI_EXECUTABLE_NAME"
-cp "$REPO_DIR/LICENSE" "$CLI_STAGING/LICENSE"
-tar -czf "$CLI_TARBALL" -C "$CLI_STAGING" "$CLI_EXECUTABLE_NAME" LICENSE
-rm -rf "$CLI_STAGING"
-(
-  cd "$DIST_DIR"
-  shasum -a 256 "$CLI_TARBALL_BASENAME" > "$CLI_TARBALL_BASENAME.sha256"
-)
-
 echo "Built $ARCHIVE"
 echo "Checksum $ARCHIVE.sha256"
 echo "Built $DMG"
 echo "Checksum $DMG.sha256"
-echo "Built $CLI_TARBALL"
-echo "Checksum $CLI_TARBALL.sha256"

@@ -123,7 +123,7 @@ fn main() {
                 json!({"ok": true, "command": "version", "result": {"version": version}})
             );
         } else {
-            println!("doubao-theme {version}");
+            println!("doubao-skin {version}");
         }
         return;
     }
@@ -227,10 +227,11 @@ fn execute(args: &[String]) -> Result<Value, CliError> {
         "remove-build" => {
             require_empty(rest, "remove-build")?;
             build::remove(|line| eprintln!("{line}")).map_err(CliError::external)?;
-            Ok(json!({"path": build::skin_app()}))
+            let path = build::skin_app().map_err(CliError::external)?;
+            Ok(json!({"path": path}))
         }
         _ => Err(CliError::arguments(format!(
-            "未知命令：{command}。运行 doubao-theme --help 查看可用命令"
+            "未知命令：{command}。运行 doubao-skin --help 查看可用命令"
         ))),
     }
 }
@@ -378,7 +379,7 @@ fn resolve_theme(input: &str) -> Result<theme::Theme, CliError> {
         return theme::load(&bundled, input).map_err(CliError::invalid);
     }
     Err(CliError::invalid(format!(
-        "找不到主题 {input}，请先运行 doubao-theme list"
+        "找不到主题 {input}，请先运行 doubao-skin list"
     )))
 }
 
@@ -471,21 +472,21 @@ fn text_field<'a>(value: &'a Value, key: &str) -> &'a str {
 
 fn usage() -> &'static str {
     concat!(
-        "doubao-theme ",
+        "doubao-skin ",
         env!("CARGO_PKG_VERSION"),
         " — 豆皮命令行工具\n\n\
 用法：\n\
-  doubao-theme list [--json]\n\
-  doubao-theme create <theme-dir> --name <名称> [--description <描述>] [--accent <#RRGGBB>] [--appearance light|dark|both] [--author <作者>]\n\
-  doubao-theme check <theme-dir>\n\
-  doubao-theme preview <theme-dir>\n\
-  doubao-theme pack <theme-dir> [output.doubao-skin.zip]\n\
-  doubao-theme install <package>\n\
-  doubao-theme apply <theme> [--target doubao|doubao-work] [--watch]\n\
-  doubao-theme restore [--target doubao|doubao-work]\n\
-  doubao-theme build <theme>\n\
-  doubao-theme remove-build\n\
-  doubao-theme --version\n\n\
+  doubao-skin list [--json]\n\
+  doubao-skin create <theme-dir> --name <名称> [--description <描述>] [--accent <#RRGGBB>] [--appearance light|dark|both] [--author <作者>]\n\
+  doubao-skin check <theme-dir>\n\
+  doubao-skin preview <theme-dir>\n\
+  doubao-skin pack <theme-dir> [output.doubao-skin.zip]\n\
+  doubao-skin install <package>\n\
+  doubao-skin apply <theme> [--target doubao|doubao-work] [--watch]  # macOS / Windows\n\
+  doubao-skin restore [--target doubao|doubao-work]                  # macOS / Windows\n\
+  doubao-skin build <theme>                                        # 仅 macOS\n\
+  doubao-skin remove-build                                         # 仅 macOS\n\
+  doubao-skin --version\n\n\
 退出码：0 成功，2 参数错误，3 主题无效，4 外部操作失败",
     )
 }

@@ -11,9 +11,9 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The workflow tests the workspace, builds Apple Silicon and Intel versions of both the GUI and `doubao-theme`, combines each binary into the universal app, bundles the two repository Skills, signs the bundle, uploads ZIP and DMG packages with both checksums as workflow artifacts, and creates or updates the matching GitHub Release. A manual workflow run builds artifacts but does not create a GitHub Release.
+The workflow tests the workspace, builds Apple Silicon and Intel versions of the GUI, combines them into the universal app, signs the bundle, uploads ZIP and DMG packages with both checksums as workflow artifacts, and creates or updates the matching GitHub Release. A manual workflow run builds artifacts but does not create a GitHub Release.
 
-Each release also publishes a standalone CLI tarball (`doubao-theme-macOS-universal.tar.gz`) with its SHA-256 checksum. This lets users install only the CLI without the desktop app.
+The CLI follows an independent matrix: macOS universal, Linux x64/ARM64, and Windows x64/x86/ARM64. Each CLI archive has its own checksum. The Windows hashes generate a `doubao-skin.json` Scoop manifest, while the desktop artifacts remain CLI-free.
 
 ## Bundled themes
 
@@ -49,6 +49,8 @@ Keep the encrypted recovery `.p12` outside the repository with mode `0600`; keep
 - Verify the real desktop window and native apply workflow.
 - Confirm theme and artwork provenance.
 - Create and push the version tag.
-- Download both release packages and verify their checksums. Run `hdiutil verify` on the DMG, mount it read-only, confirm it contains “豆皮.app” and `Applications -> /Applications`, verify the mounted app with `./scripts/verify-macos-signature.sh <app> <certificate-sha256>`, then test a clean install.
-- Confirm `Contents/Resources/bin/doubao-theme --help` runs and both bundled Skill directories pass validation.
-- Extract the standalone CLI tarball, verify `doubao-theme --version` prints the expected version, and confirm `shasum -a 256 -c` against the sidecar checksum.
+- Download both release packages and verify their checksums. Run `hdiutil verify` on the DMG, mount it read-only, confirm it contains “豆皮.app” and `Applications -> /Applications`, verify the mounted app with `./scripts/package.sh verify-macos <app> <certificate-sha256>`, then test a clean install.
+- Confirm the macOS app bundle has no `Contents/Resources/bin` or bundled Skill directories.
+- Confirm each Windows archive contains exactly one top-level `doubao-skin.exe`.
+- Confirm every CLI archive contains only the CLI binary and license, then smoke-test `--version` on native macOS and Linux runners.
+- Install the generated Release manifest with Scoop on a clean Windows user and confirm `doubao-skin --version` resolves through PATH without installing the desktop app.

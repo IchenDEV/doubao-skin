@@ -7,16 +7,17 @@ fn main() {
         .as_deref()
         .and_then(skin_core::live::TargetApp::from_id)
         .unwrap_or(skin_core::live::TargetApp::DoubaoWork);
-    let out = std::process::Command::new("curl")
-        .args([
-            "-s",
-            "--max-time",
-            "3",
-            &format!("http://localhost:{}/json", target.port()),
-        ])
-        .output()
-        .unwrap();
-    let targets: Vec<serde_json::Value> = serde_json::from_slice(&out.stdout).unwrap();
+    let url = format!("http://localhost:{}/json", target.port());
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .timeout_global(Some(Duration::from_secs(3)))
+        .build()
+        .into();
+    let response = agent.get(&url).call().expect("read CDP target list");
+    let body = response
+        .into_body()
+        .read_to_vec()
+        .expect("read CDP response");
+    let targets: Vec<serde_json::Value> = serde_json::from_slice(&body).expect("parse CDP targets");
     for t in &targets {
         if t.get("type").and_then(|v| v.as_str()) != Some("page") {
             continue;

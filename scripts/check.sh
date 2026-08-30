@@ -6,9 +6,12 @@ REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 cd "$REPO_ROOT"
 
 check_workflow() {
-  bash -n scripts/devflow scripts/test-devflow.sh scripts/check.sh scripts/build-macos.sh
+  bash -n scripts/devflow scripts/check.sh scripts/install-cli.sh scripts/package.sh \
+    scripts/checks/*.sh scripts/package/*.sh
+  node --check scripts/package/generate-scoop-manifest.mjs
   ./scripts/devflow validate
-  ./scripts/test-devflow.sh
+  ./scripts/checks/devflow.sh
+  ./scripts/checks/portability.sh
 }
 
 check_rust() {
@@ -18,8 +21,8 @@ check_rust() {
 }
 
 check_web() {
-  corepack pnpm --dir apps/web check
-  corepack pnpm --dir apps/web audit --audit-level=high
+  (cd apps/web && corepack pnpm check)
+  (cd apps/web && corepack pnpm audit --audit-level=high)
   node --check apps/web/scripts/sync-themes.mjs
   node --check apps/web/scripts/sync-skills.mjs
 }
