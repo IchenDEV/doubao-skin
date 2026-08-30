@@ -5,7 +5,7 @@ status: pending
 owner: "Codex implementation agent"
 created: "2026-08-30"
 based_on: plan.md
-commit: ""
+commit: "7fd0c3ef6ba588868f6b2caed5105d33647ca4ae"
 risk: "critical"
 verification_mode: "human"
 verified_by: ""
@@ -451,10 +451,13 @@ and remain protected by regression/package checks. The live-apply hang is
 traced to a Windows-incompatible WebSocket random source, repaired with native
 OS randomness, protected by regression tests, and rebuilt into all three
 single-entry Windows Desktop archives. The ARM64 VM now provides an additional
-real target-window pass for theme application and button state. Final human
-verdict remains pending only because the current official ARM64 Doubao install
-still reports its own missing `mcp_helper.dll` when launched with CDP. Linux
-CLI and release publication remain unexecuted on their final release paths.
+real target-window pass for theme application and button state. Final verdict
+remains pending for three explicitly separated reasons: the current official
+ARM64 Doubao install still reports its own missing `mcp_helper.dll` when
+launched with CDP; the latest native Windows package has not been recaptured at
+both normal and narrow window sizes; and the protected `v0.4.0` Release job has
+not yet proved the stable certificate fingerprint or published the Linux CLI
+assets and final download URLs.
 
 The additional repository-wide compatibility audit removed generic-code
 dependencies on macOS user paths, `/dev/urandom`, external `curl`, and macOS
@@ -463,9 +466,9 @@ or target-specific adapters instead of leaking into portable theme and CLI
 operations. Packaging is exposed through one dispatcher with grouped internal
 scripts, and the obsolete macOS Windows-cross/GPUI-patch path is gone. All
 three native Windows CI jobs now pass and retain downloadable test artifacts.
-The file stays `pending` until a human or fresh-context verifier records the
-final verdict; the newest native artifact also has not yet been relaunched in
-the guest VM.
+The file stays `pending` until the remaining native-window evidence is recorded
+and the human-controlled production Release gate proves the final signed
+artifacts. This status is not a macOS/Windows compile failure.
 
 ### Independent fresh-context verdict on 2026-08-31
 
@@ -478,3 +481,22 @@ package. The current VMware control channel can read the guest display but
 reports `noWindowsAvailable` for click and keypress operations, so that visual
 gate cannot be completed in this audit without a working interactive guest
 channel.
+
+### Independent v0.4.0 release-preparation audit on 2026-08-31
+
+`pending`. The auditor confirmed that the universal CLI is signed only after
+`lipo`; the Release job reuses the App's identity and temporary keychain and
+checks App/CLI against one pinned SHA-256 certificate; ordinary CI has no
+production secrets; and Cargo, Web, Codex, and Claude versions are aligned at
+`0.4.0`. CI run `33328750122` passed Rust, Web, and native Windows x64/x86/
+ARM64 for commit `2984d51008a8a314897ed4e5c1b43d18f6af6022`; its only failure was the
+truthful pending verification gate. The auditor downloaded its macOS CLI
+artifact and independently verified the sidecar, exact two-file contents,
+x86_64/ARM64 slices, strict ad-hoc hardened-runtime signature, and exact
+`doubao-skin 0.4.0` output. The remote archive SHA-256 is
+`ffc929c99b09e69c43a4ffe81ae65d17815abc2ce88a91b8b4828c21b5500004`.
+The audit also identified and then rechecked two corrections: exact version
+output is now a hard CI/Release assertion, and the changed critical artifacts
+were explicitly re-approved by `idevlab` on 2026-08-31. No remaining static
+implementation defect was reported; the unresolved items are the production
+signature/Release execution and native-window evidence described above.
