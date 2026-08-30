@@ -79,6 +79,7 @@ async function renderPackagePreview(directory, info, colors, backgroundName) {
   const relative = info.preview?.image;
   if (!relative) return null;
   const destination = safeRelativeAsset(directory, relative, "preview.image");
+  if (fs.existsSync(destination)) return destination;
   const width = 1200;
   const height = 675;
   const backgroundPath = backgroundName
@@ -185,15 +186,46 @@ function exportIcon(directory, info, id) {
   return `/themes/${path.basename(destination)}`;
 }
 
+function archiveContentSignature(archivePath) {
+  const listing = execFileSync("unzip", ["-v", archivePath], { encoding: "utf8" });
+  return listing
+    .split(/\r?\n/)
+    .flatMap((line) => {
+      const columns = line.trim().split(/\s+/);
+      if (columns.length < 8 || !/^\d+$/.test(columns[0]) || !/^[0-9a-f]{8}$/i.test(columns[6])) {
+        return [];
+      }
+      return [`${columns[0]}\t${columns[6].toLowerCase()}\t${columns.slice(7).join(" ")}`];
+    })
+    .sort()
+    .join("\n");
+}
+
+function archiveContentsMatch(left, right) {
+  try {
+    const leftSignature = archiveContentSignature(left);
+    return leftSignature.length > 0 && leftSignature === archiveContentSignature(right);
+  } catch {
+    return false;
+  }
+}
+
 function exportPackage(directoryName, id) {
   fs.mkdirSync(publicPackagesDir, { recursive: true });
   const destination = path.join(publicPackagesDir, `${id}.doubao-skin.zip`);
-  fs.rmSync(destination, { force: true });
+  const candidate = `${destination}.candidate`;
+  fs.rmSync(candidate, { force: true });
   execFileSync(
     "zip",
-    ["-X", "-q", "-r", destination, directoryName, "-x", "*/.DS_Store"],
+    ["-X", "-q", "-r", candidate, directoryName, "-x", "*/.DS_Store"],
     { cwd: themesDir },
   );
+  if (fs.existsSync(destination) && archiveContentsMatch(destination, candidate)) {
+    fs.rmSync(candidate, { force: true });
+  } else {
+    fs.rmSync(destination, { force: true });
+    fs.renameSync(candidate, destination);
+  }
   const bytes = fs.readFileSync(destination);
   return {
     packageUrl: `/themes/packages/${path.basename(destination)}`,
@@ -210,8 +242,13 @@ if (themeDirectories.length === 0) throw new Error(`No themes found under ${them
 
 fs.mkdirSync(path.dirname(databasePath), { recursive: true });
 fs.mkdirSync(publicThemesDir, { recursive: true });
-fs.rmSync(publicPackagesDir, { recursive: true, force: true });
 fs.mkdirSync(publicPackagesDir, { recursive: true });
+const expectedPackages = new Set(themeDirectories.map((name) => `${name}.doubao-skin.zip`));
+for (const entry of fs.readdirSync(publicPackagesDir)) {
+  if (entry.endsWith(".candidate") || (entry.endsWith(".doubao-skin.zip") && !expectedPackages.has(entry))) {
+    fs.rmSync(path.join(publicPackagesDir, entry), { force: true });
+  }
+}
 const preparedThemes = [];
 const catalogThemes = [];
 
