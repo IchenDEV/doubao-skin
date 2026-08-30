@@ -2,7 +2,7 @@
   "name": "@doubao-skin/web",
   "private": true,
   "type": "module",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "license": "MIT",
   "packageManager": "pnpm@12.0.0",
   "engines": {
@@ -14,11 +14,11 @@
     "build": "next build",
     "start": "next start",
     "sync": "node scripts/sync-themes.mjs && node scripts/sync-skills.mjs",
-    "test:filters": "node --test scripts/theme-filters.test.mjs",
+    "test:filters": "node --test scripts/theme-filters.test.mjs scripts/download-platform.test.mjs",
     "test:gallery": "node --test scripts/gallery-client.test.mjs",
     "test:sync-themes": "node --test scripts/sync-themes.test.mjs",
     "typecheck": "tsc --noEmit",
-    "check": "node --test scripts/theme-filters.test.mjs scripts/gallery-client.test.mjs scripts/skill-discovery.test.mjs scripts/sync-themes.test.mjs && node scripts/sync-skills.mjs --check && tsc --noEmit && next build"
+    "check": "node --test scripts/theme-filters.test.mjs scripts/download-platform.test.mjs scripts/gallery-client.test.mjs scripts/skill-discovery.test.mjs scripts/sync-themes.test.mjs && node scripts/sync-skills.mjs --check && tsc --noEmit && next build"
   },
   "dependencies": {
     "better-sqlite3": "13.0.3",

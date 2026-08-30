@@ -27,7 +27,7 @@ cargo fmt --all -- --check
 cargo test --workspace --all-targets --locked
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo run -p doubao-skin-desktop
-cargo run -p skin-core --bin doubao-theme -- --help
+cargo run -p skin-core --bin doubao-skin -- --help
 ```
 
 The desktop app loads `themes/` from the repository by default. Override it during development with `DOUBAO_SKIN_THEMES_DIR=/absolute/path/to/themes`.
@@ -48,13 +48,37 @@ corepack pnpm --dir apps/web sync
 
 Commit generated changes under `apps/web/data` and `apps/web/public/themes` with their source theme change.
 
-## Local macOS package
+## Desktop packages
+
+macOS:
 
 ```bash
-./scripts/build-macos.sh
-./scripts/build-macos.sh --universal
+./scripts/package.sh desktop-macos
+./scripts/package.sh desktop-macos --universal
 ```
 
-The script builds with the lockfile, creates an app bundle, copies themes, the `doubao-theme` CLI, `create-doubao-theme` and `apply-doubao-theme` Skills, and license notices, and signs the bundle. It then writes ZIP and DMG packages plus an independent SHA-256 checksum for each under `dist/`. The DMG contains the same signed app and an `Applications` symlink.
+The script builds with the lockfile, creates an app bundle, copies themes and license notices, and signs the bundle. It then writes ZIP and DMG packages plus an independent SHA-256 checksum for each under `dist/`. The DMG contains the same signed app and an `Applications` symlink.
 
-The script also produces a standalone CLI tarball (`doubao-theme-macOS-{arch}.tar.gz`) containing just the `doubao-theme` binary and license, with its own SHA-256 checksum. This allows users to install only the CLI without the desktop app.
+Windows (from Git Bash on a Windows MSVC host):
+
+```bash
+./scripts/package.sh desktop-windows x86_64-pc-windows-msvc
+./scripts/package.sh desktop-windows i686-pc-windows-msvc
+./scripts/package.sh desktop-windows aarch64-pc-windows-msvc
+```
+
+Each command writes one flat desktop ZIP and checksum under `dist/`. The same targets are built on `windows-2025` runners in pull-request CI; the command intentionally fails on non-Windows hosts.
+
+CLI packaging is a separate build path and never writes into the desktop bundle:
+
+```bash
+./scripts/package.sh cli --universal-macos
+./scripts/package.sh cli x86_64-pc-windows-msvc
+./scripts/package.sh cli --host
+```
+
+The first command creates the macOS universal CLI tarball, the second creates a Windows CLI-only ZIP, and `--host` creates a native macOS or Linux tarball.
+
+Windows desktop and CLI assets are built by GitHub Actions on `windows-2025` runners. The Windows package commands fail on non-Windows hosts, so a macOS cross-build can never be mistaken for Windows CI evidence.
+
+The packaged CLI keeps portable authoring and package-management commands on every platform. Live `apply`/`restore` is limited to macOS and Windows, where the official clients exist; offline `build`/`remove-build` is isolated to macOS and fails before resolving paths or invoking tools elsewhere.

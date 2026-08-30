@@ -2,13 +2,20 @@
 
 All notable changes are recorded here. This project follows Semantic Versioning once the first stable release is published.
 
-## Unreleased
+## 0.4.0 - 2026-08-31
 
 ### Added
 
-- Standalone CLI distribution: `doubao-theme-macOS-universal.tar.gz` published as a separate release asset.
-- One-line CLI installer: `curl -fsSL .../install-cli.sh | sh`.
-- `doubao-theme --version` flag.
+- `doubao-skin --version` flag.
+- Windows desktop packages built on native Windows runners for x64, x86, and ARM64, each with one `doubao-skin.exe` entry point.
+- CLI binary standardized as `doubao-skin` for consistency with the product name.
+- CLI-only release assets for macOS universal, Linux x64/ARM64, and Windows x64/x86/ARM64, kept separate from every desktop package.
+- Scoop manifest for architecture-aware Windows CLI installation and a platform-detecting macOS/Linux installer.
+- Browser-local desktop download recommendation with manual architecture selection.
+
+### Changed
+
+- macOS universal CLI archives are signed after `lipo` with the same stable community identity as the desktop app.
 
 ## 0.1.0 - 2026-08-29
 

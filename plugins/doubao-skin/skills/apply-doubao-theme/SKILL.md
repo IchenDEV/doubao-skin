@@ -11,16 +11,25 @@ Use the existing Rust CLI for every operation. Keep read-only discovery separate
 
 Resolve one executable in this order:
 
-1. Use the exact path in `DOUBAO_THEME_CLI` when it is set.
-2. Use `doubao-theme` from `PATH` when available.
-3. Use `/Applications/豆皮.app/Contents/Resources/bin/doubao-theme` when it exists.
-4. In this repository, use `cargo run -p skin-core --bin doubao-theme --`.
+1. Use the exact path in `DOUBAO_SKIN_CLI` when it is set.
+2. Use `doubao-skin` from `PATH` when available.
+3. In this repository, use `cargo run -p skin-core --bin doubao-skin --`.
 
-If none is available, suggest installing the standalone CLI:
+If none is available, explain the exact target and ask before installing the standalone CLI. Use Scoop on Windows:
+
+```powershell
+scoop install https://github.com/IchenDEV/doubao-skin/releases/latest/download/doubao-skin.json
+```
+
+On macOS or Linux, use the platform-detecting installer:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
 ```
+
+Installing the CLI must not install, launch, or modify the desktop app. When this repository is already present, prefer `cargo run` instead of installing another copy.
+
+The portable commands are `list`, `check`, `install`, and the authoring commands. `apply` and `restore` require macOS or Windows with the corresponding official client installed. `build` and `remove-build` are macOS-only. On Linux, do not attempt live application or an offline app clone.
 
 Do not reimplement installation or application with shell scripts.
 
@@ -35,10 +44,10 @@ Do not reimplement installation or application with shell scripts.
 Before each command below, state the exact target and effect, then wait for the user's explicit approval in the current conversation. Earlier approval for a different target or action does not carry over.
 
 - `install <package>`: installs or updates that package under the user's Doubao Skin theme directory.
-- `apply <theme>`: may start or restart the selected app with its local debugging port; tell the user to save active work first. Default target is `doubao-work`. Do not add `--watch` unless the user asks for ongoing developer mode.
-- `restore`: removes the live theme from responsive pages without deleting installed packages. Warn that an existing `--watch` process can apply it again.
-- `build <theme>`: replaces the existing `~/Applications/DoubaoWork-Skin.app` clone, never `/Applications/DoubaoWork.app`.
-- `remove-build`: deletes only `~/Applications/DoubaoWork-Skin.app`.
+- `apply <theme>` (macOS/Windows): may start or restart the selected app with its local debugging port; tell the user to save active work first. Default target is `doubao-work`. Do not add `--watch` unless the user asks for ongoing developer mode.
+- `restore` (macOS/Windows): removes the live theme from responsive pages without deleting installed packages. Warn that an existing `--watch` process can apply it again.
+- `build <theme>` (macOS only): replaces the existing `~/Applications/DoubaoWork-Skin.app` clone, never `/Applications/DoubaoWork.app`.
+- `remove-build` (macOS only): deletes only `~/Applications/DoubaoWork-Skin.app`.
 
 If approval is absent, stop after the read-only checks. Never interpret automatic Skill discovery as authorization.
 

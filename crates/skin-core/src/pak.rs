@@ -131,17 +131,22 @@ mod tests {
     /// Roundtrip the REAL resources.pak of the installed app (read-only):
     /// parse -> rebuild must be byte-identical, and the Doubao page
     /// detection heuristic must find its pages.
+    #[cfg(target_os = "macos")]
     #[test]
     fn real_resources_pak_roundtrip() {
-        let versions = std::path::Path::new(
-            "/Applications/DoubaoWork.app/Contents/Helpers/DoubaoWork Browser.app/\
-             Contents/Frameworks/DoubaoWork Browser Framework.framework/Versions",
+        let Some(bundle) = crate::live::TargetApp::DoubaoWork.installed_app_bundle() else {
+            eprintln!("skipping: Doubao Work is not registered with the operating system");
+            return;
+        };
+        let versions = bundle.join(
+            "Contents/Helpers/DoubaoWork Browser.app/Contents/Frameworks/\
+             DoubaoWork Browser Framework.framework/Versions",
         );
         if !versions.exists() {
             eprintln!("skipping: {versions:?} not found");
             return;
         }
-        let mut dirs: Vec<_> = std::fs::read_dir(versions)
+        let mut dirs: Vec<_> = std::fs::read_dir(&versions)
             .unwrap()
             .filter_map(|e| e.ok())
             .map(|e| e.path())

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 DEVFLOW="$REPO_ROOT/scripts/devflow"
 TEST_ROOT=$(mktemp -d)
 TEST_WORKFLOW="$TEST_ROOT/workflow"
@@ -75,8 +75,29 @@ expect_failure "fresh verifier cannot be implementation owner" flow validate
 replace "$verification" 'verified_by: "builder"' 'verified_by: "fresh-verifier"'
 flow validate >/dev/null
 
-PR_BODY="Change artifact: workflow/changes/$change_id" DEVFLOW_DATE=2026-01-02 DEVFLOW_WORKFLOW_DIR="$TEST_WORKFLOW" "$DEVFLOW" check-pr >/dev/null
-expect_failure "PR without linked artifact" env PR_BODY="No artifact" DEVFLOW_DATE=2026-01-02 DEVFLOW_WORKFLOW_DIR="$TEST_WORKFLOW" "$DEVFLOW" check-pr
+pr_body="Change artifact: workflow/changes/$change_id"
+PR_BODY="$pr_body" PR_IS_DRAFT=false DEVFLOW_DATE=2026-01-02 DEVFLOW_WORKFLOW_DIR="$TEST_WORKFLOW" "$DEVFLOW" check-pr >/dev/null
+
+replace "$verification" 'status: passed' 'status: pending'
+PR_BODY="$pr_body" PR_IS_DRAFT=true DEVFLOW_DATE=2026-01-02 DEVFLOW_WORKFLOW_DIR="$TEST_WORKFLOW" "$DEVFLOW" check-pr >/dev/null
+expect_failure "ready PR with pending verification" env PR_BODY="$pr_body" PR_IS_DRAFT=false DEVFLOW_DATE=2026-01-02 DEVFLOW_WORKFLOW_DIR="$TEST_WORKFLOW" "$DEVFLOW" check-pr
+
+replace "$verification" 'status: pending' 'status: failed'
+expect_failure "draft PR with failed verification" env PR_BODY="$pr_body" PR_IS_DRAFT=true DEVFLOW_DATE=2026-01-02 DEVFLOW_WORKFLOW_DIR="$TEST_WORKFLOW" "$DEVFLOW" check-pr
+
+replace "$verification" 'status: failed' 'status: passed'
+expect_failure "invalid PR draft state" env PR_BODY="$pr_body" PR_IS_DRAFT=unknown DEVFLOW_DATE=2026-01-02 DEVFLOW_WORKFLOW_DIR="$TEST_WORKFLOW" "$DEVFLOW" check-pr
+expect_failure "empty PR draft state" env PR_BODY="$pr_body" PR_IS_DRAFT= DEVFLOW_DATE=2026-01-02 DEVFLOW_WORKFLOW_DIR="$TEST_WORKFLOW" "$DEVFLOW" check-pr
+expect_failure "missing PR draft state" env PR_BODY="$pr_body" DEVFLOW_DATE=2026-01-02 DEVFLOW_WORKFLOW_DIR="$TEST_WORKFLOW" "$DEVFLOW" check-pr
+PR_BODY="$pr_body" PR_IS_DRAFT=true DEVFLOW_DATE=2026-01-02 DEVFLOW_WORKFLOW_DIR="$TEST_WORKFLOW" "$DEVFLOW" check-pr >/dev/null
+
+replace "$plan" 'status: accepted' 'status: draft'
+expect_failure "draft PR with unaccepted plan" env PR_BODY="$pr_body" PR_IS_DRAFT=true DEVFLOW_DATE=2026-01-02 DEVFLOW_WORKFLOW_DIR="$TEST_WORKFLOW" "$DEVFLOW" check-pr
+replace "$plan" 'status: draft' 'status: accepted'
+expect_failure "PR without linked artifact" env PR_BODY="No artifact" PR_IS_DRAFT=false DEVFLOW_DATE=2026-01-02 DEVFLOW_WORKFLOW_DIR="$TEST_WORKFLOW" "$DEVFLOW" check-pr
+
+grep -Fq 'types: [opened, synchronize, reopened, edited, ready_for_review, converted_to_draft]' "$REPO_ROOT/.github/workflows/ci.yml"
+grep -Fq 'PR_IS_DRAFT: ${{ github.event.pull_request.draft }}' "$REPO_ROOT/.github/workflows/ci.yml"
 
 flow incident gallery-health monitor >/dev/null
 incident="$TEST_WORKFLOW/incidents/2026-01-02-gallery-health/incident.md"

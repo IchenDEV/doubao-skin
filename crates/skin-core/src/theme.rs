@@ -34,14 +34,17 @@ pub fn default_themes_dir() -> PathBuf {
         .unwrap_or_else(|_| Path::new(env!("CARGO_MANIFEST_DIR")).join("../../themes"))
 }
 
-/// Finds app-bundled themes for both `Contents/MacOS/<gui>` and
-/// `Contents/Resources/bin/doubao-theme` executable locations.
+/// Finds themes bundled beside a Windows executable or under macOS Resources.
 pub fn bundled_themes_dir_for_executable(executable: &Path) -> Option<PathBuf> {
     let parent = executable.parent()?;
     let container = parent.parent()?;
-    [container.join("Resources/themes"), container.join("themes")]
-        .into_iter()
-        .find(|candidate| candidate.is_dir())
+    [
+        parent.join("themes"),
+        container.join("Resources/themes"),
+        container.join("themes"),
+    ]
+    .into_iter()
+    .find(|candidate| candidate.is_dir())
 }
 
 pub const DEFAULT_THEME_STORE_URL: &str = "https://doubao-skin.idevlab.dev/themes/catalog.json";
@@ -51,26 +54,30 @@ pub(crate) const MAX_PACKAGE_BYTES: u64 = 200 * 1024 * 1024;
 const MAX_PACKAGE_CONTENT_BYTES: u64 = 512 * 1024 * 1024;
 const MAX_PACKAGE_ENTRIES: usize = 2_048;
 
+fn product_directory(base: Option<PathBuf>) -> PathBuf {
+    base.unwrap_or_else(std::env::temp_dir).join("Doubao Skin")
+}
+
+pub fn app_data_dir() -> PathBuf {
+    std::env::var_os("DOUBAO_SKIN_DATA_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| product_directory(dirs::data_local_dir()))
+}
+
 /// User-installed themes live outside the signed app bundle so updates do not
 /// remove them. Tests and local builds can override this path explicitly.
 pub fn user_themes_dir() -> PathBuf {
     if let Some(dir) = std::env::var_os("DOUBAO_SKIN_USER_THEMES_DIR") {
         return PathBuf::from(dir);
     }
-    std::env::var_os("HOME")
-        .map(PathBuf::from)
-        .map(|home| home.join("Library/Application Support/Doubao Skin/themes"))
-        .unwrap_or_else(|| std::env::temp_dir().join("Doubao Skin/themes"))
+    app_data_dir().join("themes")
 }
 
 pub fn theme_store_cache_dir() -> PathBuf {
     if let Some(dir) = std::env::var_os("DOUBAO_SKIN_THEME_STORE_CACHE_DIR") {
         return PathBuf::from(dir);
     }
-    std::env::var_os("HOME")
-        .map(PathBuf::from)
-        .map(|home| home.join("Library/Caches/Doubao Skin/theme-store"))
-        .unwrap_or_else(|| std::env::temp_dir().join("Doubao Skin/theme-store"))
+    product_directory(dirs::cache_dir()).join("theme-store")
 }
 
 pub fn theme_store_url() -> String {
@@ -3014,6 +3021,18 @@ mod tests {
     use zip::write::SimpleFileOptions;
 
     static THEME_STORE_ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    #[test]
+    fn platform_directories_keep_product_data_below_the_system_base() {
+        assert_eq!(
+            product_directory(Some(PathBuf::from("/platform/data"))),
+            PathBuf::from("/platform/data/Doubao Skin")
+        );
+        assert_eq!(
+            product_directory(Some(PathBuf::from(r"C:\Users\tester\AppData\Local"))),
+            PathBuf::from(r"C:\Users\tester\AppData\Local").join("Doubao Skin")
+        );
+    }
 
     #[test]
     fn theme_store_uses_public_default_and_env_override() {

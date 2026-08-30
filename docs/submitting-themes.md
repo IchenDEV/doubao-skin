@@ -1,6 +1,6 @@
 # 提交新主题
 
-豆皮库通过 GitHub Pull Request 接收主题，不在网页上直接上传文件。每个主题必须是可以由桌面应用和 `doubao-theme` CLI 真实加载的独立目录。
+豆皮库通过 GitHub Pull Request 接收主题，不在网页上直接上传文件。每个主题必须是可以由桌面应用和 `doubao-skin` CLI 真实加载的独立目录。
 
 ## 1. 准备仓库和分支
 
@@ -24,7 +24,13 @@ Claude Code（在 Claude Code 中输入）：
 
 然后调用 `$create-doubao-theme` 描述颜色、明暗、气质和使用场景。
 
-没有安装插件的用户可以先安装独立 CLI：
+没有安装插件的用户可以单独安装 CLI。Windows：
+
+```powershell
+scoop install https://github.com/IchenDEV/doubao-skin/releases/latest/download/doubao-skin.json
+```
+
+macOS / Linux：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
@@ -33,7 +39,7 @@ curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/i
 然后直接运行：
 
 ```bash
-doubao-theme create themes/<theme-id> \
+doubao-skin create themes/<theme-id> \
   --name "主题名称" \
   --description "一句自然语言描述" \
   --accent "#3370eb" \
@@ -41,15 +47,15 @@ doubao-theme create themes/<theme-id> \
   --author "作者名称"
 ```
 
-源码用户也可以使用 `cargo run -p skin-core --bin doubao-theme --` 替代 `doubao-theme`。
+源码用户也可以使用 `cargo run -p skin-core --bin doubao-skin --` 替代 `doubao-skin`。
 
 生成器会创建 v2 `theme.json`、基础 `theme.css` 和 1200 × 675 `preview.jpg`，不会覆盖非空目录。
 
 ## 3. 检查和预览
 
 ```bash
-doubao-theme check themes/<theme-id>
-doubao-theme preview themes/<theme-id>
+doubao-skin check themes/<theme-id>
+doubao-skin preview themes/<theme-id>
 ```
 
 检查必须通过。请同时实际查看预览；合成预览不能替代在无私人内容的豆包工作窗口中进行的应用验证。
@@ -77,7 +83,7 @@ corepack pnpm --dir apps/web sync
 使用一个新的输出路径：
 
 ```bash
-doubao-theme pack themes/<theme-id> dist/<theme-id>.doubao-skin.zip
+doubao-skin pack themes/<theme-id> dist/<theme-id>.doubao-skin.zip
 ```
 
 如需安装或应用，请使用 `$apply-doubao-theme`。安装、应用、恢复、离线构建和删除都有副作用，Skill 会在执行前说明准确目标并等待确认。
@@ -89,7 +95,7 @@ Pull Request 请包含：
 - 主题名称、ID 和一句设计说明；
 - 作者与版本；
 - 素材来源和许可证；
-- `doubao-theme check` 结果；
+- `doubao-skin check` 结果；
 - `corepack pnpm --dir apps/web sync` 结果，以及本主题对应的生成文件；
 - 预览图；
 - 实际应用验证范围，以及未验证的部分。
