@@ -26,7 +26,7 @@ verified_at: ""
 - The Default and Dark Icon Composer exports were mechanically resized into both iconsets and the xcassets app-icon set; no Rust, Info.plist, build-script, theme, metadata, or component source was changed.
 - At the user's later direction, the approved Default export was also mechanically resized to `apps/web/src/app/icon.png` (128×128 RGBA, SHA-256 `c46d8c8f4bf49664dcdf23fbec7067391b757796bd7970b2db644b33a3a78c29`) and `apps/web/public/app-icon.png` (256×256 RGBA, SHA-256 `6e3576e1640a908491b05ba7da26a740415b768400696a15680492e4663fddc2`).
 - `pnpm --dir apps/web sync` and `./scripts/check.sh web` passed: 9 tests passed, TypeScript passed, and the Next.js 16.3.3 production build generated the static `/icon.png` route. The sync command's unrelated theme database/catalog/package rewrites were discarded after confirming those paths were clean before this task.
-- The Chinese and English READMEs now reference the tracked 256×256 website icon, describe the shared layered yuba identity, and retain only the two current product screenshots required by `docs/README.md`. All four local image references exist.
+- The Chinese and English READMEs now reference the tracked 256×256 website icon, describe the shared layered yuba identity, retain the current desktop/gallery screenshots, and add the same two privacy-redacted real-window captures. Every local README image reference resolves to a tracked file.
 
 ## Behavioral evidence
 
@@ -37,6 +37,7 @@ verified_at: ""
 - Dock accessibility capture timed out twice, and the app switcher overlay dismissed before the automation could capture it. No system settings or global icon caches were changed to manufacture these results.
 - The production-mode website at `http://127.0.0.1:3000/` rendered the new mark in the header at the existing 34×34 desktop and 30×30 narrow sizes. The loaded Next image reported complete with 48×48 natural output; both `/app-icon.png` and the generated `/icon.png?...` route returned HTTP 200 with `image/png`.
 - The browser interaction path `首页 → 使用与下载` reached `/guide`, preserved the header mark, and produced no warnings or errors. At a 390×844 viewport the page retained `scrollWidth=390`, so the replacement introduced no horizontal overflow.
+- The built 豆皮 app selected the real `/Applications/DoubaoWork.app` live target and applied both `QQ轻蓝` and `星光书房`. The captured 1396×768 windows show the actual Doubao Work new-conversation and conversation surfaces with the expected background, message, and composer styling; no message was sent and no official app file was modified.
 
 ## Visual evidence
 
@@ -47,12 +48,13 @@ verified_at: ""
 - Finder and About-panel screenshots confirm that the system loaded the new bundle icon. Dock and app-switcher screenshots are not available, so the full system-surface acceptance criterion is not yet satisfied.
 - In-app Browser screenshots at the default desktop viewport and 390×844 show the folded-yuba mark centered and unclipped in the existing header shell. The page identity, meaningful DOM, absence of framework overlays, console health, resource loading, desktop layout, narrow layout, and one navigation interaction all passed.
 - `docs/images/app.png` now shows the verified current 豆皮 desktop window, and `docs/images/gallery.png` shows the verified current website with the folded-yuba mark. Both were visually reopened after replacement; the screenshots contain no clipping or unrelated private content.
+- `docs/images/doubao-work-qq-light-blue-redacted.png` and `docs/images/doubao-work-starry-room-redacted.png` are real-window captures, not preview-shell mockups. Both were reopened at their original 1396×768 dimensions after redaction; the QQ Light Blue new-conversation background and the Starry Room conversation background, bubbles, composer, and live page structure remain visible without readable personal content.
 
 ## Security and privacy evidence
 
 - All geometry is original and locally authored; the accepted SVG sources and rendered layers are retained under `evidence/source-v5/`.
-- No resource was read from or written to `/Applications/DoubaoWork.app` or another official application. The protocol bridge, themes, account data, credentials, signing material, and release configuration were not touched.
-- Evidence screenshots contain only the local 豆皮 app, Icon Composer, Finder, the local website, and the necessary system surface; no conversation content or private workspace data was included.
+- No file was written inside `/Applications/DoubaoWork.app` or another official application. The existing loopback live path only applied the selected theme CSS to the running page; credentials, signing material, release configuration, attachments, tools, and native headers were not accessed or forwarded.
+- Unredacted Doubao Work captures were created only under a temporary `/tmp/doubao-skin-readme.*` directory and were never copied into the repository. After the redacted files passed visual review, that temporary directory was moved to macOS Trash and remains recoverable only until the user empties Trash. The committed PNGs use strong sidebar pixelation plus opaque, theme-colored masks over account, workspace, title, and message text regions. A final Apple Vision pass found zero readable text regions in the QQ Light Blue image and only the generic arrow glyph `→` in the Starry Room image; only the redacted outputs appear in Git status.
 
 ## Deviations and residual risk
 
@@ -63,7 +65,8 @@ verified_at: ""
 - Packaging generated local ZIP, DMG, tar, and checksum outputs as part of the existing build script, but no tag, release, upload, publication, or production approval action was performed.
 - The accepted intent/spec originally excluded the website favicon. The user later explicitly requested the website icon update and then explicitly rejected a separate intent. Following the repository's established implementation-deviation pattern, the accepted historical artifacts were not rewritten; this verification records the newer instruction, which only synchronizes the two existing website icon files and does not broaden into PWA, social, theme, or deployment work.
 - The user subsequently requested a README update. The bilingual README hero, one feature bullet, and the two existing current-product screenshots were updated in the same brand-identity scope; download claims, release links, deployment instructions, and other documentation were not changed.
+- The user then explicitly requested real transformed-page screenshots with personal information masked. This supersedes the earlier two-screenshot README convention only for a focused bilingual `真实页面效果` / `Real transformed pages` section; no intent was added, matching the user's earlier direction to keep this work in the existing change.
 
 ## Verdict
 
-Pending fresh-context or human verdict. Canonical Icon Composer editing, Default/Dark/Mono source evidence, Apple compilation, bundle integration, signing, launch, Finder, About-panel, website icon integration, production web build, desktop browser, narrow browser, and navigation checks pass. Full visual acceptance remains open for Dock, app switcher, and the human judgment of literal recognition at 16 px.
+Pending fresh-context or human verdict. Canonical Icon Composer editing, Default/Dark/Mono source evidence, Apple compilation, bundle integration, signing, launch, Finder, About-panel, website icon integration, production web build, desktop browser, narrow browser, navigation, two live-theme real-window captures, and repository-only privacy review pass. Full visual acceptance remains open for Dock, app switcher, and the human judgment of literal recognition at 16 px.

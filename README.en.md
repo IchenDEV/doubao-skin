@@ -22,6 +22,23 @@
 
 > macOS is supported today; Windows is planned. This is an independent project and does not modify the official Doubao or Doubao Work apps in `/Applications`.
 
+## Real transformed pages
+
+These screenshots were captured from a real local Doubao Work window with themes applied in live mode. Account avatars, workspace details, conversation lists, titles, and message content are redacted; the unredacted captures are not included in the repository.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/images/doubao-work-qq-light-blue-redacted.png" alt="Redacted real Doubao Work window using the QQ Light Blue theme">
+      <br><sub>QQ Light Blue · New conversation</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/images/doubao-work-starry-room-redacted.png" alt="Redacted real Doubao Work window using the Starry Room theme">
+      <br><sub>Starry Room · Conversation view</sub>
+    </td>
+  </tr>
+</table>
+
 ## Features
 
 - Native macOS app for browsing, previewing, installing, applying, and restoring themes.

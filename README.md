@@ -22,6 +22,23 @@
 
 > 当前支持 macOS；Windows 版稍后推出。本项目不是字节跳动官方产品，不会修改 `/Applications` 中的官方「豆包」或「豆包工作」安装包。
 
+## 真实页面效果
+
+以下截图来自本机真实的「豆包工作」窗口，主题通过 live 模式呈现。账号头像、工作区、会话列表、标题和正文均已打码，原始截图未纳入仓库。
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/images/doubao-work-qq-light-blue-redacted.png" alt="QQ 轻蓝主题应用于真实豆包工作窗口的脱敏截图">
+      <br><sub>QQ 轻蓝 · 新对话页</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/images/doubao-work-starry-room-redacted.png" alt="星光书房主题应用于真实豆包工作窗口的脱敏截图">
+      <br><sub>星光书房 · 会话页</sub>
+    </td>
+  </tr>
+</table>
+
 ## 功能
 
 - 原生 macOS 桌面应用：浏览、预览、安装、应用和恢复主题。
