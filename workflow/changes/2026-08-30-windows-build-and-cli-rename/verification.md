@@ -17,9 +17,9 @@ verified_at: ""
 ## Automated checks
 
 - `./scripts/check.sh all` passed from the repository root.
-  - Workflow validation and approval-policy tests passed for 13 artifact sets.
+  - Workflow validation and approval-policy tests passed for 14 artifact sets.
   - Rust formatting, workspace tests, and Clippy with warnings denied passed.
-  - Tests passed: 11 desktop, 33 core library, 7 authoring, 2 bundled-theme
+  - Tests passed: 11 desktop, 35 core library, 7 authoring, 2 bundled-theme
     path, and 4 CLI integration tests.
   - Twelve Web tests, TypeScript, the 38-page Next.js production build, and the
     high-severity dependency audit passed; the audit found no known
@@ -103,7 +103,7 @@ verified_at: ""
   focused tests.
 - The repository-wide platform audit first added four regression tests that
   failed to compile because the portable directory and capability-boundary
-  helpers did not exist. After implementation, all 33 core tests pass. The
+  helpers did not exist. After implementation, all 35 core tests pass. The
   user theme and cache roots now use the operating system's standard data and
   cache APIs instead of `HOME` plus macOS-only suffixes; tests cover both
   POSIX and Windows-style bases.
@@ -127,7 +127,7 @@ verified_at: ""
   `crates/` and `apps/`, and is part of `./scripts/check.sh workflow`.
 - `./scripts/check.sh workflow`, `./scripts/check.sh rust`, and
   `./scripts/check.sh web` pass after the script move and platform-adapter
-  refactor. This includes 34 core tests, 11 desktop tests, 13 integration tests,
+  refactor. This includes 35 core tests, 11 desktop tests, 13 integration tests,
   Clippy with warnings denied, 12 Web tests, the 38-route production build, and
   the high-severity dependency audit.
 - `./scripts/package.sh cli --host` produced and ran the macOS ARM64 CLI-only
@@ -136,6 +136,13 @@ verified_at: ""
   the required Windows-host error.
 - Workflow YAML parsing, shell/Node syntax checks, `git diff --check`, and the
   case-insensitive path collision scan pass with the organized script tree.
+- Native CI run `33321611462` provided two red baselines unavailable on macOS:
+  x64 ran a macOS LaunchServices path test under Windows path semantics, while
+  x86 and ARM64 completed GPUI release compilation but could not find
+  `llvm-readobj`. The test is now macOS-compiled only; Windows packaging installs
+  `llvm-tools-preview` and resolves both `llvm-readobj` and
+  `llvm-readobj.exe`. The same run also exposed and prompted removal of two
+  macOS-only dead-code warnings from Windows release builds.
 
 ## Behavioral evidence
 

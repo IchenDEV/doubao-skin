@@ -7,7 +7,6 @@ DIST_DIR="$REPO_DIR/dist"
 EXECUTABLE_NAME="doubao-skin-app"
 PACKAGED_EXECUTABLE_NAME="doubao-skin"
 PACKAGE_NAME="doubao-skin-desktop"
-APP_VERSION=${APP_VERSION:-$(awk -F '"' '/^version =/ { print $2; exit }' "$REPO_DIR/Cargo.toml")}
 DEFAULT_BUNDLED_THEMES="doubao-snack-giggle doubao-dessert-giggle gallery-whale-maid qq-light-blue pure-dark"
 BUNDLED_THEMES=${BUNDLED_THEMES:-$DEFAULT_BUNDLED_THEMES}
 
@@ -43,6 +42,7 @@ case "$HOST" in
     ;;
 esac
 
+rustup component add llvm-tools-preview
 rustup target add "$TARGET"
 cargo build \
   --manifest-path "$REPO_DIR/Cargo.toml" \

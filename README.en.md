@@ -121,7 +121,7 @@ Run `doubao-skin --help` for the complete interface.
 
 ## Build from source
 
-Requirements: macOS, Rust 1.97.1+, Node.js 24.19+, and pnpm 12.
+Requirements: Rust 1.97.1+, Node.js 24.19+, and pnpm 12. Desktop packages must be built on their target operating system.
 
 ```bash
 # Test and validate the whole project
@@ -135,6 +135,9 @@ cargo run -p doubao-skin-desktop
 
 # Build a universal Apple Silicon + Intel package
 ./scripts/package.sh desktop-macos --universal
+
+# Build a Windows x64 package from Windows Git Bash
+./scripts/package.sh desktop-windows x86_64-pc-windows-msvc
 ```
 
 Website:

@@ -48,7 +48,9 @@ corepack pnpm --dir apps/web sync
 
 Commit generated changes under `apps/web/data` and `apps/web/public/themes` with their source theme change.
 
-## Local macOS package
+## Desktop packages
+
+macOS:
 
 ```bash
 ./scripts/package.sh desktop-macos
@@ -56,6 +58,16 @@ Commit generated changes under `apps/web/data` and `apps/web/public/themes` with
 ```
 
 The script builds with the lockfile, creates an app bundle, copies themes and license notices, and signs the bundle. It then writes ZIP and DMG packages plus an independent SHA-256 checksum for each under `dist/`. The DMG contains the same signed app and an `Applications` symlink.
+
+Windows (from Git Bash on a Windows MSVC host):
+
+```bash
+./scripts/package.sh desktop-windows x86_64-pc-windows-msvc
+./scripts/package.sh desktop-windows i686-pc-windows-msvc
+./scripts/package.sh desktop-windows aarch64-pc-windows-msvc
+```
+
+Each command writes one flat desktop ZIP and checksum under `dist/`. The same targets are built on `windows-2025` runners in pull-request CI; the command intentionally fails on non-Windows hosts.
 
 CLI packaging is a separate build path and never writes into the desktop bundle:
 

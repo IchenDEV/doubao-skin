@@ -119,7 +119,7 @@ doubao-skin pack themes/my-theme dist/my-theme.doubao-skin.zip
 
 ## 从源码构建
 
-需要 macOS、Rust 1.97.1+、Node.js 24.19+ 与 pnpm 12。
+需要 Rust 1.97.1+、Node.js 24.19+ 与 pnpm 12；桌面安装包必须在对应的目标操作系统上构建。
 
 ```bash
 # 测试与检查
@@ -133,6 +133,9 @@ cargo run -p doubao-skin-desktop
 
 # 构建 Apple 芯片 + Intel 通用安装包
 ./scripts/package.sh desktop-macos --universal
+
+# 在 Windows Git Bash 中构建 Windows x64 安装包
+./scripts/package.sh desktop-windows x86_64-pc-windows-msvc
 ```
 
 网站：

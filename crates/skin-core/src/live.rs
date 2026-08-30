@@ -108,6 +108,7 @@ impl TargetApp {
         platform::install_hint(self)
     }
 
+    #[cfg(target_os = "macos")]
     pub(crate) fn installed_app_bundle(self) -> Option<PathBuf> {
         platform::installed_app_bundle(self)
     }

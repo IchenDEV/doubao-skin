@@ -8,9 +8,18 @@ if [ ! -f "$EXE" ]; then
   exit 1
 fi
 
-HOST=$(rustc -vV | awk '/^host:/ { print $2 }')
-LLVM_READOBJ=$(rustc --print sysroot)/lib/rustlib/$HOST/bin/llvm-readobj
-if [ ! -x "$LLVM_READOBJ" ]; then
+if [ -z "${LLVM_READOBJ:-}" ]; then
+  HOST=$(rustc -vV | awk '/^host:/ { print $2 }')
+  LLVM_BIN=$(rustc --print sysroot)/lib/rustlib/$HOST/bin
+  if [ -x "$LLVM_BIN/llvm-readobj" ]; then
+    LLVM_READOBJ="$LLVM_BIN/llvm-readobj"
+  elif [ -x "$LLVM_BIN/llvm-readobj.exe" ]; then
+    LLVM_READOBJ="$LLVM_BIN/llvm-readobj.exe"
+  elif command -v llvm-readobj >/dev/null 2>&1; then
+    LLVM_READOBJ=$(command -v llvm-readobj)
+  fi
+fi
+if [ -z "${LLVM_READOBJ:-}" ] || [ ! -x "$LLVM_READOBJ" ]; then
   echo "llvm-readobj not found in the active Rust toolchain" >&2
   exit 1
 fi

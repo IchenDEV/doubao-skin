@@ -176,11 +176,7 @@ jobs:
           key: windows-${{ matrix.target }}
       - name: Build and package
         shell: bash
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            export APP_VERSION="${GITHUB_REF_NAME#v}"
-          fi
-          ./scripts/package.sh desktop-windows ${{ matrix.target }}
+        run: ./scripts/package.sh desktop-windows ${{ matrix.target }}
       - name: Verify package checksums
         shell: bash
         run: |

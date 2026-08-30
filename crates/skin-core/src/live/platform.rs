@@ -30,7 +30,7 @@ fn macos_binary_relative_path(target: TargetApp) -> &'static str {
     }
 }
 
-#[cfg(any(test, target_os = "macos"))]
+#[cfg(target_os = "macos")]
 fn macos_bundle_from_launch_services_output(output: &[u8]) -> Option<PathBuf> {
     let value = std::str::from_utf8(output).ok()?.trim();
     let path = PathBuf::from(value);
@@ -66,11 +66,6 @@ fn bundle_from_explicit_binary(target: TargetApp) -> Option<PathBuf> {
 #[cfg(target_os = "macos")]
 pub(super) fn installed_app_bundle(target: TargetApp) -> Option<PathBuf> {
     bundle_from_explicit_binary(target).or_else(|| registered_macos_bundle(target))
-}
-
-#[cfg(not(target_os = "macos"))]
-pub(super) fn installed_app_bundle(_target: TargetApp) -> Option<PathBuf> {
-    None
 }
 
 #[cfg(target_os = "macos")]
@@ -452,6 +447,7 @@ pub(super) fn kill_app(_target: TargetApp) {}
 mod tests {
     use super::*;
 
+    #[cfg(target_os = "macos")]
     #[test]
     fn launch_services_output_must_be_an_absolute_app_bundle() {
         assert_eq!(

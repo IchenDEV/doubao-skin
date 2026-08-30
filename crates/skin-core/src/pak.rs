@@ -131,6 +131,7 @@ mod tests {
     /// Roundtrip the REAL resources.pak of the installed app (read-only):
     /// parse -> rebuild must be byte-identical, and the Doubao page
     /// detection heuristic must find its pages.
+    #[cfg(target_os = "macos")]
     #[test]
     fn real_resources_pak_roundtrip() {
         let Some(bundle) = crate::live::TargetApp::DoubaoWork.installed_app_bundle() else {
