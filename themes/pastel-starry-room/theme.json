@@ -23,7 +23,7 @@
   },
   "appearance": "both",
   "background": "bg.jpg",
-  "veil": 0.04,
+  "veil": 0.02,
   "typography": {
     "ui": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
     "body": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
@@ -56,7 +56,7 @@
     "iconSize": 20
   },
   "content": {
-    "chatBackground": "rgba(229,231,249,0.18)",
+    "chatBackground": "rgba(229,231,249,0.10)",
     "userMessageBackground": "rgba(94,77,172,1)",
     "userMessageText": "#ffffff",
     "assistantMessageBackground": "rgba(252,252,255,0.97)",
@@ -96,7 +96,7 @@
         "iconSize": 20
       },
       "content": {
-        "chatBackground": "rgba(229,231,249,0.18)",
+        "chatBackground": "rgba(229,231,249,0.10)",
         "userMessageBackground": "rgba(94,77,172,1)",
         "userMessageText": "#ffffff",
         "assistantMessageBackground": "rgba(252,252,255,0.97)",
@@ -129,7 +129,7 @@
         "iconSize": 20
       },
       "content": {
-        "chatBackground": "rgba(18,20,25,0.88)",
+        "chatBackground": "rgba(18,20,25,0.72)",
         "userMessageBackground": "#867ac1",
         "userMessageText": "#ffffff",
         "assistantMessageBackground": "rgba(29,31,37,0.94)",

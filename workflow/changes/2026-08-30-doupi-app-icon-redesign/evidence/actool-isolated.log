@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>com.apple.actool.compilation-results</key>
+	<dict>
+		<key>output-files</key>
+		<array>
+			<string>/var/folders/nl/47s4vtc92m74_j8pmm7d0chh0000gn/T/tmp.webeVQQFIa/AppIcon-partial.plist</string>
+			<string>/var/folders/nl/47s4vtc92m74_j8pmm7d0chh0000gn/T/tmp.webeVQQFIa/out/AppIcon.icns</string>
+			<string>/var/folders/nl/47s4vtc92m74_j8pmm7d0chh0000gn/T/tmp.webeVQQFIa/out/Assets.car</string>
+		</array>
+	</dict>
+</dict>
+</plist>

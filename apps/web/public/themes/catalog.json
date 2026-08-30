@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-29T15:19:07.415Z",
+  "generatedAt": "2026-08-30T13:57:36.049Z",
   "themes": [
     {
       "id": "violet-night",
@@ -399,8 +399,8 @@
       "iconUrl": "/themes/qq-light-blue.icon.svg",
       "accent": "#5099d6",
       "packageUrl": "/themes/packages/qq-light-blue.doubao-skin.zip",
-      "sha256": "16fe18af41b783363d2aa3b0c38fa8437e5efaca02b4b46a35b3ecc84bf3a72c",
-      "packageSize": 150331
+      "sha256": "fc5459e6db7dbc2ae45ef89e04dd8c7735d01e6aad2749cbe9fc8aa07d15352c",
+      "packageSize": 155732
     },
     {
       "id": "gallery-whale-maid",
@@ -479,8 +479,8 @@
       "iconUrl": "/themes/pastel-starry-room.icon.svg",
       "accent": "#867ac1",
       "packageUrl": "/themes/packages/pastel-starry-room.doubao-skin.zip",
-      "sha256": "fb4641553a64ba3c7159205fe3f1c2625892598a77710364f33202f22837bbc3",
-      "packageSize": 670129
+      "sha256": "a66d248de8b8e37a7bc6803faaf37728417a2e43b92e31f2030d355202f289da",
+      "packageSize": 672673
     },
     {
       "id": "doubao-snack-giggle",

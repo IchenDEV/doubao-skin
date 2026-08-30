@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="rearSheet" x1="230" y1="238" x2="790" y2="730" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF7C8"/>
+      <stop offset="0.5" stop-color="#EFD37A"/>
+      <stop offset="1" stop-color="#C98C2D"/>
+    </linearGradient>
+    <linearGradient id="middleSheet" x1="250" y1="280" x2="780" y2="716" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF0A9"/>
+      <stop offset="0.56" stop-color="#E5B94F"/>
+      <stop offset="1" stop-color="#B56A20"/>
+    </linearGradient>
+  </defs>
+
+  <g>
+    <path d="M232 338 C255 295 306 264 366 256 C492 240 638 255 754 292 C789 303 811 335 807 370 L770 653 C765 692 732 721 690 724 C549 735 394 719 276 675 C239 661 217 628 221 591 L247 385 C249 369 244 352 232 338Z" fill="url(#rearSheet)" stroke="#A96A20" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M269 329 C323 285 422 273 530 288 C626 301 715 328 772 367 L744 615 C740 648 714 672 679 676 C550 690 410 672 304 632 C270 619 251 589 255 556 L277 377 C279 359 276 343 269 329Z" fill="url(#middleSheet)" stroke="#C27E24" stroke-width="9" stroke-linejoin="round"/>
+  </g>
+
+  <g fill="none" stroke-linecap="round">
+    <path d="M302 378 C392 341 526 350 706 412" stroke="#FFF8D5" stroke-opacity="0.62" stroke-width="18"/>
+    <path d="M288 450 C418 412 575 431 738 493" stroke="#9F641E" stroke-opacity="0.28" stroke-width="13"/>
+    <path d="M281 538 C414 503 559 517 711 574" stroke="#FFF4BF" stroke-opacity="0.48" stroke-width="11"/>
+  </g>
+
+  <g fill="#A96A20" opacity="0.30">
+    <ellipse cx="354" cy="401" rx="12" ry="8" transform="rotate(-12 354 401)"/>
+    <ellipse cx="471" cy="466" rx="9" ry="7" transform="rotate(18 471 466)"/>
+    <ellipse cx="628" cy="401" rx="13" ry="8" transform="rotate(9 628 401)"/>
+    <ellipse cx="676" cy="542" rx="10" ry="7" transform="rotate(-17 676 542)"/>
+    <ellipse cx="390" cy="569" rx="11" ry="7" transform="rotate(12 390 569)"/>
+  </g>
+</svg>
