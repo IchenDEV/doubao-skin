@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bottomSheet" x1="225" y1="555" x2="786" y2="748" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FAEFC9"/>
+      <stop offset="0.58" stop-color="#E4C878"/>
+      <stop offset="1" stop-color="#C48F45"/>
+    </linearGradient>
+    <linearGradient id="middleSheet" x1="245" y1="438" x2="780" y2="640" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF2BD"/>
+      <stop offset="0.55" stop-color="#ECD693"/>
+      <stop offset="1" stop-color="#CF9D55"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Lower loose sheet: a thin, irregular membrane rather than a thick block. -->
+  <path d="M237 587 C263 561 300 547 341 552 L627 574 C663 577 698 591 727 611 L786 652 C807 667 808 689 787 703 C756 724 719 736 678 739 L355 765 C314 768 277 757 247 735 L216 711 C192 692 192 665 215 646 L249 617 C259 608 254 596 237 587Z"
+        fill="url(#bottomSheet)" stroke="#B9854B" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M236 681 C355 726 539 728 753 681" fill="none" stroke="#FFF0B7" stroke-opacity="0.78" stroke-width="5" stroke-linecap="round"/>
+  <path d="M248 704 C382 746 548 742 720 710" fill="none" stroke="#9D672F" stroke-opacity="0.34" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Middle folded sheet stays visibly separate from the lower one. -->
+  <path d="M266 477 C296 450 335 437 376 440 L666 459 C702 462 732 473 759 493 L795 520 C815 535 813 557 792 572 L716 626 C696 640 673 648 648 648 L342 654 C307 655 277 646 252 628 L223 607 C202 591 201 568 220 551 L274 507 C286 497 283 487 266 477Z"
+        fill="url(#middleSheet)" stroke="#C18D4B" stroke-width="4" stroke-linejoin="round"/>
+  <g fill="none" stroke-linecap="round">
+    <path d="M288 518 C406 482 560 493 723 540" stroke="#FFF8D5" stroke-opacity="0.68" stroke-width="11"/>
+    <path d="M268 583 C402 550 554 560 700 601" stroke="#9A5F24" stroke-opacity="0.25" stroke-width="5"/>
+  </g>
+  <g fill="#9D6427" opacity="0.26">
+    <ellipse cx="355" cy="540" rx="13" ry="8" transform="rotate(-8 355 540)"/>
+    <ellipse cx="505" cy="588" rx="11" ry="7" transform="rotate(12 505 588)"/>
+    <ellipse cx="650" cy="527" rx="14" ry="8" transform="rotate(-12 650 527)"/>
+  </g>
+</svg>

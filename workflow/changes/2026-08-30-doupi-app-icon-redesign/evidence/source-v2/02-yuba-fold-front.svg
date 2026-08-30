@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="frontSheet" x1="278" y1="330" x2="756" y2="702" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF4B8"/>
+      <stop offset="0.46" stop-color="#F0C45B"/>
+      <stop offset="1" stop-color="#C47A21"/>
+    </linearGradient>
+    <linearGradient id="turnedEdge" x1="268" y1="590" x2="748" y2="746" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD978"/>
+      <stop offset="0.5" stop-color="#E9AA36"/>
+      <stop offset="1" stop-color="#9D561B"/>
+    </linearGradient>
+    <linearGradient id="innerFold" x1="349" y1="625" x2="720" y2="695" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF0AC"/>
+      <stop offset="1" stop-color="#C87722"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M286 360 C338 315 429 297 529 308 C626 319 708 343 759 381 L738 581 C734 618 710 642 674 646 C550 660 417 642 317 604 C283 591 263 560 267 526 L284 395 C286 381 287 370 286 360Z" fill="url(#frontSheet)" stroke="#B66F20" stroke-width="11" stroke-linejoin="round"/>
+
+  <path d="M267 526 C280 569 320 601 381 618 C485 647 610 649 738 581 C742 647 718 702 668 733 C580 787 431 781 326 727 C270 698 240 647 244 592 C246 564 254 542 267 526Z" fill="url(#turnedEdge)" stroke="#A85E1B" stroke-width="11" stroke-linejoin="round"/>
+
+  <path d="M297 594 C380 644 527 669 686 624 C666 662 630 689 581 702 C488 728 377 703 312 653 C292 638 286 613 297 594Z" fill="url(#innerFold)" opacity="0.95"/>
+
+  <g fill="none" stroke-linecap="round">
+    <path d="M312 414 C410 376 547 390 700 448" stroke="#FFF9D4" stroke-opacity="0.70" stroke-width="18"/>
+    <path d="M294 488 C402 454 560 474 719 527" stroke="#9C5B1D" stroke-opacity="0.30" stroke-width="12"/>
+    <path d="M278 612 C382 683 562 698 704 623" stroke="#FFF1AD" stroke-opacity="0.80" stroke-width="13"/>
+    <path d="M285 653 C382 721 548 734 665 681" stroke="#8E4B19" stroke-opacity="0.38" stroke-width="10"/>
+  </g>
+
+  <g fill="#A7601C" opacity="0.34">
+    <ellipse cx="355" cy="460" rx="12" ry="8" transform="rotate(-9 355 460)"/>
+    <ellipse cx="482" cy="399" rx="10" ry="7" transform="rotate(17 482 399)"/>
+    <ellipse cx="615" cy="499" rx="13" ry="8" transform="rotate(-14 615 499)"/>
+    <ellipse cx="421" cy="550" rx="9" ry="6" transform="rotate(13 421 550)"/>
+  </g>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="topFlap" x1="230" y1="303" x2="760" y2="522" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF7CF"/>
+      <stop offset="0.55" stop-color="#F0D487"/>
+      <stop offset="1" stop-color="#C58B39"/>
+    </linearGradient>
+    <linearGradient id="returnFlap" x1="260" y1="458" x2="758" y2="691" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FBE8AD"/>
+      <stop offset="0.50" stop-color="#DFB45C"/>
+      <stop offset="1" stop-color="#A86628"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Accordion fold: two broad translucent-looking flaps with a clear hinge. -->
+  <path d="M268 335 C297 311 333 298 373 298 L649 302 C688 303 724 316 754 340 L791 370 C812 387 811 411 789 428 L643 526 C624 539 603 546 581 547 L339 552 C302 553 271 543 246 523 L215 499 C194 482 194 457 214 439 L275 386 C292 372 290 349 268 335Z"
+        fill="url(#topFlap)" stroke="#9E6125" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M339 552 C438 537 526 529 643 526 C685 542 724 559 763 585 C787 601 788 625 765 642 L667 711 C646 726 621 734 595 734 L354 731 C318 730 285 719 259 699 L223 672 C202 656 202 632 222 615 L292 561 C305 551 322 548 339 552Z"
+        fill="url(#returnFlap)" stroke="#8F521F" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M339 552 C433 573 529 566 643 526" fill="none" stroke="#FFF5C5" stroke-opacity="0.92" stroke-width="12" stroke-linecap="round"/>
+  <path d="M350 569 C447 587 539 578 629 546" fill="none" stroke="#865020" stroke-opacity="0.32" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Wide wrinkles and protein-film mottling. -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M284 382 C397 345 547 351 708 397" stroke="#FFFFFF" stroke-opacity="0.56" stroke-width="14"/>
+    <path d="M258 455 C390 417 548 426 726 474" stroke="#9C6528" stroke-opacity="0.23" stroke-width="10"/>
+    <path d="M283 625 C395 596 516 604 646 642" stroke="#FFF0B0" stroke-opacity="0.66" stroke-width="12"/>
+    <path d="M302 683 C404 658 503 663 596 689" stroke="#8A521F" stroke-opacity="0.25" stroke-width="8"/>
+  </g>
+  <g fill="#9A6428" opacity="0.27">
+    <ellipse cx="342" cy="430" rx="14" ry="8" transform="rotate(-10 342 430)"/>
+    <ellipse cx="476" cy="368" rx="11" ry="7" transform="rotate(14 476 368)"/>
+    <ellipse cx="625" cy="456" rx="15" ry="9" transform="rotate(-12 625 456)"/>
+    <ellipse cx="414" cy="646" rx="12" ry="8" transform="rotate(9 414 646)"/>
+    <ellipse cx="566" cy="682" rx="10" ry="7" transform="rotate(-8 566 682)"/>
+  </g>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bean" x1="651" y1="672" x2="805" y2="789" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF0A4"/>
+      <stop offset="0.55" stop-color="#DFA73B"/>
+      <stop offset="1" stop-color="#A65B1B"/>
+    </linearGradient>
+  </defs>
+  <!-- Two soybeans: no green garnish, so the sheets cannot read as toast. -->
+  <ellipse cx="686" cy="719" rx="53" ry="42" transform="rotate(-18 686 719)" fill="url(#bean)" stroke="#8E4D18" stroke-width="8"/>
+  <ellipse cx="759" cy="748" rx="56" ry="44" transform="rotate(15 759 748)" fill="url(#bean)" stroke="#8E4D18" stroke-width="8"/>
+  <path d="M653 711 C671 698 692 696 708 705" fill="none" stroke="#FFF8CF" stroke-opacity="0.74" stroke-width="8" stroke-linecap="round"/>
+  <path d="M730 735 C749 724 770 726 786 738" fill="none" stroke="#FFF8CF" stroke-opacity="0.74" stroke-width="8" stroke-linecap="round"/>
+</svg>

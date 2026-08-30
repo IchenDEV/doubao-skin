@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="rearA" x1="226" y1="248" x2="790" y2="728" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF4B7"/>
+      <stop offset="0.54" stop-color="#EAC45E"/>
+      <stop offset="1" stop-color="#B96F24"/>
+    </linearGradient>
+    <linearGradient id="rearB" x1="270" y1="250" x2="746" y2="714" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF9CF"/>
+      <stop offset="0.58" stop-color="#F1D77F"/>
+      <stop offset="1" stop-color="#C8862C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Two loose sheets, deliberately offset so the silhouette reads as a stack. -->
+  <path d="M237 343 C252 313 279 291 315 283 L712 240 C756 235 789 255 806 292 C814 310 814 329 809 350 L745 668 C737 709 704 735 661 737 L300 757 C257 759 226 733 219 697 C215 676 219 656 227 637 L260 556 L221 437 C212 405 216 372 237 343Z"
+        fill="url(#rearA)" stroke="#9E5B20" stroke-width="11" stroke-linejoin="round"/>
+  <path d="M282 306 C307 276 344 261 387 264 L741 282 C782 284 807 314 804 354 L779 665 C776 704 746 729 705 728 L327 718 C285 717 258 691 259 651 L268 543 L241 416 C234 378 248 339 282 306Z"
+        fill="url(#rearB)" stroke="#B56C22" stroke-width="10" stroke-linejoin="round"/>
+
+  <!-- Paper-thin exposed edges. -->
+  <path d="M258 651 C367 687 541 700 779 665" fill="none" stroke="#8F4F1D" stroke-opacity="0.62" stroke-width="10" stroke-linecap="round"/>
+  <path d="M265 674 C393 711 555 716 745 688" fill="none" stroke="#FFE89A" stroke-opacity="0.76" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Broad yuba wrinkles, not surface noise. -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M305 365 C405 315 550 321 721 371" stroke="#FFF8D0" stroke-opacity="0.76" stroke-width="16"/>
+    <path d="M290 449 C403 407 570 413 752 474" stroke="#A96623" stroke-opacity="0.26" stroke-width="13"/>
+    <path d="M286 538 C413 502 568 512 737 565" stroke="#FFF1AB" stroke-opacity="0.58" stroke-width="12"/>
+  </g>
+
+  <!-- A few large pores survive at small sizes. -->
+  <g fill="#A96422" opacity="0.29">
+    <ellipse cx="363" cy="397" rx="14" ry="9" transform="rotate(-12 363 397)"/>
+    <ellipse cx="488" cy="470" rx="11" ry="8" transform="rotate(16 488 470)"/>
+    <ellipse cx="637" cy="391" rx="15" ry="9" transform="rotate(8 637 391)"/>
+    <ellipse cx="670" cy="552" rx="12" ry="8" transform="rotate(-15 670 552)"/>
+    <ellipse cx="383" cy="578" rx="13" ry="8" transform="rotate(11 383 578)"/>
+  </g>
+</svg>
