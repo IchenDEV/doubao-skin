@@ -2,7 +2,7 @@
   "name": "@doubao-skin/web",
   "private": true,
   "type": "module",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "license": "MIT",
   "packageManager": "pnpm@12.0.0",
   "engines": {

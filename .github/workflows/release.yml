@@ -22,7 +22,7 @@ jobs:
       - name: Check semantic version and workspace match
         run: |
           if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
-            echo "Release tags must use semantic versioning, for example v0.1.0" >&2
+            echo "Release tags must use semantic versioning, for example v0.4.0" >&2
             exit 1
           fi
           workspace_version=$(awk -F '"' '/^version =/ { print $2; exit }' Cargo.toml)
@@ -30,9 +30,25 @@ jobs:
             echo "Tag $GITHUB_REF_NAME does not match workspace version $workspace_version" >&2
             exit 1
           fi
+          node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+
+          const expected = process.env.GITHUB_REF_NAME.slice(1);
+          const manifests = [
+            "apps/web/package.json",
+            "plugins/doubao-skin/.codex-plugin/plugin.json",
+            "plugins/doubao-skin/.claude-plugin/plugin.json",
+          ];
+          for (const manifest of manifests) {
+            const actual = JSON.parse(readFileSync(manifest, "utf8")).version;
+            if (actual !== expected) {
+              throw new Error(`${manifest} version ${actual} does not match ${expected}`);
+            }
+          }
+          NODE
 
   macos:
-    name: Universal macOS package
+    name: Universal macOS desktop and CLI packages
     needs: [validate-tag]
     if: ${{ always() && (needs.validate-tag.result == 'success' || needs.validate-tag.result == 'skipped') }}
     runs-on: macos-26
@@ -137,6 +153,31 @@ jobs:
             dist/Doubao-Skin-macOS-universal.dmg
             dist/Doubao-Skin-macOS-universal.dmg.sha256
           if-no-files-found: error
+      - name: Build and sign universal macOS CLI
+        env:
+          CODESIGN_IDENTITY: ${{ env.CODESIGN_IDENTITY }}
+          CODESIGN_KEYCHAIN: ${{ env.SIGNING_KEYCHAIN }}
+        run: ./scripts/package.sh cli --universal-macos
+      - name: Verify stable CLI signature and package checksum
+        run: |
+          (cd dist && shasum -a 256 -c doubao-skin-cli-macOS-universal.tar.gz.sha256)
+          verify_dir=$(mktemp -d "$RUNNER_TEMP/doubao-skin-cli-verify.XXXXXX")
+          trap 'rm -rf "$verify_dir"' EXIT HUP INT TERM
+          test "$(tar -tzf dist/doubao-skin-cli-macOS-universal.tar.gz | wc -l | tr -d ' ')" -eq 2
+          tar -tzf dist/doubao-skin-cli-macOS-universal.tar.gz | grep -qx doubao-skin
+          tar -tzf dist/doubao-skin-cli-macOS-universal.tar.gz | grep -qx LICENSE
+          tar -xzf dist/doubao-skin-cli-macOS-universal.tar.gz -C "$verify_dir"
+          lipo "$verify_dir/doubao-skin" -verify_arch x86_64
+          lipo "$verify_dir/doubao-skin" -verify_arch arm64
+          ./scripts/package.sh verify-macos "$verify_dir/doubao-skin" "$MACOS_CERTIFICATE_SHA256"
+          "$verify_dir/doubao-skin" --version
+      - uses: actions/upload-artifact@v7
+        with:
+          name: doubao-skin-cli-macOS-universal
+          path: |
+            dist/doubao-skin-cli-macOS-universal.tar.gz
+            dist/doubao-skin-cli-macOS-universal.tar.gz.sha256
+          if-no-files-found: error
       - name: Remove temporary signing material
         if: ${{ always() }}
         run: |
@@ -200,10 +241,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - label: macOS-universal
-            runner: macos-26
-            build: --universal-macos
-            asset: doubao-skin-cli-macOS-universal.tar.gz
           - label: Linux-x64
             runner: ubuntu-24.04
             build: --host

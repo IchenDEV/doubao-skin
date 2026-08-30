@@ -2,18 +2,18 @@
 
 ## Automated release
 
-The `Release macOS app` workflow runs for tags beginning with `v`.
+The `Release` workflow runs for tags beginning with `v`.
 
 The job targets the GitHub `production` environment. Configure that environment with a required human reviewer; an agent may prepare the tag and artifacts but cannot authorize the production job.
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.4.0
+git push origin v0.4.0
 ```
 
 The workflow tests the workspace, builds Apple Silicon and Intel versions of the GUI, combines them into the universal app, signs the bundle, uploads ZIP and DMG packages with both checksums as workflow artifacts, and creates or updates the matching GitHub Release. A manual workflow run builds artifacts but does not create a GitHub Release.
 
-The CLI follows an independent matrix: macOS universal, Linux x64/ARM64, and Windows x64/x86/ARM64. Each CLI archive has its own checksum. The Windows hashes generate a `doubao-skin.json` Scoop manifest, while the desktop artifacts remain CLI-free.
+The CLI follows an independent artifact chain: macOS universal, Linux x64/ARM64, and Windows x64/x86/ARM64. Each CLI archive has its own checksum. The macOS CLI is signed after its universal slices are combined, using the same stable community identity imported for the desktop app. The Windows hashes generate a `doubao-skin.json` Scoop manifest, while the desktop artifacts remain CLI-free.
 
 ## Bundled themes
 
@@ -27,7 +27,7 @@ Set `BUNDLE_ALL_THEMES=1` when an internal build needs every checked-in theme. S
 
 ## Signing and notarization
 
-Every release uses the same long-lived community self-signed identity. The job refuses to build when its encrypted certificate, pinned SHA-256 fingerprint, or SHA-1 signing identity is missing or mismatched. This creates a continuous release identity across versions, but it is not Apple notarization: macOS may require users to right-click the app and choose Open on first launch.
+Every release uses the same long-lived community self-signed identity for both the macOS desktop app and macOS CLI. The job refuses to build when its encrypted certificate, pinned SHA-256 fingerprint, or SHA-1 signing identity is missing or mismatched. This creates a continuous release identity across versions, but it is not Apple notarization: macOS may require users to right-click the app or CLI and choose Open on first launch.
 
 Configure these GitHub Actions secrets:
 
@@ -52,5 +52,5 @@ Keep the encrypted recovery `.p12` outside the repository with mode `0600`; keep
 - Download both release packages and verify their checksums. Run `hdiutil verify` on the DMG, mount it read-only, confirm it contains “豆皮.app” and `Applications -> /Applications`, verify the mounted app with `./scripts/package.sh verify-macos <app> <certificate-sha256>`, then test a clean install.
 - Confirm the macOS app bundle has no `Contents/Resources/bin` or bundled Skill directories.
 - Confirm each Windows archive contains exactly one top-level `doubao-skin.exe`.
-- Confirm every CLI archive contains only the CLI binary and license, then smoke-test `--version` on native macOS and Linux runners.
+- Confirm every CLI archive contains only the CLI binary and license, then smoke-test `--version` on native macOS and Linux runners. Verify both macOS architectures and the CLI certificate fingerprint before publication.
 - Install the generated Release manifest with Scoop on a clean Windows user and confirm `doubao-skin --version` resolves through PATH without installing the desktop app.

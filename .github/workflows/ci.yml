@@ -53,6 +53,27 @@ jobs:
       - name: Check packaging scripts
         run: |
           bash -n scripts/package.sh scripts/package/*.sh
+      - name: Build and verify universal macOS CLI
+        run: |
+          ./scripts/package.sh cli --universal-macos
+          (cd dist && shasum -a 256 -c doubao-skin-cli-macOS-universal.tar.gz.sha256)
+          verify_dir=$(mktemp -d "$RUNNER_TEMP/doubao-skin-cli-verify.XXXXXX")
+          trap 'rm -rf "$verify_dir"' EXIT HUP INT TERM
+          test "$(tar -tzf dist/doubao-skin-cli-macOS-universal.tar.gz | wc -l | tr -d ' ')" -eq 2
+          tar -tzf dist/doubao-skin-cli-macOS-universal.tar.gz | grep -qx doubao-skin
+          tar -tzf dist/doubao-skin-cli-macOS-universal.tar.gz | grep -qx LICENSE
+          tar -xzf dist/doubao-skin-cli-macOS-universal.tar.gz -C "$verify_dir"
+          lipo "$verify_dir/doubao-skin" -verify_arch x86_64
+          lipo "$verify_dir/doubao-skin" -verify_arch arm64
+          codesign --verify --strict "$verify_dir/doubao-skin"
+          "$verify_dir/doubao-skin" --version
+      - uses: actions/upload-artifact@v7
+        with:
+          name: macOS-CLI-universal
+          path: |
+            dist/doubao-skin-cli-macOS-universal.tar.gz
+            dist/doubao-skin-cli-macOS-universal.tar.gz.sha256
+          if-no-files-found: error
 
   windows:
     name: Windows native ${{ matrix.label }}

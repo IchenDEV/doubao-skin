@@ -2,15 +2,15 @@
 set -eu
 
 if [ "$#" -ne 2 ]; then
-  echo "usage: $0 <app-bundle> <expected-certificate-sha256>" >&2
+  echo "usage: $0 <code-object> <expected-certificate-sha256>" >&2
   exit 2
 fi
 
-APP_BUNDLE=$1
+CODE_OBJECT=$1
 EXPECTED_INPUT=$2
 
-if [ ! -d "$APP_BUNDLE" ]; then
-  echo "app bundle does not exist: $APP_BUNDLE" >&2
+if [ ! -e "$CODE_OBJECT" ]; then
+  echo "code object does not exist: $CODE_OBJECT" >&2
   exit 1
 fi
 
@@ -26,7 +26,7 @@ if [ "${#EXPECTED}" -ne 64 ]; then
   exit 2
 fi
 
-codesign --verify --deep --strict "$APP_BUNDLE"
+codesign --verify --deep --strict "$CODE_OBJECT"
 
 VERIFY_DIR=$(mktemp -d "${TMPDIR:-/tmp}/doubao-skin-signature.XXXXXX")
 cleanup() {
@@ -35,10 +35,10 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 
 CERTIFICATE_PREFIX="$VERIFY_DIR/certificate"
-codesign -d --extract-certificates="$CERTIFICATE_PREFIX" "$APP_BUNDLE" >/dev/null 2>&1
+codesign -d --extract-certificates="$CERTIFICATE_PREFIX" "$CODE_OBJECT" >/dev/null 2>&1
 CERTIFICATE_FILE="${CERTIFICATE_PREFIX}0"
 if [ ! -f "$CERTIFICATE_FILE" ]; then
-  echo "could not extract signing certificate from $APP_BUNDLE" >&2
+  echo "could not extract signing certificate from $CODE_OBJECT" >&2
   exit 1
 fi
 
@@ -50,4 +50,4 @@ if [ "$ACTUAL" != "$EXPECTED" ]; then
   exit 1
 fi
 
-echo "Verified $APP_BUNDLE with certificate SHA-256 $ACTUAL"
+echo "Verified $CODE_OBJECT with certificate SHA-256 $ACTUAL"

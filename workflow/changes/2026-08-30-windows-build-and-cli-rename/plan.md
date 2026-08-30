@@ -31,9 +31,12 @@ approved_at: "2026-08-30"
 - `scripts/package/verify-windows-exe.sh` — 打包前验证 GUI 与图标资源
 - `scripts/package/macos.sh` — 移除内嵌 CLI、Skills 和独立 CLI 压缩包
 - `scripts/package/cli.sh`, `scripts/install-cli.sh` — 独立多平台 CLI 打包与安装链
+- `scripts/package/verify-macos-signature.sh` — App 与 CLI 共用的稳定证书指纹验证器
 - `scripts/package/generate-scoop-manifest.mjs` — 从当次 Windows CLI 哈希生成 Scoop 清单
 - `apps/web/src/components/DesktopDownloads.tsx`, `apps/web/src/lib/downloads.ts` — 浏览器本地桌面平台推荐
+- `apps/web/scripts/skill-discovery.test.mjs` — Cargo、Web 与两份插件清单的版本一致性门禁
 - `README.md`, `README.en.md`, `CHANGELOG.md` — CLI 名称更新
+- `Cargo.toml`, `Cargo.lock`, `apps/web/package.json`, `plugins/doubao-skin/.{codex-plugin,claude-plugin}/plugin.json` — `0.4.0` 版本统一
 - `docs/development.md`, `docs/submitting-themes.md`, `docs/releasing.md` — CLI 名称更新
 - `plugins/doubao-skin/skills/*/SKILL.md` — CLI 引用更新
 - `apps/web/public/.well-known/agent-skills/*/SKILL.md` — CLI 引用更新
@@ -56,12 +59,14 @@ approved_at: "2026-08-30"
 13. 根据覆盖安装后的 ARM64 实机复现，优先选择 `Application/` 下的官方外层启动器，并把 Windows 目标应用的启动工作目录固定为该 EXE 所在目录，避免直接运行 `Application/app/` 内部二进制后触发 `mcp_helper.dll` 缺失
 14. 全仓库兼容性审计：用户数据目录改用跨平台目录 API；live/offline 能力在进入路径和系统命令前明确分流；移除示例中的外部 `curl` 依赖；Windows 不注册 macOS 菜单和快捷键
 15. 将脚本整理为 `package/` 与 `checks/` 两组并保留单一 `scripts/package.sh` 入口；将 CI 与 release 的 Windows 构建迁移到 `windows-2025` 原生 runner
+16. 将发布候选统一为 `0.4.0`；在 `lipo` 合并后重签 macOS universal CLI，普通 CI 用 ad-hoc 签名检查结构，Release 与 App 共用长期身份和固定证书指纹
 
 ## Test-first proof
 
 - 重命名测试文件后运行 `cargo test -p skin-core` 验证 CLI 行为契约不变。
 - 在修复 Windows 实时注入前加入随机源和首次注入超时回归；测试先因缺少超时实现而编译失败，再完成修复。
 - 运行 `./scripts/check.sh workflow` 验证 SDLC 工件。
+- 修复前解包 universal CLI 后运行 `codesign --verify --strict`，确认 `lipo` 输出报 `code object is not signed at all`；修复后要求双架构、严格签名、校验和、归档内容和 `--version` 全部通过。
 
 ## Visual or integration proof
 
@@ -92,7 +97,8 @@ approved_at: "2026-08-30"
 - ARM64 覆盖安装验证确认官方豆包直接启动正常，但主题工具为打开 CDP 端口而重启后立即报 `mcp_helper.dll` 缺失。安装目录同时存在 `Application/Doubao.exe` 外层入口和 `Application/app/Doubao.exe` 内部二进制；Windows 分支原先优先选中内部二进制并继承主题工具工作目录。现改为优先外层入口、从入口所在目录启动，并加入入口优先级与工作目录回归测试。
 - 用户要求进一步减少系统强相关实现并全项目扫描。审计后把用户数据与缓存路径交给跨平台目录库，将无法跨平台的实时应用和 macOS 离线克隆明确隔离在能力边界内，并清除外部 `curl` 与非 macOS 平台上的 macOS 菜单注册。
 - 用户要求整理多语言脚本。对外入口收敛到 `scripts/package.sh`，实现按 `package/` 和 `checks/` 分组；远端 Windows CI 直接调用同一入口，避免 CI 与本地脚本分叉。
+- 用户准备发布 `v0.4.0`，要求 CLI 暂时沿用 App 的签名办法。实现将 universal CLI 留在同一 macOS Release 作业中，在一次证书导入后分别签名 App 与合并完成的 CLI，并对两者执行同一固定指纹校验；普通 CI 只做 ad-hoc 结构验证，不接触生产签名材料。
 
 ## Decision
 
-用户在 2026-08-30 明确要求按上述修复与分组方案继续，并立即产出 Windows 测试包；同日进一步确认桌面发布包只保留简洁入口，同时 CLI 必须保留为完全独立、可由 Agent 自动发现安装的跨平台链路。
+用户在 2026-08-30 明确要求按上述修复与分组方案继续，并立即产出 Windows 测试包；同日进一步确认桌面发布包只保留简洁入口，同时 CLI 必须保留为完全独立、可由 Agent 自动发现安装的跨平台链路。2026-08-31 用户明确准备发布 `v0.4.0`，要求先确认版本正确，并让 macOS CLI 临时复用 App 已有的稳定签名方案。

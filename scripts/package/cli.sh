@@ -7,6 +7,8 @@ DIST_DIR="$REPO_DIR/dist"
 BINARY_NAME="doubao-skin"
 PACKAGE_NAME="skin-core"
 BUILD_MODE=${1:---host}
+CODESIGN_IDENTITY=${CODESIGN_IDENTITY:--}
+CODESIGN_KEYCHAIN=${CODESIGN_KEYCHAIN:-}
 
 mkdir -p "$DIST_DIR"
 
@@ -81,6 +83,9 @@ build_universal_macos() {
     "$REPO_DIR/target/x86_64-apple-darwin/release/$BINARY_NAME" \
     -output "$staging/$BINARY_NAME"
   chmod 755 "$staging/$BINARY_NAME"
+  lipo "$staging/$BINARY_NAME" -verify_arch x86_64
+  lipo "$staging/$BINARY_NAME" -verify_arch arm64
+  sign_macos_binary "$staging/$BINARY_NAME"
   cp "$REPO_DIR/LICENSE" "$staging/LICENSE"
 
   archive="$DIST_DIR/doubao-skin-cli-macOS-universal.tar.gz"
@@ -117,6 +122,9 @@ build_host() {
   trap 'rm -rf "$staging"' EXIT HUP INT TERM
   cp "$REPO_DIR/target/release/$BINARY_NAME" "$staging/$BINARY_NAME"
   chmod 755 "$staging/$BINARY_NAME"
+  if [ "$platform" = "macOS" ]; then
+    sign_macos_binary "$staging/$BINARY_NAME"
+  fi
   cp "$REPO_DIR/LICENSE" "$staging/LICENSE"
 
   archive="$DIST_DIR/doubao-skin-cli-$platform-$label.tar.gz"
@@ -127,6 +135,18 @@ build_host() {
   rm -rf "$staging"
   trap - EXIT HUP INT TERM
   report "$archive"
+}
+
+sign_macos_binary() {
+  binary=$1
+  if [ -n "$CODESIGN_KEYCHAIN" ]; then
+    codesign --force --options runtime --timestamp=none \
+      --keychain "$CODESIGN_KEYCHAIN" --sign "$CODESIGN_IDENTITY" "$binary"
+  else
+    codesign --force --options runtime --timestamp=none \
+      --sign "$CODESIGN_IDENTITY" "$binary"
+  fi
+  codesign --verify --strict "$binary"
 }
 
 write_checksum() {

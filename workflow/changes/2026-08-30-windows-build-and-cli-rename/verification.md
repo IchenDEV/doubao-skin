@@ -227,6 +227,50 @@ verified_at: ""
   Its sole failed job is still Development workflow, where `check-pr`
   correctly rejects this verification's truthful `pending` status.
 
+### v0.4.0 macOS CLI release preparation
+
+- Before the signing fix, the current universal CLI archive built and ran, but
+  `codesign --verify --strict` on its extracted `doubao-skin` failed with
+  `code object is not signed at all`. This recorded the `lipo` signature loss
+  as the red baseline.
+- After the fix, `./scripts/package.sh cli --universal-macos` signs the combined
+  binary rather than relying on either input slice. The locally produced
+  archive passes its SHA-256 sidecar, contains exactly `doubao-skin` and
+  `LICENSE`, verifies both x86_64 and ARM64 slices with `lipo`, passes strict
+  ad-hoc signature verification with hardened runtime, and prints
+  `doubao-skin 0.4.0`. The final local archive hash for this pass is
+  `2969dccf6312cbdae96311959a499651b546b26be71f542070af6f89b3b15e0f`.
+- Ordinary macOS CI now repeats that package, content, architecture, signature,
+  and version verification without production credentials. The Release job
+  keeps the CLI in the same macOS job as the App, reuses the already imported
+  `CODESIGN_IDENTITY` and temporary keychain, and checks both code objects with
+  the same pinned `MACOS_CERTIFICATE_SHA256` verifier.
+- `Cargo.toml`, both workspace package records in `Cargo.lock`,
+  `apps/web/package.json`, and the Codex/Claude plugin manifests now report
+  `0.4.0`; Cargo remains the release tag authority. The Web gate and Release
+  tag validation now reject a future version mismatch across those manifests.
+- `./scripts/check.sh all` passes on the `0.4.0` worktree: workflow policy and
+  portability, 11 desktop tests, 36 core tests, 13 Rust integration tests,
+  formatting, Clippy with warnings denied, 12 Web tests, Skill consistency,
+  TypeScript, the 38-route production build, and the high-severity dependency
+  audit all succeeded.
+- `./scripts/package.sh desktop-macos --universal` also passes on the final
+  versioned worktree. The App reports `CFBundleShortVersionString` `0.4.0`, its
+  executable contains x86_64 and ARM64, strict ad-hoc bundle verification and
+  both ZIP/DMG sidecars pass, and the App contains neither a CLI `bin/` nor a
+  bundled Skill directory. The local ZIP and DMG hashes are respectively
+  `e09bd4be41cab29330452584f07909fa333ca0d77e7ec0ccbcf9e9ca1c786f49`
+  and `3504cfbbc4d0b5ef1275519a89ead8e3eab92835c05587b904f009b439c24bf5`.
+- The `v0.4.0` tag and GitHub Release do not exist yet, so the new stable CLI
+  download URL correctly remains unavailable until publication. All five
+  existing signing-secret names required by the Release workflow are present,
+  but their values were neither read nor exposed.
+- This macOS host does not currently have the community release identity in its
+  login keychain. Local evidence therefore proves the universal package and
+  signature structure only; the stable certificate fingerprint remains a
+  production-environment Release gate and must not be claimed before that job
+  succeeds.
+
 ## Behavioral evidence
 
 - Desktop sources are grouped under `app/`, `ui/`, `preview/`, and `store/`.

@@ -28,6 +28,8 @@ approved_at: "2026-08-30"
 12. Windows CLI 提供 Release 生成的 Scoop 清单，按 x64、x86、ARM64 选择资产并校验 SHA-256。
 13. macOS/Linux CLI 安装脚本必须自动识别 macOS 通用版、Linux x64 或 Linux ARM64，并校验 sidecar SHA-256。
 14. Web 下载页必须只在浏览器本地检测平台，不上传用户代理信息；推荐 macOS 或对应 Windows 架构，同时保留全部桌面版本的手动下载链接。
+15. macOS universal CLI 必须在合并 x86_64 与 ARM64 切片后重新签名；Release 使用与 App 相同的长期社区身份和固定 SHA-256 证书指纹，普通 CI 使用 ad-hoc 身份验证签名结构但不得访问生产密钥。
+16. `v0.4.0` 的 Cargo 工作区、Web 包和 Codex/Claude 插件清单版本必须一致；Tag 校验继续以 Cargo 工作区版本为权威来源。
 
 ## User experience
 
@@ -69,6 +71,7 @@ approved_at: "2026-08-30"
 
 - 三架构 Windows 桌面与 CLI ZIP 均由 Windows runner 构建，并在普通 PR CI 中持续编译与留存测试产物。
 - 发布任务只有在 macOS 与真实 Windows runner 上的全部 Windows 矩阵成功后才允许上传 Release。
+- 普通 PR CI 必须构建、校验和、解包并严格验证 macOS universal CLI 的双架构与签名；Release 还必须核对 CLI 与 App 的同一证书指纹。
 - 每个完整 Windows 包只运行顶层 `doubao-skin.exe`，归档内不得出现第二个顶层 EXE。
 - Release 同时上传桌面资产和独立 CLI-only 资产，但 macOS 应用包不得含 `Contents/Resources/bin` 或打包 Skills，Windows 桌面 ZIP 也不得含 CLI-only 文件。
 - Scoop 清单的三种架构 URL 和哈希必须与同一 Release 的 CLI-only 资产一致。
@@ -81,4 +84,4 @@ approved_at: "2026-08-30"
 
 ## Decision
 
-用户在 2026-08-30 明确确认上述构建目标；同日实机测试发现无图标、无关闭按钮、预置主题图片空白和目标应用误报未安装，并明确要求修复后重新产出测试包。后续用户明确废止“macOS 交叉编译作为 CI”的方案，要求整理多语言脚本并由远端真实 Windows 设备完成 Windows 编译验证。
+用户在 2026-08-30 明确确认上述构建目标；同日实机测试发现无图标、无关闭按钮、预置主题图片空白和目标应用误报未安装，并明确要求修复后重新产出测试包。后续用户明确废止“macOS 交叉编译作为 CI”的方案，要求整理多语言脚本并由远端真实 Windows 设备完成 Windows 编译验证。2026-08-31 用户明确指定下一版本为 `0.4.0`，并要求 macOS CLI 的临时签名处理与 App 保持一致。
