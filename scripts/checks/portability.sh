@@ -7,11 +7,38 @@ cd "$REPO_ROOT"
 
 failures=0
 
+for required_command in git grep find awk; do
+  if ! command -v "$required_command" >/dev/null 2>&1; then
+    printf 'portability: required command not found: %s\n' "$required_command" >&2
+    exit 1
+  fi
+done
+
+search_rust_sources() {
+  local pattern=$1
+  shift
+  local pathspecs=()
+  local root
+  for root in "$@"; do
+    pathspecs+=(":(glob)$root/**/*.rs")
+  done
+
+  local file
+  local file_matches
+  while IFS= read -r -d '' file; do
+    if file_matches=$(grep -HnE -- "$pattern" "$file"); then
+      printf '%s\n' "$file_matches"
+    elif [ "$?" -ne 1 ]; then
+      return 1
+    fi
+  done < <(git ls-files -co --exclude-standard -z -- "${pathspecs[@]}")
+}
+
 reject() {
   description=$1
   pattern=$2
   shift 2
-  matches=$(rg -n --glob '*.rs' -e "$pattern" "$@" || true)
+  matches=$(search_rust_sources "$pattern" "$@")
   if [ -n "$matches" ]; then
     printf 'portability: %s\n%s\n' "$description" "$matches" >&2
     failures=1
@@ -23,7 +50,7 @@ reject_outside_adapters() {
   pattern=$2
   allowed=$3
   shift 3
-  matches=$(rg -n --glob '*.rs' -e "$pattern" "$@" || true)
+  matches=$(search_rust_sources "$pattern" "$@")
   matches=$(printf '%s\n' "$matches" | grep -Ev "$allowed" || true)
   if [ -n "$matches" ]; then
     printf 'portability: %s\n%s\n' "$description" "$matches" >&2

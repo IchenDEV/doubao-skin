@@ -208,39 +208,109 @@ fn display_icon_path(value: &str) -> Option<PathBuf> {
     (!path.is_empty()).then(|| PathBuf::from(path))
 }
 
+#[cfg(any(test, target_os = "windows"))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum WindowsRegistryView {
+    Registry64,
+    Registry32,
+}
+
+#[cfg(any(test, target_os = "windows"))]
+#[derive(Debug)]
+struct WindowsRegistryEntry {
+    key_name: String,
+    display_name: String,
+    display_icon: Option<String>,
+    install_location: Option<String>,
+}
+
+#[cfg(any(test, target_os = "windows"))]
+fn windows_registry_views() -> [WindowsRegistryView; 2] {
+    [
+        WindowsRegistryView::Registry64,
+        WindowsRegistryView::Registry32,
+    ]
+}
+
+#[cfg(target_os = "windows")]
+impl WindowsRegistryView {
+    fn access(self) -> u32 {
+        use windows_sys::Win32::System::Registry::{KEY_WOW64_32KEY, KEY_WOW64_64KEY};
+
+        match self {
+            Self::Registry64 => KEY_WOW64_64KEY,
+            Self::Registry32 => KEY_WOW64_32KEY,
+        }
+    }
+}
+
+#[cfg(any(test, target_os = "windows"))]
+fn registry_install_paths_from_views(
+    target: TargetApp,
+    mut entries_in_view: impl FnMut(WindowsRegistryView) -> Vec<WindowsRegistryEntry>,
+) -> Vec<PathBuf> {
+    let mut paths = Vec::new();
+    for view in windows_registry_views() {
+        for entry in entries_in_view(view) {
+            if !registry_entry_matches(target, &entry.key_name, &entry.display_name) {
+                continue;
+            }
+            if let Some(path) = entry.display_icon.as_deref().and_then(display_icon_path) {
+                paths.push(path);
+            }
+            if let Some(location) = entry
+                .install_location
+                .as_deref()
+                .map(str::trim)
+                .filter(|location| !location.is_empty())
+            {
+                paths.push(PathBuf::from(location));
+            }
+        }
+    }
+    paths.sort_unstable();
+    paths.dedup();
+    paths
+}
+
+#[cfg(target_os = "windows")]
+fn windows_registry_entries(
+    hive: &windows_registry::Key,
+    view: WindowsRegistryView,
+) -> Vec<WindowsRegistryEntry> {
+    const UNINSTALL: &str = r"Software\Microsoft\Windows\CurrentVersion\Uninstall";
+    let Ok(uninstall) = hive.options().read().access(view.access()).open(UNINSTALL) else {
+        return Vec::new();
+    };
+    let Ok(keys) = uninstall.keys() else {
+        return Vec::new();
+    };
+    keys.filter_map(|key_name| {
+        uninstall
+            .open(&key_name)
+            .ok()
+            .map(|entry| WindowsRegistryEntry {
+                key_name,
+                display_name: entry.get_string("DisplayName").unwrap_or_default(),
+                display_icon: entry.get_string("DisplayIcon").ok(),
+                install_location: entry.get_string("InstallLocation").ok(),
+            })
+    })
+    .collect()
+}
+
 #[cfg(target_os = "windows")]
 fn windows_registry_install_paths(target: TargetApp) -> Vec<PathBuf> {
     use windows_registry::{CURRENT_USER, LOCAL_MACHINE};
 
-    const UNINSTALL: &str = r"Software\Microsoft\Windows\CurrentVersion\Uninstall";
     let mut paths = Vec::new();
     for hive in [CURRENT_USER, LOCAL_MACHINE] {
-        let Ok(uninstall) = hive.open(UNINSTALL) else {
-            continue;
-        };
-        let Ok(keys) = uninstall.keys() else {
-            continue;
-        };
-        for key_name in keys {
-            let Ok(entry) = uninstall.open(&key_name) else {
-                continue;
-            };
-            let display_name = entry.get_string("DisplayName").unwrap_or_default();
-            if !registry_entry_matches(target, &key_name, &display_name) {
-                continue;
-            }
-            if let Ok(icon) = entry.get_string("DisplayIcon") {
-                if let Some(path) = display_icon_path(&icon) {
-                    paths.push(path);
-                }
-            }
-            if let Ok(location) = entry.get_string("InstallLocation") {
-                if !location.trim().is_empty() {
-                    paths.push(PathBuf::from(location.trim()));
-                }
-            }
-        }
+        paths.extend(registry_install_paths_from_views(target, |view| {
+            windows_registry_entries(hive, view)
+        }));
     }
+    paths.sort_unstable();
+    paths.dedup();
     paths
 }
 
@@ -511,6 +581,52 @@ mod tests {
             "DoubaoWork",
             "豆包工作"
         ));
+    }
+
+    #[test]
+    fn windows_registry_detection_reads_both_architecture_views() {
+        let mut visited = Vec::new();
+        let paths = registry_install_paths_from_views(TargetApp::Doubao, |view| {
+            visited.push(view);
+            match view {
+                WindowsRegistryView::Registry64 => vec![WindowsRegistryEntry {
+                    key_name: "Doubao-x64".into(),
+                    display_name: "豆包".into(),
+                    display_icon: Some(r"C:\Program Files\Doubao\Doubao.exe,0".into()),
+                    install_location: None,
+                }],
+                WindowsRegistryView::Registry32 => vec![WindowsRegistryEntry {
+                    key_name: "Doubao-x86".into(),
+                    display_name: "豆包".into(),
+                    display_icon: None,
+                    install_location: Some(r"C:\Program Files (x86)\Doubao".into()),
+                }],
+            }
+        });
+
+        assert_eq!(
+            visited,
+            vec![
+                WindowsRegistryView::Registry64,
+                WindowsRegistryView::Registry32
+            ]
+        );
+        assert_eq!(
+            paths,
+            vec![
+                PathBuf::from(r"C:\Program Files (x86)\Doubao"),
+                PathBuf::from(r"C:\Program Files\Doubao\Doubao.exe"),
+            ]
+        );
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn windows_registry_views_use_the_official_wow64_access_flags() {
+        use windows_sys::Win32::System::Registry::{KEY_WOW64_32KEY, KEY_WOW64_64KEY};
+
+        assert_eq!(WindowsRegistryView::Registry64.access(), KEY_WOW64_64KEY);
+        assert_eq!(WindowsRegistryView::Registry32.access(), KEY_WOW64_32KEY);
     }
 
     #[test]

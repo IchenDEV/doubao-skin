@@ -7,8 +7,8 @@ All notable changes are recorded here. This project follows Semantic Versioning 
 ### Added
 
 - `doubao-skin --version` flag.
-- Windows cross-compiled desktop packages for x64, x86, and ARM64, each with one `doubao-skin.exe` entry point.
-- CLI binary renamed from `doubao-theme` to `doubao-skin` for consistency with the product name.
+- Windows desktop packages built on native Windows runners for x64, x86, and ARM64, each with one `doubao-skin.exe` entry point.
+- CLI binary standardized as `doubao-skin` for consistency with the product name.
 - CLI-only release assets for macOS universal, Linux x64/ARM64, and Windows x64/x86/ARM64, kept separate from every desktop package.
 - Scoop manifest for architecture-aware Windows CLI installation and a platform-detecting macOS/Linux installer.
 - Browser-local desktop download recommendation with manual architecture selection.

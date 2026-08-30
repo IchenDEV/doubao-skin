@@ -157,6 +157,63 @@ verified_at: ""
   truthfully `pending`; `scripts/devflow check-pr` requires the final human or
   fresh-context verdict before the PR gate can pass.
 
+### Independent fresh-context audit on 2026-08-31
+
+- The audit compared `origin/main..HEAD` at
+  `a4bba0ae6305bac74059688d24ac59c33568ada8` and separately reviewed the
+  uncommitted `scripts/checks/portability.sh` change. `git diff --check
+  origin/main..HEAD` and `git diff --check` both passed.
+- During the audit, the implementation worktree added the mixed-bitness ARP
+  fix and its Windows-only dependency, updated the lockfile, and corrected the
+  CHANGELOG. Those follow-up diffs were independently reread before the final
+  local gate below; they are not part of the audited HEAD or its CI artifacts.
+- `./scripts/check.sh workflow` passed: 14 artifact sets validated, workflow
+  policy cases passed, and the portability boundary check passed. With
+  `PATH=/usr/bin:/bin:/usr/sbin:/sbin`, `rg` was unavailable and
+  `/bin/bash scripts/checks/portability.sh` still passed, directly exercising
+  the working-tree scanner fallback.
+- After the follow-up fixes below, `./scripts/check.sh all` passed on the final
+  worktree, including 11 desktop tests, 36 core tests, 7 authoring tests, 2
+  bundled-theme path tests, 4 CLI integration tests, formatting, Clippy with
+  warnings denied, 12 Web tests, generated-Skill consistency, TypeScript, the
+  38-route production build, and the high-severity dependency audit.
+- CI run
+  [`33323010961`](https://github.com/IchenDEV/doubao-skin/actions/runs/33323010961)
+  is for the exact audited HEAD. Rust workspace, Web application, and native
+  Windows x64, x86, and ARM64 jobs all succeeded. Its sole failed job is
+  Development workflow: artifact validation passed and `check-pr` rejected
+  this verification's truthful `pending` status.
+- The run's three unexpired artifacts were downloaded and independently
+  checked. GitHub reports `Windows-native-x64` at 10,752,890 bytes,
+  `Windows-native-x86` at 10,122,236 bytes, and `Windows-native-arm64` at
+  10,271,196 bytes. All six sidecar checksums passed. The Desktop ZIP hashes
+  are `e5d2ed8297bb97727e74e260eed0a39ee46c8bcae3b1896c2cc2db1a09227752`,
+  `947a814a765da9e2cc2f9ac4e673086b3986a3f38d77337241169059b2257804`,
+  and `c55297e47064f60f63037e351ceaae1a813169ccf51db609644419bb1b418db2`;
+  the CLI ZIP hashes are
+  `2dfd7eab9de9078c884e8fe7a6dd6b6f8c38b6ca692b8bf72375fc7c9ede65f8`,
+  `9576bd228af1aa0a614fca2dc478eca58d8e9eb40eb09e668821c290061b3b04`,
+  and `7ab2d918c8f2e140b9364897fae058c204a928d9a02faea20a299c85e9bfe84f`
+  in x64, x86, ARM64 order.
+- Every downloaded Desktop ZIP has exactly one top-level
+  `doubao-skin.exe`, no `bin/` or `skills/` entries, and the expected sibling
+  theme tree. Every CLI ZIP contains exactly `doubao-skin.exe` and `LICENSE`.
+  `file` identified matching x86-64, Intel 80386, and AArch64 GUI/console
+  binaries. `scripts/package/verify-windows-exe.sh` independently confirmed
+  ICON, GROUP_ICON, and Windows GUI subsystem resources on all three Desktop
+  executables.
+- Regenerating `doubao-skin.json` from the three downloaded CLI sidecars
+  produced matching x64, x86, and ARM64 URLs and hashes. On macOS, both
+  `./scripts/package.sh desktop-windows x86_64-pc-windows-msvc` and
+  `./scripts/package.sh cli x86_64-pc-windows-msvc` failed before Cargo with
+  the required Windows-MSVC-host boundary.
+- A fresh `cargo check -p skin-core --lib --target
+  x86_64-pc-windows-msvc --locked` attempt could not compile `ring` on this
+  macOS host because the host has no Windows C sysroot (`assert.h` was
+  missing). Consequently the new Windows-only registry-view code still needs
+  the repository-mandated native Windows CI rerun rather than local
+  cross-target evidence.
+
 ## Behavioral evidence
 
 - Desktop sources are grouped under `app/`, `ui/`, `preview/`, and `store/`.
@@ -303,6 +360,30 @@ verified_at: ""
   into the guest, and `vmrun` correctly refused guest operations without a
   password. No credential was requested or stored, so this newest hash was not
   relaunched in the guest during the audit pass.
+- The first independent pass found that mixed-bitness ARP discovery opened
+  only the process-default registry view. The follow-up worktree now explicitly
+  enumerates Registry64 and Registry32 with the Windows `KEY_WOW64_64KEY` and
+  `KEY_WOW64_32KEY` constants, deduplicates discovered paths, and adds a
+  seam through which production discovery reads each view. The regression
+  injects distinct fake entries, asserts the Registry64/Registry32 visit order,
+  and proves paths from both views are collected. A Windows-only test also
+  checks the enum-to-`KEY_WOW64_*` mapping. The 36-test core suite passes
+  locally; native Windows compilation and the Windows-only assertion remain
+  pending on the next CI run.
+- The first independent pass also found that `CHANGELOG.md` called the packages
+  cross-compiled and retained the old CLI binary name. The follow-up worktree
+  now says the packages are built on native Windows runners and describes the
+  CLI only as `doubao-skin`. A fresh tracked-source search finds no old CLI
+  reference outside the accepted DOM attributes and Skill identifiers.
+- The existing record describes real-window x64 and ARM64 checks but does not
+  provide inspectable normal-and-narrow final-state evidence for the native UI
+  change. The 1440x1000 and 390x844 evidence is for the Web guide, not the
+  native window. This remains an evidence gap under the repository's native UI
+  definition of done.
+- The ARP fix, CHANGELOG correction, and `portability.sh` fallback audited
+  above remain uncommitted and therefore were not present in run
+  `33323010961`. After the final worktree is committed, CI must rerun the three
+  native Windows builds and retain replacement artifacts for that new commit.
 
 ## Verdict
 
@@ -326,3 +407,16 @@ three native Windows CI jobs now pass and retain downloadable test artifacts.
 The file stays `pending` until a human or fresh-context verifier records the
 final verdict; the newest native artifact also has not yet been relaunched in
 the guest VM.
+
+### Independent fresh-context verdict on 2026-08-31
+
+`pending`. Native Windows compilation, package naming, PE resources, and
+Desktop/CLI archive separation are proven for x64, x86, and ARM64 at the
+audited HEAD. The initial ARP and CHANGELOG findings are fixed in the current
+worktree, and the complete local gate plus the no-`rg` portability check pass.
+A final pass still requires native Windows CI and replacement artifacts for
+the new commit and inspectable normal/narrow native-window validation of the
+latest package. The current VMware control channel can read the guest display
+but reports `noWindowsAvailable` for click and keypress operations, so that
+visual gate cannot be completed in this audit without a working interactive
+guest channel.

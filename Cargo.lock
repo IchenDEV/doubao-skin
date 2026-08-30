@@ -4908,6 +4908,7 @@ dependencies = [
  "sha2 0.11.0",
  "ureq",
  "windows-registry",
+ "windows-sys 0.61.2",
  "zip",
 ]
 
