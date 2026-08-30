@@ -354,6 +354,24 @@ verified_at: ""
   integration tests, formatting, Clippy with warnings denied, 15 Web tests,
   generated Skill consistency, TypeScript, the 42-route production build, and
   the high-severity dependency audit all succeeded.
+- CI run
+  [`33332896594`](https://github.com/IchenDEV/doubao-skin/actions/runs/33332896594)
+  completed successfully for exact PR HEAD
+  `e5b2ba304510a53939bb584ef2dbf01574574926`. Development workflow executed
+  the real Draft gate with the PR body and `PR_IS_DRAFT=true`; Rust, Web, and
+  native Windows x64/x86/ARM64 also passed. The Windows jobs built and uploaded
+  separate Desktop and CLI archives, and the macOS job built and verified the
+  universal CLI. The four unexpired artifacts are `Windows-native-x64`
+  (12,491,015 bytes), `Windows-native-x86` (11,891,500 bytes),
+  `Windows-native-arm64` (12,013,769 bytes), and `macOS-CLI-universal`
+  (2,284,362 bytes). Vercel and Vercel Preview Comments were also green on the
+  same PR head.
+- A fresh-context verifier independently inspected the run and Development
+  workflow log. It confirmed that the new gate ran rather than being skipped
+  or reusing an old result, printed `Draft PR gate passed` with verification
+  still `pending`, and left PR #10 open, Draft, cleanly mergeable, and all
+  checks green. This passes the CI-policy fix without changing the overall
+  product verification verdict or its existing real-window evidence gaps.
 
 ## Behavioral evidence
 
