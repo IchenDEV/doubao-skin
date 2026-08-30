@@ -7,23 +7,23 @@ created: "2026-08-30"
 source: "user"
 risk: "critical"
 approved_by: "idevlab"
-approved_at: "2026-08-30"
+approved_at: "2026-08-31"
 ---
 
-# Intent: Windows 交叉编译打包与 CLI 重命名
+# Intent: Windows 原生构建、兼容性与 CLI 重命名
 
 ## Problem
 
-豆皮当前仅有 macOS 构建流水线。用户需要在 Windows 设备（x64、x86、ARM64）上验证桌面应用，但缺少对应的交叉编译配置、打包脚本和 CI 作业。早期方案又把开发者 CLI 嵌入完整包并额外发布 CLI-only 包，造成多个入口和重复下载物。
+豆皮原本仅有 macOS 构建流水线。用户需要在 Windows 设备（x64、x86、ARM64）上验证桌面应用，但缺少由 Windows 主机执行的原生编译、打包脚本和 CI 作业。早期方案又把开发者 CLI 嵌入完整包并额外发布 CLI-only 包，造成多个入口和重复下载物。
 
 ## Proposed outcome
 
-1. 从 macOS 交叉编译生成 Windows x64、x86、ARM64 三个架构的桌面应用，每个包只有一个 `doubao-skin.exe` 入口。
+1. 由远端 Windows runner 原生生成 Windows x64、x86、ARM64 三个架构的桌面应用，每个包只有一个 `doubao-skin.exe` 入口。
 2. CI release 工作流新增 Windows 构建作业，产出带校验和的 ZIP 包。
 3. CLI 统一命名为 `doubao-skin`，不嵌入桌面包，通过独立的多平台 Release 资产安装。
 4. Windows CLI 提供 Scoop 清单，macOS/Linux 提供自动识别平台并校验哈希的安装脚本。
 5. Web 下载页在浏览器本地识别 macOS 或 Windows 与可用架构，推荐正确桌面包并保留手动选择。
-6. GPUI Windows 着色器通过内嵌源码 + 运行时 D3DCompile 解决交叉编译路径问题。
+6. 删除 GPUI vendored patch 与 macOS 交叉编译备用链，只保留上游 GPUI 和 Windows 原生构建。
 7. 将桌面源码按 app、ui、preview、store 分组，避免单目录平铺大量文件。
 8. 为 `v0.4.0` 统一工作区、Web 与插件版本；macOS universal CLI 在 `lipo` 合并后复用桌面 App 的长期稳定社区签名身份。
 
@@ -36,7 +36,7 @@ approved_at: "2026-08-30"
 
 ## Constraints
 
-- macOS 交叉编译使用 xwin + clang-cl 方案，不依赖 Windows 构建机器。
+- Windows 发布资产必须由真实 Windows runner 原生构建；不保留 xwin 或 GPUI 本地补丁备用链。
 - 不修改技能名（create-doubao-theme、apply-doubao-theme），仅更新其内部对 CLI 二进制的引用。
 - 不修改 DOM 注入属性名（data-doubao-theme-icon、data-doubao-theme-composer），它们是运行时协议的一部分。
 - 优先使用上游 gpui_windows，不在仓库中保留整份 vendored 补丁。
@@ -44,7 +44,6 @@ approved_at: "2026-08-30"
 ## Out of scope
 
 - Windows 代码签名和安装包（MSI/MSIX）。
-- Windows 原生 UI 功能测试（由用户在设备上手动验证）。
 - 重写 GPUI 上游着色器架构。
 
 ## Success signals
@@ -60,7 +59,7 @@ approved_at: "2026-08-30"
 
 ## Open questions
 
-- Windows ARM64 虚拟机上 DirectX 兼容性需用户实机验证。
+- 无未决产品设计问题；最终发布仍受验收记录与生产签名作业约束。
 
 ## Decision
 

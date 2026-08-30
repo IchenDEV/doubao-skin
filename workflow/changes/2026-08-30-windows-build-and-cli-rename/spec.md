@@ -7,14 +7,14 @@ created: "2026-08-30"
 based_on: intent.md
 risk: "critical"
 approved_by: "idevlab"
-approved_at: "2026-08-30"
+approved_at: "2026-08-31"
 ---
 
 # Spec: Windows 原生打包与 CLI 重命名
 
 ## Requirements
 
-1. 对外只保留 `scripts/package.sh` 打包入口；内部按桌面平台、CLI、校验和可选本地交叉构建分组。
+1. 对外只保留 `scripts/package.sh` 打包入口；内部按桌面平台、CLI、校验和平台资源验证分组。
 2. CI 和 release 工作流必须在真实 Windows runner 上原生编译 x64、x86、ARM64 Windows 资产，不以 macOS 交叉编译作为通过证据。
 3. CLI 名统一为 `doubao-skin`，不进入桌面发布包，通过独立的 macOS、Linux 与 Windows CLI-only 资产发布。
 4. 移除仓库中的 `patches/gpui_windows` vendored patch，优先使用固定 revision 的上游 GPUI。
@@ -43,7 +43,7 @@ approved_at: "2026-08-30"
 - Windows CI 工具链：`windows-2025` runner 安装相应 MSVC target，直接执行 Cargo 构建。三个架构均在 Windows 操作系统上构建。
 - Windows 打包脚本在非 Windows 主机上直接失败；仓库不保留 GPUI 补丁或 cargo-xwin 备用路径，避免出现两套构建行为。
 - 桌面应用内部 Cargo 二进制名为 `doubao-skin-app`，Windows 打包时复制为唯一用户入口 `doubao-skin.exe`。
-- macOS 应用包只含 GUI、主题和许可证；独立 CLI 构建矩阵另行发布 macOS universal、Linux x64/ARM64 和 Windows x64/x86/ARM64。
+- macOS 应用包只含 GUI、主题和许可证；macOS universal CLI 在同一受保护的 macOS Release 作业中作为独立资产生成，Linux x64/ARM64 与 Windows x64/x86/ARM64 CLI 由独立矩阵生成。
 - Scoop 清单由当次 Windows CLI 包的真实哈希生成并作为 `doubao-skin.json` Release 资产发布。
 - Windows 使用非透明 GPUI 标题栏恢复系统窗口控件；macOS 标题栏策略不变。
 - 所有主题位图向 GPUI 传递 `PathBuf`/文件资源，不再把绝对路径降级为字符串资源。
@@ -65,7 +65,7 @@ approved_at: "2026-08-30"
 ## Areas of concern
 
 - Windows ARM64 虚拟机 DirectX 兼容性需实机验证。
-- clang-cl 包装脚本对新依赖可能需要扩展。
+- 长期社区签名身份只存在于受人工审批保护的 Release 环境，普通 CI 只能验证 ad-hoc 签名结构。
 
 ## Acceptance criteria
 

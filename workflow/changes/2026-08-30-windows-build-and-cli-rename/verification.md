@@ -287,9 +287,11 @@ verified_at: ""
 - Release publication now gates independent Desktop and CLI matrices. Desktop
   uploads remain CLI-free; CLI uploads remain theme/GUI-free. Windows Desktop
   CI also asserts one top-level EXE and its exact `doubao-skin.exe` name.
-- The CLI matrix covers macOS universal, native Linux x64/ARM64, and Windows
-  x64/x86/ARM64. A downstream job generates the Scoop manifest only after all
-  CLI architectures pass; publication requires Desktop, CLI, and Scoop jobs.
+- The independent CLI artifact chain covers macOS universal in the protected
+  macOS job plus native Linux x64/ARM64 and Windows x64/x86/ARM64 in the CLI
+  matrix. A downstream job generates the Scoop manifest only after every
+  matrix target passes; publication requires Desktop, CLI, macOS, and Scoop
+  jobs.
 - `scripts/install-cli.sh` detects macOS or Linux architecture, downloads the
   CLI-only archive and sidecar checksum, verifies it, and installs only the
   `doubao-skin` executable. Windows instructions use the generated Scoop

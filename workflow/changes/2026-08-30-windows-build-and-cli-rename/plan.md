@@ -7,7 +7,7 @@ created: "2026-08-30"
 based_on: spec.md
 risk: "critical"
 approved_by: "idevlab"
-approved_at: "2026-08-30"
+approved_at: "2026-08-31"
 ---
 
 # Plan: Windows 原生打包与 CLI 重命名
@@ -45,7 +45,7 @@ approved_at: "2026-08-30"
 ## Order of work
 
 1. Windows 构建脚本和 CI 配置
-2. gpui_windows 最小临时交叉编译修正
+2. 删除 gpui_windows vendored patch 与 xwin 交叉构建备用链
 3. CLI 二进制重命名（源码 + Cargo）
 4. 全仓库文档/脚本/网站 CLI 引用更新，并把安装方式收敛为源码开发工具
 5. 测试文件重命名和更新
@@ -66,7 +66,7 @@ approved_at: "2026-08-30"
 - 重命名测试文件后运行 `cargo test -p skin-core` 验证 CLI 行为契约不变。
 - 在修复 Windows 实时注入前加入随机源和首次注入超时回归；测试先因缺少超时实现而编译失败，再完成修复。
 - 运行 `./scripts/check.sh workflow` 验证 SDLC 工件。
-- 修复前解包 universal CLI 后运行 `codesign --verify --strict`，确认 `lipo` 输出报 `code object is not signed at all`；修复后要求双架构、严格签名、校验和、归档内容和 `--version` 全部通过。
+- 修复前解包 universal CLI 后运行 `codesign --verify --strict`，确认 `lipo` 输出报 `code object is not signed at all`；修复后要求双架构、严格签名、校验和、归档内容和精确的 `doubao-skin 0.4.0` 版本断言全部通过。
 
 ## Visual or integration proof
 

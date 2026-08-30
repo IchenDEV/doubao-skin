@@ -170,7 +170,8 @@ jobs:
           lipo "$verify_dir/doubao-skin" -verify_arch x86_64
           lipo "$verify_dir/doubao-skin" -verify_arch arm64
           ./scripts/package.sh verify-macos "$verify_dir/doubao-skin" "$MACOS_CERTIFICATE_SHA256"
-          "$verify_dir/doubao-skin" --version
+          expected_version=$(awk -F '"' '/^version =/ { print $2; exit }' Cargo.toml)
+          test "$("$verify_dir/doubao-skin" --version)" = "doubao-skin $expected_version"
       - uses: actions/upload-artifact@v7
         with:
           name: doubao-skin-cli-macOS-universal
