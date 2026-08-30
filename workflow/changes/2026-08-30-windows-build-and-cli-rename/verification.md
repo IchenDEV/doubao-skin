@@ -143,6 +143,19 @@ verified_at: ""
   `llvm-tools-preview` and resolves both `llvm-readobj` and
   `llvm-readobj.exe`. The same run also exposed and prompted removal of two
   macOS-only dead-code warnings from Windows release builds.
+- Native CI run `33322177480` passed the repaired implementation on
+  `windows-2025` for x64, x86, and ARM64. All three jobs built both the desktop
+  and independent CLI archives; the desktop verifier passed `ICON`,
+  `GROUP_ICON`, and Windows GUI subsystem checks on both the Cargo output and
+  packaged `doubao-skin.exe`. The x64 job additionally passed all 32
+  Windows-applicable core tests.
+- The same run uploaded `Windows-native-x64` (10,752,679 bytes),
+  `Windows-native-x86` (10,122,277 bytes), and `Windows-native-arm64`
+  (10,271,142 bytes). Each artifact contains its desktop ZIP, CLI-only ZIP,
+  and both sidecar SHA-256 files. Rust workspace and Web jobs also passed.
+- The development-workflow job remains red by design because this file is
+  truthfully `pending`; `scripts/devflow check-pr` requires the final human or
+  fresh-context verdict before the PR gate can pass.
 
 ## Behavioral evidence
 
@@ -250,8 +263,8 @@ verified_at: ""
 
 - Earlier cargo-xwin diagnostics exposed GPUI shader/resource issues and an
   i686 SafeSEH incompatibility. The cross-build workaround was deleted instead
-  of becoming a second supported path. The native Windows matrix must now show
-  whether any target-specific flag is still required.
+  of becoming a second supported path. Native Windows CI confirms the scoped
+  i686 SafeSEH flag is sufficient and ARM64 needs no cross-compiler workaround.
 - Initial package names differed only by capitalization and collided on the
   macOS filesystem. An intermediate interpretation removed CLI distribution;
   the user clarified that only Desktop/CLI co-packaging was unwanted. CLI-only
@@ -260,8 +273,8 @@ verified_at: ""
 - Real-Windows x64 screenshots now verify
   the repaired EXE icon, window controls, bundled images, installed-app
   discovery, native title controls, title-free caption, and DirectX rendering.
-  The ARM64 VM now also verifies real target-window theme application. x86
-  native compilation remains pending remote CI.
+  The ARM64 VM now also verifies real target-window theme application. x86,
+  x64, and ARM64 now all have native Windows compilation/package evidence.
 - The current official ARM64 Doubao installer was downloaded from the official
   site and used for an overwrite repair, but starting the official client with
   a CDP port still displays its own `安装文件缺失` dialog naming
@@ -271,8 +284,9 @@ verified_at: ""
   proprietary DLL, so a completely clean startup remains blocked by the
   official ARM64 installation rather than by the theme package.
 - These packages are unsigned ZIPs, not MSI/MSIX installers. Release
-  publication was not run; native GitHub Windows CI is the remaining automated
-  package gate.
+  publication was not run. The native Windows package gate passed, while final
+  verification status still requires the repository-mandated human or
+  fresh-context verdict.
 - Linux x64 and ARM64 CLI jobs are configured on native GitHub-hosted runners,
   but their archives were not built on this macOS host. Their final package
   evidence therefore remains the remote release matrix rather than this local
@@ -299,15 +313,16 @@ OS randomness, protected by regression tests, and rebuilt into all three
 single-entry Windows Desktop archives. The ARM64 VM now provides an additional
 real target-window pass for theme application and button state. Final human
 verdict remains pending only because the current official ARM64 Doubao install
-still reports its own missing `mcp_helper.dll` when launched with CDP; x86,
-Linux CLI, and remote publication also remain unexecuted on their native or CI
-environments.
+still reports its own missing `mcp_helper.dll` when launched with CDP. Linux
+CLI and release publication remain unexecuted on their final release paths.
 
 The additional repository-wide compatibility audit removed generic-code
 dependencies on macOS user paths, `/dev/urandom`, external `curl`, and macOS
 menus. Unavoidable platform behavior is now isolated behind capability checks
 or target-specific adapters instead of leaking into portable theme and CLI
 operations. Packaging is exposed through one dispatcher with grouped internal
-scripts, and the obsolete macOS Windows-cross/GPUI-patch path is gone. The
-remaining acceptance gate is the remote native Windows CI build followed by
-one final launch smoke check of the resulting Windows artifact.
+scripts, and the obsolete macOS Windows-cross/GPUI-patch path is gone. All
+three native Windows CI jobs now pass and retain downloadable test artifacts.
+The file stays `pending` until a human or fresh-context verifier records the
+final verdict; the newest native artifact also has not yet been relaunched in
+the guest VM.
