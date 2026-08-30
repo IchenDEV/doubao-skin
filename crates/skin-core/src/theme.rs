@@ -1727,7 +1727,7 @@ impl Theme {
             ""
         };
         format!(
-            "\nhtml:root[data-skin],html:root[data-skin] body{{--skin-surface-opacity:{surface};--N00:rgba(var(--N00-raw),{page})!important;--N50:rgba(var(--N50-raw),{sidebar})!important;--N100:rgba(var(--N100-raw),{layer})!important;--N200:rgba(var(--N200-raw),{layer})!important;--s-color-bg-body:rgba(var(--s-color-bg-body-raw),{page})!important;--s-color-bg-secondary:rgba(var(--s-color-bg-secondary-raw),{layer})!important;--s-color-bg-base:rgba(var(--s-color-bg-base-raw),{layer})!important;--s-color-bg-tertiary:rgba(var(--s-color-bg-tertiary-raw),{layer})!important;--s-color-bg-quaternary:rgba(var(--s-color-bg-quaternary-raw),{layer})!important;--s-color-bg-primary:rgba(var(--s-color-bg-primary-raw),{layer})!important;--s-color-bg-content-base:rgba(var(--s-color-bg-content-base-raw),{page})!important;--dbx-bg-base-web:rgba(var(--dbx-bg-base-web-raw),{layer})!important;--dbx-bg-base-2:rgba(var(--dbx-bg-base-2-raw),{layer})!important;--dbx-bg-base-5:rgba(var(--dbx-bg-base-5-raw),{layer})!important;--dbx-bg-body-web:rgba(var(--dbx-bg-body-web-raw),{sidebar})!important;--dbx-bg-body-white:rgba(var(--dbx-bg-body-white-raw),{sidebar})!important;--dbx-bg-body-mac:rgba(var(--dbx-bg-body-web-raw),{sidebar})!important;--chat-bg-color:rgba(var(--s-color-bg-body-raw),{page})!important;--chatarea-bg-color:rgba(var(--s-color-bg-body-raw),{page})!important;--g-msg-bubble-bg:rgba(var(--s-color-bg-float-raw),{surface})!important;--input-guidance-input-container-background:rgba(var(--s-color-bg-float-raw),{input})!important;--color-composebox-background:rgba(var(--s-color-bg-float-raw),{input})!important;--cr-composebox-background-color:rgba(var(--s-color-bg-float-raw),{input})!important;}}{legacy_background}"
+            "\nhtml:root[data-skin],html:root[data-skin] body{{--skin-surface-opacity:{surface};--N00:rgba(var(--N00-raw),{page})!important;--N50:rgba(var(--N50-raw),{sidebar})!important;--N100:rgba(var(--N100-raw),{layer})!important;--N200:rgba(var(--N200-raw),{layer})!important;--s-color-bg-body:rgba(var(--s-color-bg-body-raw),{page})!important;--s-color-bg-secondary:rgba(var(--s-color-bg-secondary-raw),{layer})!important;--s-color-bg-base:rgba(var(--s-color-bg-base-raw),{layer})!important;--s-color-bg-tertiary:rgba(var(--s-color-bg-tertiary-raw),{layer})!important;--s-color-bg-quaternary:rgba(var(--s-color-bg-quaternary-raw),{layer})!important;--s-color-bg-primary:rgba(var(--s-color-bg-primary-raw),{layer})!important;--s-color-bg-content-base:rgba(var(--s-color-bg-content-base-raw),{page})!important;--dbx-bg-base-web:rgba(var(--dbx-bg-base-web-raw),{layer})!important;--dbx-bg-base-2:rgba(var(--dbx-bg-base-2-raw),{layer})!important;--dbx-bg-base-5:rgba(var(--dbx-bg-base-5-raw),{layer})!important;--dbx-bg-body-web:rgba(var(--dbx-bg-body-web-raw),{sidebar})!important;--dbx-bg-body-white:rgba(var(--dbx-bg-body-white-raw),{sidebar})!important;--dbx-bg-body-mac:rgba(var(--dbx-bg-body-web-raw),{sidebar})!important;--chat-bg-color:rgba(var(--s-color-bg-body-raw),{page})!important;--chatarea-bg-color:rgba(var(--s-color-bg-body-raw),{page})!important;--g-msg-bubble-bg:rgba(var(--s-color-bg-float-raw),{surface})!important;--input-guidance-input-container-background:rgba(var(--s-color-bg-float-raw),{input})!important;--color-composebox-background:rgba(var(--s-color-bg-float-raw),{input})!important;--cr-composebox-background-color:rgba(var(--s-color-bg-float-raw),{input})!important;}}html[data-skin][data-skin-target=doubao-work] [class*=\"greeting-text-\"]{{overflow:clip!important;}}{legacy_background}"
         )
     }
 
@@ -3425,6 +3425,29 @@ mod tests {
         ] {
             assert!(css.contains(expected), "missing runtime value {expected}");
         }
+    }
+
+    #[test]
+    fn doubao_work_greeting_animation_mask_is_clipped() {
+        let mut theme =
+            load(&default_themes_dir(), "doubao-snack-giggle").expect("doubao-snack-giggle");
+        theme.surface_opacity = Some(0.40);
+        let css = theme.effective_css();
+
+        assert!(
+            css.contains(
+                r#"html[data-skin][data-skin-target=doubao-work] [class*="greeting-text-"]{overflow:clip!important;}"#
+            ),
+            "the DoubaoWork greeting must clip its animated mask after it leaves the text bounds"
+        );
+        assert!(
+            css.contains("--chat-bg-color:rgba(var(--s-color-bg-body-raw),0.22000001)!important"),
+            "the fix must preserve the transparent chat surface"
+        );
+        assert!(
+            !css.contains("Q0pGud"),
+            "the fix must not depend on a build-specific CSS module hash"
+        );
     }
 
     #[test]
