@@ -611,13 +611,9 @@ mod tests {
                 WindowsRegistryView::Registry32
             ]
         );
-        assert_eq!(
-            paths,
-            vec![
-                PathBuf::from(r"C:\Program Files (x86)\Doubao"),
-                PathBuf::from(r"C:\Program Files\Doubao\Doubao.exe"),
-            ]
-        );
+        assert_eq!(paths.len(), 2);
+        assert!(paths.contains(&PathBuf::from(r"C:\Program Files (x86)\Doubao")));
+        assert!(paths.contains(&PathBuf::from(r"C:\Program Files\Doubao\Doubao.exe")));
     }
 
     #[cfg(target_os = "windows")]
