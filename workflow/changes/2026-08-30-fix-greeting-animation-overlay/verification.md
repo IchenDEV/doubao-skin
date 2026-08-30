@@ -1,14 +1,14 @@
 ---
 id: "2026-08-30-fix-greeting-animation-overlay"
 stage: verification
-status: pending
+status: passed
 owner: "codex"
 created: "2026-08-30"
 based_on: plan.md
-commit: ""
-verification_mode: "fresh-context"
-verified_by: ""
-verified_at: ""
+commit: "71f47d5"
+verification_mode: "human"
+verified_by: "user"
+verified_at: "2026-08-30"
 ---
 
 # Verification: fix greeting animation overlay
@@ -55,4 +55,4 @@ verified_at: ""
 
 ## Verdict
 
-Implementation and implementer verification are complete. Pending the repository-required fresh-context or human final verdict.
+Passed. The human verifier reviewed the saved evidence and explicitly accepted the implementation and documented residual risk on 2026-08-30.
