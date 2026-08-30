@@ -24,13 +24,13 @@
 
 ## 真实页面效果
 
-以下截图来自本机真实的「豆包工作」窗口，主题通过 live 模式呈现。账号头像、工作区、会话列表、标题和正文均已打码，原始截图未纳入仓库。
+以下截图来自本机真实的「豆包工作」窗口，主题通过 live 模式呈现。仅对作者头像与身份、公司名和电脑设备名打码，其余界面与内容保留原样；原始截图未纳入仓库。
 
 <table>
   <tr>
     <td width="50%">
       <img src="docs/images/doubao-work-qq-light-blue-redacted.png" alt="QQ 轻蓝主题应用于真实豆包工作窗口的脱敏截图">
-      <br><sub>QQ 轻蓝 · 新对话页</sub>
+      <br><sub>QQ 轻蓝 · 真实会话页</sub>
     </td>
     <td width="50%">
       <img src="docs/images/doubao-work-starry-room-redacted.png" alt="星光书房主题应用于真实豆包工作窗口的脱敏截图">

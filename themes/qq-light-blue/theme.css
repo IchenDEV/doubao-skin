@@ -27,7 +27,7 @@ html[data-skin][data-theme=light] body {
   --B700:#1677c8;--B700-raw:22,119,200;
   --B800:#1268b1;--B800-raw:18,104,177;
   --B900:#0e5898;--B900-raw:14,88,152;
-  --s-color-bg-body:rgba(242,247,253,0.70);--s-color-bg-body-raw:242,247,253;
+  --s-color-bg-body:rgba(242,247,253,0.34);--s-color-bg-body-raw:242,247,253;
   --s-color-bg-dialogs:rgba(255,255,255,0.97);--s-color-bg-dialogs-raw:255,255,255;
   --s-color-bg-secondary:rgba(247,250,255,0.84);--s-color-bg-secondary-raw:247,250,255;
   --s-color-bg-invert-secondary:rgba(31,45,61,0.94);--s-color-bg-invert-secondary-raw:31,45,61;
@@ -42,14 +42,14 @@ html[data-skin][data-theme=light] body {
   --s-color-bg-primary:rgba(255,255,255,0.86);--s-color-bg-primary-raw:255,255,255;
   --s-color-bg-invert-primary:rgba(17,28,41,0.96);--s-color-bg-invert-primary-raw:17,28,41;
   --s-color-bg-static-black-primary:rgba(17,28,41,0.96);--s-color-bg-static-black-primary-raw:17,28,41;
-  --s-color-bg-content-base:rgba(255,255,255,0.74);--s-color-bg-content-base-raw:255,255,255;
+  --s-color-bg-content-base:rgba(255,255,255,0.56);--s-color-bg-content-base-raw:255,255,255;
   --s-color-bg-float:rgba(255,255,255,0.97);--s-color-bg-float-raw:255,255,255;
   --dbx-bg-base-web:rgba(255,255,255,0.78);--dbx-bg-base-web-raw:255,255,255;
   --dbx-bg-base-2:rgba(247,250,255,0.76);--dbx-bg-base-2-raw:247,250,255;
   --dbx-bg-base-5:rgba(238,245,255,0.76);--dbx-bg-base-5-raw:238,245,255;
-  --dbx-bg-body-web:rgba(255,255,255,0.80);--dbx-bg-body-web-raw:255,255,255;
-  --dbx-bg-body-white:rgba(255,255,255,0.80);--dbx-bg-body-white-raw:255,255,255;
-  --dbx-bg-body-mac:rgba(255,255,255,0.76);
+  --dbx-bg-body-web:rgba(255,255,255,0.50);--dbx-bg-body-web-raw:255,255,255;
+  --dbx-bg-body-white:rgba(255,255,255,0.54);--dbx-bg-body-white-raw:255,255,255;
+  --dbx-bg-body-mac:rgba(255,255,255,0.50);
   --dbx-bg-browser-mac:rgba(238,245,255,0.84);
   --dbx-bg-browser-win:#eef5ff;--dbx-bg-browser-win-raw:238,245,255;
   --dbx-bg-float:rgba(255,255,255,0.97);--dbx-bg-float-raw:255,255,255;
@@ -106,7 +106,7 @@ html[data-skin][data-theme=dark] body {
 }
 
 html[data-skin][data-theme=dark] body {
-  background-image:linear-gradient(rgba(10,12,16,.56),rgba(10,12,16,.56)),var(--skin-bg-image)!important;
+  background-image:linear-gradient(rgba(10,12,16,.42),rgba(10,12,16,.42)),var(--skin-bg-image)!important;
   background-position:center!important;
   background-size:cover!important;
   background-attachment:fixed!important;
@@ -177,11 +177,11 @@ html[data-skin][data-theme=dark] body {
 /* Background-aware dark surfaces */
 html[data-skin][data-theme=dark],
 html[data-skin][data-theme=dark] body {
-  --s-color-bg-body:rgba(18,20,25,.72);
-  --s-color-bg-content-base:rgba(22,24,29,.76);
-  --dbx-bg-body-web:rgba(18,20,25,.82);
-  --dbx-bg-body-white:rgba(25,27,32,.84);
-  --dbx-bg-body-mac:rgba(18,20,25,.82);
-  --chat-bg-color:rgba(18,20,25,.68);
-  --chatarea-bg-color:rgba(18,20,25,.68);
+  --s-color-bg-body:rgba(18,20,25,.60);
+  --s-color-bg-content-base:rgba(22,24,29,.64);
+  --dbx-bg-body-web:rgba(18,20,25,.70);
+  --dbx-bg-body-white:rgba(25,27,32,.74);
+  --dbx-bg-body-mac:rgba(18,20,25,.70);
+  --chat-bg-color:rgba(18,20,25,.58);
+  --chatarea-bg-color:rgba(18,20,25,.58);
 }

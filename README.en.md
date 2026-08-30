@@ -24,13 +24,13 @@
 
 ## Real transformed pages
 
-These screenshots were captured from a real local Doubao Work window with themes applied in live mode. Account avatars, workspace details, conversation lists, titles, and message content are redacted; the unredacted captures are not included in the repository.
+These screenshots were captured from a real local Doubao Work window with themes applied in live mode. Only the author's avatar and identity, company name, and computer device name are redacted; the rest of the interface and content is unchanged. The unredacted captures are not included in the repository.
 
 <table>
   <tr>
     <td width="50%">
       <img src="docs/images/doubao-work-qq-light-blue-redacted.png" alt="Redacted real Doubao Work window using the QQ Light Blue theme">
-      <br><sub>QQ Light Blue · New conversation</sub>
+      <br><sub>QQ Light Blue · Real conversation</sub>
     </td>
     <td width="50%">
       <img src="docs/images/doubao-work-starry-room-redacted.png" alt="Redacted real Doubao Work window using the Starry Room theme">
