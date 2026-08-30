@@ -1,4 +1,8 @@
 /* 甜点偷笑：草莓、奶油与蓝莓夜色的甜点工坊。 */
+html[data-skin="doubao-dessert-giggle"],
+html[data-skin="doubao-dessert-giggle"] body {
+  --skin-generated-icon-mode:full-color;
+}
 html[data-skin][data-theme=light],
 html[data-skin][data-theme=light] body {
   --N00:#fffafd;--N00-raw:255,250,253;
@@ -204,3 +208,22 @@ html[data-skin][data-theme=dark] body {
   --chatarea-bg-color:rgba(18,20,25,.68);
   background-image:linear-gradient(rgba(10,12,16,.26),rgba(10,12,16,.26)),var(--skin-bg-image)!important;
 }
+
+/* Generated props stay full-color on both SVG and IMG hosts. */
+html[data-skin="doubao-dessert-giggle"] svg[data-doubao-theme-icon]:not([data-doubao-theme-icon=main]) {
+  color:transparent!important;
+  background:var(--doubao-theme-icon) center/contain no-repeat!important;
+  background-color:transparent!important;
+  mask:none!important;
+  -webkit-mask:none!important;
+}
+html[data-skin="doubao-dessert-giggle"] img[data-doubao-theme-icon]:not([data-doubao-theme-icon=main]) {
+  content:var(--doubao-theme-icon)!important;
+  object-fit:contain!important;
+  background:none!important;
+  mask:none!important;
+  -webkit-mask:none!important;
+}
+
+/* Compensate for the lower visual weight of the first two navigation props. */
+html[data-skin="doubao-dessert-giggle"] [data-doubao-theme-icon=new-task],html[data-skin="doubao-dessert-giggle"] [data-doubao-theme-icon=scheduled]{transform:translateY(-1px)!important;}

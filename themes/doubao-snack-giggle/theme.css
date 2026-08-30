@@ -1,4 +1,8 @@
 /* 馋嘴豆包：奶油、橙杏与薄荷色的零食笑闹。 */
+html[data-skin="doubao-snack-giggle"],
+html[data-skin="doubao-snack-giggle"] body {
+  --skin-generated-icon-mode:full-color;
+}
 html[data-skin][data-theme=light],
 html[data-skin][data-theme=light] body {
   --N00:#fffaf2;--N00-raw:255,250,242;
@@ -219,48 +223,21 @@ html[data-skin][data-theme=dark] body {
   background-image:linear-gradient(rgba(28,21,25,.28),rgba(28,21,25,.28)),var(--skin-bg-image)!important;
 }
 
-/* The theme owns glyph color instead of inheriting Doubao's system-blue states. */
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon],
-html[data-skin=doubao-snack-giggle] img[data-doubao-theme-icon] {
-  color:var(--snack-icon-cocoa)!important;
+/* Generated props stay full-color on both SVG and IMG hosts. */
+html[data-skin="doubao-snack-giggle"] svg[data-doubao-theme-icon]:not([data-doubao-theme-icon=main]) {
+  color:transparent!important;
+  background:var(--doubao-theme-icon) center/contain no-repeat!important;
+  background-color:transparent!important;
+  mask:none!important;
+  -webkit-mask:none!important;
 }
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=new-task],
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=conversation],
-html[data-skin=doubao-snack-giggle] img[data-doubao-theme-icon=conversation],
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=send],
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=stop],
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=knowledge] {
-  color:var(--snack-icon-peach)!important;
+html[data-skin="doubao-snack-giggle"] img[data-doubao-theme-icon]:not([data-doubao-theme-icon=main]) {
+  content:var(--doubao-theme-icon)!important;
+  object-fit:contain!important;
+  background:none!important;
+  mask:none!important;
+  -webkit-mask:none!important;
 }
-html[data-skin=doubao-snack-giggle] body img[data-doubao-theme-icon]:not([data-doubao-theme-icon=main]) {
-  content:""!important;
-  background-color:currentColor!important;
-  mask:var(--doubao-theme-icon) center/contain no-repeat!important;
-  -webkit-mask:var(--doubao-theme-icon) center/contain no-repeat!important;
-}
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=cloud],
-html[data-skin=doubao-snack-giggle] img[data-doubao-theme-icon=cloud],
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=voice],
-html[data-skin=doubao-snack-giggle] img[data-doubao-theme-icon=voice],
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=read-aloud],
-html[data-skin=doubao-snack-giggle] img[data-doubao-theme-icon=read-aloud],
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=daily-work],
-html[data-skin=doubao-snack-giggle] img[data-doubao-theme-icon=daily-work] {
-  color:var(--snack-icon-drool)!important;
-}
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=content-creation],
-html[data-skin=doubao-snack-giggle] img[data-doubao-theme-icon=content-creation] {
-  color:var(--snack-icon-mint)!important;
-}
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=skills],
-html[data-skin=doubao-snack-giggle] img[data-doubao-theme-icon=skills],
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=more-skills],
-html[data-skin=doubao-snack-giggle] img[data-doubao-theme-icon=more-skills],
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=research],
-html[data-skin=doubao-snack-giggle] img[data-doubao-theme-icon=research] {
-  color:var(--snack-icon-grape)!important;
-}
-html[data-skin=doubao-snack-giggle] svg[data-doubao-theme-icon=design],
-html[data-skin=doubao-snack-giggle] img[data-doubao-theme-icon=design] {
-  color:var(--snack-icon-berry)!important;
-}
+
+/* Compensate for the lower visual weight of the first two navigation props. */
+html[data-skin="doubao-snack-giggle"] [data-doubao-theme-icon=new-task],html[data-skin="doubao-snack-giggle"] [data-doubao-theme-icon=scheduled]{transform:translateY(-1px)!important;}
