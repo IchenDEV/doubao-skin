@@ -2,13 +2,18 @@
 
 use std::path::PathBuf;
 
+use skin_core::live::TargetApp;
 use skin_core::theme;
 
 pub enum Msg {
     Log(String),
-    Applied(u64),
+    Applied {
+        target: TargetApp,
+        generation: u64,
+    },
     Done {
-        generation: Option<u64>,
+        target: TargetApp,
+        generation: u64,
         ok: bool,
         restoring: bool,
     },

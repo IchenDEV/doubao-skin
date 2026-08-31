@@ -6,10 +6,10 @@ mod input;
 mod install;
 pub(crate) mod platform;
 pub(crate) mod theme_ops;
+pub(crate) mod theme_sessions;
 pub(crate) mod types;
 
 use std::collections::VecDeque;
-use std::sync::atomic::AtomicBool;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::Duration;
 
@@ -19,8 +19,9 @@ use skin_core::{live, theme};
 
 pub use self::helpers::{
     initial_target, preview_identity, read_target_preference, save_target_preference,
-    support_label, target_shortcut, theme_is_active, uses_short_compact_layout,
+    support_label, target_shortcut, uses_short_compact_layout,
 };
+use crate::app::theme_sessions::ThemeSessions;
 use crate::app::types::{Msg, SourceView, StoreRow, ThemeRow};
 use crate::i18n::t;
 use crate::ui::constants::MAX_INTERNAL_LOGS;
@@ -44,14 +45,10 @@ pub struct SkinApp {
     pub(crate) message: String,
     pub(crate) applying: bool,
     pub(crate) selected_target: live::TargetApp,
-    pub(crate) active_target: Option<live::TargetApp>,
-    pub(crate) active_theme: Option<String>,
-    pub(crate) active_surface_opacity: Option<f32>,
     pub(crate) restart_confirmation_target: Option<live::TargetApp>,
     pub(crate) surface_opacity: f32,
     pub(crate) opacity_drag_start: Option<(gpui::Pixels, f32)>,
-    pub(crate) live_stop: Option<Arc<AtomicBool>>,
-    pub(crate) live_thread: Option<std::thread::JoinHandle<()>>,
+    pub(crate) theme_sessions: ThemeSessions,
     pub(crate) generation: u64,
     pub(crate) focus_handle: FocusHandle,
     pub(crate) url_buffer: Arc<Mutex<Vec<String>>>,
@@ -145,14 +142,10 @@ impl SkinApp {
             message: String::new(),
             applying: false,
             selected_target,
-            active_target: None,
-            active_theme: None,
-            active_surface_opacity: None,
             restart_confirmation_target: None,
             surface_opacity,
             opacity_drag_start: None,
-            live_stop: None,
-            live_thread: None,
+            theme_sessions: ThemeSessions::default(),
             generation: 0,
             focus_handle,
             url_buffer,
@@ -165,32 +158,33 @@ impl SkinApp {
                 self.internal_logs.push_front(line);
                 self.internal_logs.truncate(MAX_INTERNAL_LOGS);
             }
-            Msg::Applied(generation) if generation == self.generation => {
-                self.applying = false;
-                self.message = l.action_applied.into();
+            Msg::Applied { target, generation }
+                if self.theme_sessions.generation_matches(target, generation) =>
+            {
+                if self.selected_target == target {
+                    self.applying = false;
+                    self.message = l.action_applied.into();
+                }
             }
-            Msg::Applied(_) => {}
+            Msg::Applied { .. } => {}
             Msg::Done {
+                target,
                 generation,
                 ok,
                 restoring,
             } => {
-                if generation.is_none() || generation == Some(self.generation) {
+                let current_session = self.theme_sessions.generation_matches(target, generation);
+                if current_session && (!ok || (ok && target == live::TargetApp::WorkBuddy)) {
+                    self.theme_sessions.take_if_generation(target, generation);
+                }
+                if self.selected_target == target && generation == self.generation {
                     self.applying = false;
                     if restoring && ok {
                         self.message = l.action_restored.into();
-                    } else if ok && self.active_target == Some(live::TargetApp::WorkBuddy) {
+                    } else if ok && target == live::TargetApp::WorkBuddy {
                         self.message = "WorkBuddy 已退出，主题监听已停止".into();
-                        self.active_target = None;
-                        self.active_theme = None;
-                        self.active_surface_opacity = None;
-                        self.live_stop = None;
                     } else if !ok {
                         self.message = l.action_apply_failed.into();
-                        self.active_target = None;
-                        self.active_theme = None;
-                        self.active_surface_opacity = None;
-                        self.live_stop = None;
                     }
                 }
             }

@@ -58,15 +58,6 @@ pub fn uses_short_compact_layout(compact: bool, height: gpui::Pixels) -> bool {
     compact && height <= px(600.)
 }
 
-pub fn theme_is_active(
-    active_target: Option<live::TargetApp>,
-    active_theme: Option<&str>,
-    selected_target: live::TargetApp,
-    theme_id: &str,
-) -> bool {
-    active_target == Some(selected_target) && active_theme == Some(theme_id)
-}
-
 pub fn preview_identity(target: live::TargetApp) -> (&'static str, &'static str) {
     let l = t();
     match target {

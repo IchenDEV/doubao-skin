@@ -1,14 +1,15 @@
 //! Theme apply, restore, and target switching operations.
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
 use gpui::Context;
 
 use skin_core::live;
 
+use crate::app::theme_sessions::TargetSession;
 use crate::app::types::Msg;
-use crate::app::{save_target_preference, theme_is_active, SkinApp};
+use crate::app::{save_target_preference, SkinApp};
 use crate::i18n::t;
 use crate::ui::constants::MIN_SURFACE_OPACITY;
 
@@ -23,14 +24,7 @@ impl SkinApp {
             cx.notify();
             return;
         }
-        if let Some(stop) = self.live_stop.take() {
-            stop.store(true, Ordering::Relaxed);
-        }
-        self.generation += 1;
         self.applying = false;
-        let old_target = self.active_target.take();
-        self.active_theme = None;
-        self.active_surface_opacity = None;
         self.selected_target = target;
         save_target_preference(target);
         for row in &mut self.themes {
@@ -39,23 +33,6 @@ impl SkinApp {
         self.ensure_selected_match();
         self.ensure_store_selected_match();
         self.message.clear();
-        let previous_thread = self.live_thread.take();
-        if previous_thread.is_some() || old_target.is_some() {
-            let tx = self.tx.clone();
-            self.live_thread = Some(std::thread::spawn(move || {
-                if let Some(thread) = previous_thread {
-                    let _ = thread.join();
-                }
-                if let Some(old_target) = old_target {
-                    let tx_log = tx.clone();
-                    if let Err(error) = live::restore(old_target, move |line| {
-                        let _ = tx_log.send(Msg::Log(line));
-                    }) {
-                        let _ = tx.send(Msg::Log(format!("restore failed: {error}")));
-                    }
-                }
-            }));
-        }
         cx.notify();
     }
 
@@ -79,15 +56,11 @@ impl SkinApp {
             cx.notify();
             return;
         }
-        let active = theme_is_active(
-            self.active_target,
-            self.active_theme.as_deref(),
+        let active = self.theme_sessions.is_active(
             target,
             row.theme.id.as_str(),
-        ) && (!row.preview.has_background
-            || self
-                .active_surface_opacity
-                .is_some_and(|value| (value - self.surface_opacity).abs() < 0.001));
+            row.preview.has_background.then_some(self.surface_opacity),
+        );
         if active {
             self.restart_confirmation_target = None;
             return;
@@ -125,9 +98,11 @@ impl SkinApp {
                 return;
             }
         }
-        if let Some(stop) = self.live_stop.take() {
-            stop.store(true, Ordering::Relaxed);
+        let previous = self.theme_sessions.take(target);
+        if let Some(previous) = &previous {
+            previous.request_stop();
         }
+        let previous_thread = previous.and_then(TargetSession::into_thread);
         let mut theme = row.theme.clone();
         if row.preview.has_background {
             theme.surface_opacity = Some(self.surface_opacity);
@@ -135,16 +110,20 @@ impl SkinApp {
         self.generation += 1;
         let generation = self.generation;
         let stop = Arc::new(AtomicBool::new(false));
-        self.live_stop = Some(stop.clone());
-        self.active_target = Some(target);
-        self.active_theme = Some(theme.id.clone());
-        self.active_surface_opacity = theme.surface_opacity;
+        self.theme_sessions.replace(
+            target,
+            TargetSession::pending(
+                theme.id.clone(),
+                theme.surface_opacity,
+                generation,
+                stop.clone(),
+            ),
+        );
         self.applying = true;
         self.message = t().action_applying.into();
         self.restart_confirmation_target = None;
         let tx = self.tx.clone();
-        let previous_thread = self.live_thread.take();
-        self.live_thread = Some(std::thread::spawn(move || {
+        let thread = std::thread::spawn(move || {
             if let Some(thread) = previous_thread {
                 let _ = thread.join();
             }
@@ -159,36 +138,37 @@ impl SkinApp {
                 move |line| {
                     if !reported && line.trim_start().starts_with("injected:") {
                         reported = true;
-                        let _ = tx_log.send(Msg::Applied(generation));
+                        let _ = tx_log.send(Msg::Applied { target, generation });
                     }
                     let _ = tx_log.send(Msg::Log(line));
                 },
             );
             let _ = tx.send(Msg::Done {
-                generation: Some(generation),
+                target,
+                generation,
                 ok: result.is_ok(),
                 restoring: false,
             });
-        }));
+        });
+        self.theme_sessions
+            .attach_thread(target, generation, thread);
         cx.notify();
     }
 
     pub(crate) fn restore_default(&mut self, cx: &mut Context<Self>) {
         self.restart_confirmation_target = None;
-        if let Some(stop) = self.live_stop.take() {
-            stop.store(true, Ordering::Relaxed);
+        let target = self.selected_target;
+        let previous = self.theme_sessions.take(target);
+        if let Some(previous) = &previous {
+            previous.request_stop();
         }
+        let previous_thread = previous.and_then(TargetSession::into_thread);
         self.generation += 1;
         let generation = self.generation;
-        let target = self.selected_target;
-        self.active_target = None;
-        self.active_theme = None;
-        self.active_surface_opacity = None;
         self.applying = true;
         self.message = t().action_restoring.into();
         let tx = self.tx.clone();
-        let previous_thread = self.live_thread.take();
-        self.live_thread = Some(std::thread::spawn(move || {
+        std::thread::spawn(move || {
             if let Some(thread) = previous_thread {
                 let _ = thread.join();
             }
@@ -197,11 +177,12 @@ impl SkinApp {
                 let _ = tx_log.send(Msg::Log(line));
             });
             let _ = tx.send(Msg::Done {
-                generation: Some(generation),
+                target,
+                generation,
                 ok: result.is_ok(),
                 restoring: true,
             });
-        }));
+        });
         cx.notify();
     }
 
@@ -216,15 +197,11 @@ impl SkinApp {
     }
 
     pub(crate) fn selected_settings_are_active(&self, row: &crate::app::types::ThemeRow) -> bool {
-        theme_is_active(
-            self.active_target,
-            self.active_theme.as_deref(),
+        self.theme_sessions.is_active(
             self.selected_target,
             row.theme.id.as_str(),
-        ) && (!row.preview.has_background
-            || self
-                .active_surface_opacity
-                .is_some_and(|value| (value - self.surface_opacity).abs() < 0.001))
+            row.preview.has_background.then_some(self.surface_opacity),
+        )
     }
 }
 

@@ -1,4 +1,6 @@
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use gpui::{point, px, size, ImageSource, Resource, WindowBounds};
 
@@ -6,9 +8,9 @@ use skin_core::theme_package::{SupportDeclaration, SupportLevel, TargetSupport};
 use skin_core::{live, theme};
 
 use crate::app::actions::application_menu;
+use crate::app::theme_sessions::{TargetSession, ThemeSessions};
 use crate::app::{
-    initial_target, preview_identity, support_label, target_shortcut, theme_is_active,
-    uses_short_compact_layout,
+    initial_target, preview_identity, support_label, target_shortcut, uses_short_compact_layout,
 };
 use crate::i18n::t;
 use crate::preview::preview_rgba;
@@ -190,25 +192,61 @@ fn target_default_respects_installation_and_saved_preference() {
 }
 
 #[test]
-fn active_theme_is_scoped_to_its_target() {
-    assert!(theme_is_active(
-        Some(live::TargetApp::Doubao),
-        Some("violet-night"),
-        live::TargetApp::Doubao,
-        "violet-night"
-    ));
-    assert!(!theme_is_active(
-        Some(live::TargetApp::DoubaoWork),
-        Some("violet-night"),
-        live::TargetApp::Doubao,
-        "violet-night"
-    ));
-    assert!(theme_is_active(
-        Some(live::TargetApp::WorkBuddy),
-        Some("violet-night"),
+fn applying_to_a_second_target_preserves_the_first_target_session() {
+    let mut sessions = ThemeSessions::default();
+    let workbuddy_stop = Arc::new(AtomicBool::new(false));
+    let doubao_stop = Arc::new(AtomicBool::new(false));
+
+    sessions.replace(
         live::TargetApp::WorkBuddy,
-        "violet-night"
-    ));
+        TargetSession::for_test("gallery-whale-maid", Some(0.68), 1, workbuddy_stop.clone()),
+    );
+    sessions.replace(
+        live::TargetApp::Doubao,
+        TargetSession::for_test("pure-dark", None, 2, doubao_stop),
+    );
+
+    assert!(sessions.is_active(live::TargetApp::WorkBuddy, "gallery-whale-maid", Some(0.68),));
+    assert!(sessions.is_active(live::TargetApp::Doubao, "pure-dark", None));
+    assert!(
+        !workbuddy_stop.load(Ordering::Relaxed),
+        "applying to 豆包 must not stop the WorkBuddy watcher"
+    );
+}
+
+#[test]
+fn replacing_one_target_stops_only_its_previous_generation() {
+    let mut sessions = ThemeSessions::default();
+    let old_workbuddy_stop = Arc::new(AtomicBool::new(false));
+    let current_workbuddy_stop = Arc::new(AtomicBool::new(false));
+    let doubao_stop = Arc::new(AtomicBool::new(false));
+
+    sessions.replace(
+        live::TargetApp::WorkBuddy,
+        TargetSession::for_test(
+            "gallery-whale-maid",
+            Some(0.68),
+            1,
+            old_workbuddy_stop.clone(),
+        ),
+    );
+    sessions.replace(
+        live::TargetApp::Doubao,
+        TargetSession::for_test("pure-dark", None, 2, doubao_stop.clone()),
+    );
+    sessions.replace(
+        live::TargetApp::WorkBuddy,
+        TargetSession::for_test("qq-light-blue", None, 3, current_workbuddy_stop.clone()),
+    );
+
+    assert!(old_workbuddy_stop.load(Ordering::Relaxed));
+    assert!(!current_workbuddy_stop.load(Ordering::Relaxed));
+    assert!(!doubao_stop.load(Ordering::Relaxed));
+    assert!(sessions
+        .take_if_generation(live::TargetApp::WorkBuddy, 1)
+        .is_none());
+    assert!(sessions.is_active(live::TargetApp::WorkBuddy, "qq-light-blue", None));
+    assert!(sessions.is_active(live::TargetApp::Doubao, "pure-dark", None));
 }
 
 #[test]
