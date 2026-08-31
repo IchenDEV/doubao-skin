@@ -19,6 +19,14 @@ use crate::app::{uses_short_compact_layout, SkinApp};
 use crate::i18n::t;
 use crate::ui::constants::{HEADER_HEIGHT, WINDOW_TITLE_X};
 
+pub(crate) fn header_brand_padding(target_os: &str, compact: bool) -> f32 {
+    if target_os == "macos" {
+        WINDOW_TITLE_X - if compact { 16.0 } else { 24.0 }
+    } else {
+        0.0
+    }
+}
+
 impl Render for SkinApp {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = self.colors;
@@ -50,6 +58,7 @@ impl SkinApp {
     fn render_header(&self, compact: bool, cx: &mut Context<Self>) -> gpui::AnyElement {
         let colors = self.colors;
         let l = t();
+        let brand_padding = header_brand_padding(std::env::consts::OS, compact);
         let brand = div()
             .flex()
             .items_center()
@@ -70,7 +79,7 @@ impl SkinApp {
                     div()
                         .flex_1()
                         .min_w(px(0.))
-                        .child(div().pl(px(WINDOW_TITLE_X - 16.)).child(brand)),
+                        .child(div().pl(px(brand_padding)).child(brand)),
                 )
                 .child(target_switch)
                 .child(div().flex_1().min_w(px(0.)))
@@ -87,7 +96,7 @@ impl SkinApp {
                     div()
                         .flex_1()
                         .min_w(px(0.))
-                        .child(div().pl(px(WINDOW_TITLE_X - 24.)).child(brand)),
+                        .child(div().pl(px(brand_padding)).child(brand)),
                 )
                 .child(target_switch)
                 .child(div().flex_1().min_w(px(0.)))

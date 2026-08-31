@@ -139,6 +139,31 @@ fn windows_launch_working_directory(binary: &Path) -> Result<PathBuf, String> {
 }
 
 #[cfg(any(test, target_os = "windows"))]
+fn windows_cdp_binary(installed_binary: &Path) -> PathBuf {
+    let Some(file_name) = installed_binary.file_name() else {
+        return installed_binary.to_path_buf();
+    };
+    let Some(directory) = installed_binary.parent() else {
+        return installed_binary.to_path_buf();
+    };
+    if !directory
+        .file_name()
+        .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case("Application"))
+    {
+        return installed_binary.to_path_buf();
+    }
+    // The public launcher performs installer diagnostics when Chromium flags
+    // are present. Start its adjacent runtime directly for CDP, while keeping
+    // discovery and non-standard/portable layouts on the installed entry.
+    let runtime = directory.join("app").join(file_name);
+    if runtime.is_file() {
+        runtime
+    } else {
+        installed_binary.to_path_buf()
+    }
+}
+
+#[cfg(any(test, target_os = "windows"))]
 fn windows_app_root(target: TargetApp, local_app_data: &Path) -> PathBuf {
     local_app_data.join(match target {
         TargetApp::Doubao => "Doubao",
@@ -433,8 +458,9 @@ pub(super) fn launch_app<F: FnMut(String)>(target: TargetApp, mut log: F) -> Res
 #[cfg(target_os = "windows")]
 pub(super) fn launch_app<F: FnMut(String)>(target: TargetApp, mut log: F) -> Result<(), String> {
     let port = target.port();
-    let binary = installed_binary(target)
+    let installed_binary = installed_binary(target)
         .ok_or_else(|| format!("未找到{}：{}", target.display_name(), install_hint(target)))?;
+    let binary = windows_cdp_binary(&installed_binary);
     let working_directory = windows_launch_working_directory(&binary)?;
     log(format!(
         "launching {} --remote-debugging-port={port}",
@@ -559,6 +585,31 @@ mod tests {
             windows_binary_in_root(TargetApp::DoubaoWork, &root),
             Some(work)
         );
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn windows_cdp_launch_uses_the_inner_runtime_when_present() {
+        let root = std::env::temp_dir().join(format!(
+            "doubao-skin-windows-cdp-runtime-{}",
+            std::process::id()
+        ));
+        let outer = root.join("Doubao/Application/Doubao.exe");
+        let runtime = root.join("Doubao/Application/app/Doubao.exe");
+        std::fs::create_dir_all(runtime.parent().unwrap()).unwrap();
+        std::fs::write(&outer, []).unwrap();
+        std::fs::write(&runtime, []).unwrap();
+
+        assert_eq!(windows_cdp_binary(&outer), runtime);
+
+        let portable = root.join("Portable/Doubao.exe");
+        std::fs::create_dir_all(portable.parent().unwrap()).unwrap();
+        std::fs::write(&portable, []).unwrap();
+        let portable_child = root.join("Portable/app/Doubao.exe");
+        std::fs::create_dir_all(portable_child.parent().unwrap()).unwrap();
+        std::fs::write(&portable_child, []).unwrap();
+        assert_eq!(windows_cdp_binary(&portable), portable);
 
         std::fs::remove_dir_all(root).unwrap();
     }
