@@ -93,11 +93,6 @@ html[data-skin][data-theme=light] body {
   background-attachment:fixed !important;
 }
 
-html[data-skin][data-theme=light] body::before,
-html[data-skin][data-theme=light] body::after {
-  display:none !important;
-}
-
 /* Dark appearance */
 html[data-skin][data-theme=dark],
 html[data-skin][data-theme=dark] body {
@@ -141,9 +136,6 @@ html[data-skin][data-theme=dark] body {
   background-size:cover!important;
   background-attachment:fixed!important;
 }
-html[data-skin][data-theme=dark] body::before,
-html[data-skin][data-theme=dark] body::after { display:none!important; }
-
 /* Complete dark surface tokens */
 html[data-skin][data-theme=dark],
 html[data-skin][data-theme=dark] body {

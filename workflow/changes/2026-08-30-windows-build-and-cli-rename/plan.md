@@ -62,6 +62,7 @@ approved_at: "2026-08-31"
 15. 将脚本整理为 `package/` 与 `checks/` 两组并保留单一 `scripts/package.sh` 入口；将 CI 与 release 的 Windows 构建迁移到 `windows-2025` 原生 runner
 16. 将发布候选统一为 `0.4.0`；在 `lipo` 合并后重签 macOS universal CLI，普通 CI 用 ad-hoc 签名检查结构，Release 与 App 共用长期身份和固定证书指纹
 17. 修复 Draft PR 的 CI 门禁：为 `devflow check-pr` 加入受 GitHub PR 事件驱动的 Draft 状态，回归覆盖 pending/failed/passed 组合；推送后等待并检查完整远端 CI，Ready PR 仍严格要求 verification passed
+18. 用最终 ARM64 原生包回到 Windows 虚拟机复验标题栏、图标、预置资源、安装发现与真实主题应用；若实窗暴露主题兼容性回归，先补能判红的主题边界测试，再同步 Web 包并重跑 Windows 原生 CI
 
 ## Test-first proof
 
@@ -102,6 +103,7 @@ approved_at: "2026-08-31"
 - 用户要求进一步减少系统强相关实现并全项目扫描。审计后把用户数据与缓存路径交给跨平台目录库，将无法跨平台的实时应用和 macOS 离线克隆明确隔离在能力边界内，并清除外部 `curl` 与非 macOS 平台上的 macOS 菜单注册。
 - 用户要求整理多语言脚本。对外入口收敛到 `scripts/package.sh`，实现按 `package/` 和 `checks/` 分组；远端 Windows CI 直接调用同一入口，避免 CI 与本地脚本分叉。
 - 用户准备发布 `v0.4.0`，要求 CLI 暂时沿用 App 的签名办法。实现将 universal CLI 留在同一 macOS Release 作业中，在一次证书导入后分别签名 App 与合并完成的 CLI，并对两者执行同一固定指纹校验；普通 CI 只做 ad-hoc 结构验证，不接触生产签名材料。
+- 最终 ARM64 原生包在虚拟机中验证真实主题应用时，`馋嘴豆包`使未登录弹窗变成空白；同窗恢复默认后内容立即恢复。该问题属于本变更要求的 Windows 主题可用性实窗验收，保留在同一变更内：主题不再强制隐藏宿主页面的 `body::before`/`body::after`，版本提升至 `1.1.1`，增加先红后绿的边界回归并同步 Web 主题包。
 
 ## Decision
 

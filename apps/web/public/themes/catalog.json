@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-30T18:50:43.929Z",
+  "generatedAt": "2026-08-31T05:22:04.714Z",
   "themes": [
     {
       "id": "violet-night",
@@ -486,7 +486,7 @@
       "id": "doubao-snack-giggle",
       "name": "馋嘴豆包",
       "description": "豆包盯着零食流口水，伙伴们笑成一团",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "author": "豆皮",
       "category": "brand",
       "tags": [
@@ -499,8 +499,8 @@
       "iconUrl": "/themes/doubao-snack-giggle.icon.png",
       "accent": "#d66a45",
       "packageUrl": "/themes/packages/doubao-snack-giggle.doubao-skin.zip",
-      "sha256": "a7fe6d2334898c90aa4bec3ed9a3a15a91b2242a162e789062bcf363e9cb74e1",
-      "packageSize": 1855208
+      "sha256": "0ea6d2c24e7050733d968d6b8c1b54bd1aa9b4c216cf94c591eaf71cb883fc73",
+      "packageSize": 1855164
     },
     {
       "id": "doubao-dessert-giggle",
