@@ -27,6 +27,27 @@ pub struct Locale {
     pub action_in_use: &'static str,
     pub action_restore_default: &'static str,
 
+    // Automatic theme lifecycle
+    pub auto_theme_keep_title: &'static str,
+    pub auto_theme_keep_description: &'static str,
+    pub auto_theme_login_title: &'static str,
+    pub auto_theme_apply_first: &'static str,
+    pub auto_theme_unsupported: &'static str,
+    pub auto_theme_enabling: &'static str,
+    pub auto_theme_disabling: &'static str,
+    pub auto_theme_enabled: &'static str,
+    pub auto_theme_disabled: &'static str,
+    pub auto_theme_cleanup_pending: &'static str,
+    pub auto_theme_approval_required: &'static str,
+    pub auto_theme_not_ready: &'static str,
+    pub auto_theme_missing_service: &'static str,
+    pub auto_theme_open_settings: &'static str,
+    pub auto_theme_login_enabled: &'static str,
+    pub auto_theme_login_disabled: &'static str,
+    pub auto_theme_save_failed: &'static str,
+    pub auto_theme_rollback_failed: &'static str,
+    pub auto_theme_restore_cleanup_failed: &'static str,
+
     // Install
     pub install_installing: &'static str,
     pub install_one_done: &'static str,
@@ -137,6 +158,16 @@ impl Locale {
     pub fn format_opacity_aria(&self, percent: u32) -> String {
         format!("{} {percent}%", self.opacity_label)
     }
+    pub fn format_auto_theme_login_description(&self, name: &str) -> String {
+        format!("登录电脑后自动打开{name}")
+    }
+    pub fn format_switch_aria(&self, title: &str, enabled: bool) -> String {
+        if enabled {
+            title.to_string()
+        } else {
+            format!("{title}，不可用")
+        }
+    }
     pub fn format_store_item_aria(&self, name: &str, installed: bool) -> String {
         if installed {
             format!("{name} 已安装")
@@ -172,6 +203,26 @@ pub static ZH_CN: Locale = Locale {
     action_apply_theme: "应用主题",
     action_in_use: "正在使用",
     action_restore_default: "恢复默认",
+
+    auto_theme_keep_title: "自动保持上次主题",
+    auto_theme_keep_description: "关闭豆皮后，下次打开仍会恢复当前主题",
+    auto_theme_login_title: "登录时打开豆包",
+    auto_theme_apply_first: "请先成功应用一个主题",
+    auto_theme_unsupported: "自动保持主题需要 macOS 13 或更高版本",
+    auto_theme_enabling: "正在开启自动保持主题…",
+    auto_theme_disabling: "正在关闭自动保持主题…",
+    auto_theme_enabled: "豆皮后台服务已注册",
+    auto_theme_disabled: "自动保持主题已关闭",
+    auto_theme_cleanup_pending: "后台启动项尚未移除，再点一次开关重试",
+    auto_theme_approval_required: "需要在系统设置中允许豆皮后台运行",
+    auto_theme_not_ready: "豆皮后台服务尚未启用",
+    auto_theme_missing_service: "当前安装包不包含豆皮后台服务",
+    auto_theme_open_settings: "打开系统设置",
+    auto_theme_login_enabled: "登录时将自动打开豆包",
+    auto_theme_login_disabled: "登录时不会自动打开豆包",
+    auto_theme_save_failed: "主题已应用，但无法保存自动恢复设置",
+    auto_theme_rollback_failed: "后台服务启用失败，自动恢复设置也未能回滚",
+    auto_theme_restore_cleanup_failed: "已恢复默认，但自动恢复设置未能清除",
 
     install_installing: "正在安装主题…",
     install_one_done: "主题已安装",

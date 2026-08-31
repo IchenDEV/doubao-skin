@@ -55,6 +55,9 @@ impl SkinApp {
                 px(20.)
             })
             .child(self.render_preview(row, compact, short))
+            .when(cfg!(target_os = "macos"), |view| {
+                view.child(self.render_auto_theme_controls(cx))
+            })
             .child(self.render_detail_actions(
                 row,
                 active,

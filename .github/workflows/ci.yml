@@ -105,12 +105,22 @@ jobs:
       - name: Run Windows core regressions
         if: ${{ matrix.target == 'x86_64-pc-windows-msvc' }}
         shell: bash
-        run: cargo test -p skin-core --lib --locked
+        run: |
+          cargo test -p skin-core --lib --locked
+          cargo test -p doubao-skin-desktop --locked
       - name: Build desktop and CLI packages on Windows
         shell: bash
         run: |
           ./scripts/package.sh desktop-windows ${{ matrix.target }}
           ./scripts/package.sh cli ${{ matrix.target }}
+      - name: Verify Windows helper package layout
+        shell: bash
+        run: |
+          cd dist
+          archive="Doubao-Skin-Windows-${{ matrix.label }}.zip"
+          sha256sum -c "$archive.sha256"
+          test "$(unzip -Z1 "$archive" | awk -F/ 'NF == 2 && tolower($0) ~ /\/doubao-skin\.exe$/ { count++ } END { print count + 0 }')" -eq 1
+          test "$(unzip -Z1 "$archive" | awk -F/ 'NF == 3 && tolower($0) ~ /\/helpers\/doubao-skin-agent\.exe$/ { count++ } END { print count + 0 }')" -eq 1
       - uses: actions/upload-artifact@v7
         with:
           name: Windows-native-${{ matrix.label }}
