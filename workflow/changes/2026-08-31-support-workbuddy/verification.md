@@ -59,6 +59,9 @@ verified_at: ""
 ## Behavioral evidence
 
 - `/Applications/WorkBuddy.app` 已安装，`CFBundleShortVersionString=5.3.14`、`CFBundleIdentifier=com.workbuddy.workbuddy`、`CFBundleExecutable=Electron`。
+- Windows 11 ARM64 虚拟机中安装并启动了官方 `WorkBuddy-win32-x64-user-5.4.5.37398844-33ba13eb.exe`；安装器与宿主下载文件的 SHA-256 均为 `a139a9c7aad407a0da7321788886cdbf7718acd1fcb44b5b5de600e4fc325569`。应用安装到当前用户默认目录 `C:\Users\idevlab\AppData\Local\Programs\WorkBuddy`，可进入官方登录页；未登录、未读取账号或任务内容，Windows 防火墙入站访问提示已取消。
+- 同一虚拟机运行 commit `c49d707` 的 Windows ARM64 测试包时，安装 WorkBuddy 前后及重启主题工具后都显示 `WorkBuddy · 未安装`。源码复核确认这是当前平台契约：Windows 安装路径表对 WorkBuddy 返回空集合，注册表匹配显式拒绝 WorkBuddy，已安装二进制缓存的第三项固定为 `None`，实时主题入口也明确返回“WorkBuddy 实时主题目前仅支持 macOS”。
+- 只读可行性探针用 `--remote-debugging-address=127.0.0.1 --remote-debugging-port=9224` 重启 Windows WorkBuddy，`http://127.0.0.1:9224/json` 返回一个 `page`，URL 为 `file:///C:/Users/idevlab/AppData/Local/Programs/WorkBuddy/resources/app.asar/renderer/index.html`。这证明 Windows 版保留回环 CDP 能力，但该 URL 不符合当前仅接受 macOS bundle 路径的严格身份规则，因此没有尝试注入主题。
 - 只读进程检查确认 WorkBuddy 当前正在运行；未输出完整命令行。
 - 用户在执行当下明确回复“开，开始执行。”，授权本次优雅退出和 CDP 重启探针。
 - WorkBuddy 通过 `Command-Q` 优雅退出；轮询确认主进程正常消失，没有使用强制结束、宽泛 `pkill Electron` 或端口占用进程终止。
@@ -92,6 +95,7 @@ verified_at: ""
 ## Visual evidence
 
 - 早期只读界面勘察确认当前 WorkBuddy 是带左侧导航、主内容区和输入区的桌面主界面；为避免把现有任务列表写入仓库，本阶段未保存视觉证据。
+- Windows 11 ARM64 虚拟机中实窗观察到主题工具稳定显示 `WorkBuddy · 未安装`，官方 WorkBuddy 5.4.5 可正常显示登录页。没有保存包含 PowerShell 进程日志或产品插件名称的截图，也没有把 Windows 登录页冒充主题应用证据。
 - 当前构建的临时 QA app 实窗显示三段目标选择器，`Command-3` 可选中 WorkBuddy，VoiceOver/AX 标签分别为 `Command-1`、`Command-2`、`Command-3`；实验提示显示“已验证 WorkBuddy 5.3.14”。
 - 深色 `pure-dark`、浅色 `qq-light-blue` 和恢复默认均在 WorkBuddy 新建空白任务、收起任务侧栏后检查；布局、可读性和 iframe 隔离正常，但用户复核指出浅色主题肉眼几乎无变化。重新并排检查确认，当前变化主要限于蓝色边框、阴影和选中态，不能满足“主题效果明显”的产品验收标准。内部导航持续注入只证明运行时稳定，不证明视觉主题成立。
 - 本地忽略目录证据：`work/verification/2026-08-31-support-workbuddy/desktop-three-targets.jpeg`、`desktop-workbuddy-selected.jpeg`、`desktop-restart-gate.jpeg`、`desktop-after-user-quit.jpeg`、`desktop-after-confirmed-restart.jpeg`、`workbuddy-qq-light-blue-after-confirmed-restart.jpeg`、`workbuddy-code-navigation-themed.jpeg`、`workbuddy-restored-official.jpeg`、`workbuddy-normal-reopen-official.jpeg`。深色实窗已在 Computer Use 中即时检查，但早期系统临时截图在复制前被清理，没有进入仓库。
@@ -106,6 +110,8 @@ verified_at: ""
 ## Security and privacy evidence
 
 - `codesign` 只读检查确认 app identifier 为 `com.workbuddy.workbuddy`、TeamIdentifier 为 `FN2V63AD2J`、hardened runtime 版本为 `15.4.0`；未修改 bundle 或签名。
+- Windows 探针只访问 guest 本机 `127.0.0.1:9224/json` 的 target 类型与 URL；没有读取 Cookie、存储、正文、账号或插件数据。安装期间出现的防火墙入站访问请求被取消，没有扩大网络访问范围。
+- 验收结束后通过 Windows 系统菜单正常关机，确认 `vmrun list` 为 `Total running VMs: 0`；临时 `127.0.0.1:5909` VNC 配置已从 VMX 移除，宿主 `192.168.92.1:8765` 临时安装包服务已停止。WorkBuddy 5.4.5 保留在虚拟机中，便于后续获批的 Windows 适配回归。
 - 预检只读取 Info.plist、签名摘要、精确路径匹配得到的 PID 和 `9224` 监听状态；未读取任务正文、账号、Cookie、localStorage、IndexedDB、工作空间、文件、插件、MCP 或网络内容。
 - 没有执行宽泛 `pkill Electron`、端口占用进程终止、app.asar 解包/修改或远程调试安全绕过。
 - 实际注入目标只有严格匹配的 `page`；先前探针出现的 `https://www.workbuddy.cn/space/home?...` 类型为 `iframe`，而运行循环同时要求 `type=page` 与严格 URL，单元测试也拒绝该 URL、普通 file、DevTools 和 extension 页面。
@@ -117,6 +123,7 @@ verified_at: ""
 ## Deviations and residual risk
 
 - 非干扰的第二实例探针没有执行：没有证据证明第二实例会使用隔离用户目录而不触碰现有单实例会话，用户已改为明确授权安全重启。
+- Windows WorkBuddy 验收是用户后续要求的只读兼容性检查，不属于本变更已接受的实现范围；`intent.md` 明确排除 Windows/Linux，现有 Spec 的安装路径、进程和 renderer 身份也都限定为 macOS。因此本轮没有在当前变更中扩写 Windows 支持。后续若要实现，需要新建或修订变更，至少覆盖 Windows 安装检测、平台专用 renderer 身份、精确启动/退出策略、应用与恢复、深浅色、双目标并存以及 Windows 真机/虚拟机实窗验收。
 - 运行时可行性 Gate 已通过：参数有效、监听仅限回环、主 renderer URL 符合 Spec，且不需要改包或安全绕过。
 - 四次 AX/取证状态短暂包含现有任务标题：一次来自早期定位“新建任务”入口时过滤范围过宽，一次来自窄窗口尝试中右键误开输入区上下文菜单并使侧栏重新展开，一次来自鲸鱼娘修复前基线启动时侧栏状态被 WorkBuddy 恢复，最新一次来自正式表面修复截图时 WorkBuddy 再次恢复展开侧栏。最后一张临时截图已立即从本地证据目录删除并确认不存在，随后收起侧栏重新保存安全截图；没有打开任务、读取正文或提交相关截图。该偏差需要独立验证者知情复核。
 - 第二次重启的执行当下确认、明确二次动作、成功应用、恢复和普通重开均已完成。
