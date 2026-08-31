@@ -5,7 +5,7 @@ status: pending
 owner: "codex"
 created: "2026-09-01"
 based_on: plan.md
-commit: ""
+commit: "a640a7943fbe576586bf86628a86d6fcb605d954"
 verification_mode: "fresh-context"
 verified_by: ""
 verified_at: ""
@@ -22,7 +22,8 @@ verified_at: ""
 - `./scripts/check.sh rust`: passed after the final implementation; desktop 25, core 53, authoring 7, bundled paths 3 and CLI 4 passed, followed by warning-as-error checks and desktop build.
 - `./scripts/check.sh all`: passed after the final read-confirmation compensation patch, including workflow, Rust, Web tests, TypeScript, Next.js static build and audit; `git diff --check` also passed.
 - `cargo check -p doubao-skin-desktop --bin doubao-skin-agent --target x86_64-pc-windows-msvc` on macOS stopped in the pre-existing `ring` C build because the host has no Windows MSVC SDK header `assert.h`; it did not reach product code and is not Windows evidence.
-- Draft PR CI run `33440186944` proved the Windows product builds and helper package layout on x86 and ARM64, plus the x64 product code compiled before tests. The x64 job then exposed one platform-specific test-fixture defect: a POSIX `/Test/...` path was not absolute under Windows. The fixture now constructs native absolute paths and the Win32 instance guard warning is removed; rerun is pending.
+- Draft PR CI run `33441260595` passed all six jobs at implementation commit `a640a79`: development workflow, Web, Rust workspace, Windows x64, Windows x86 and Windows ARM64. The x64 job ran the native core and desktop regression suites before building the desktop/CLI packages; all three Windows jobs passed the final PE and helper-package-layout checks.
+- Downloaded the `Windows-native-arm64` artifact from run `33441260595`. `shasum -a 256 -c Doubao-Skin-Windows-arm64.zip.sha256` passed, and direct ZIP inspection confirmed one top-level `doubao-skin.exe`, `helpers/doubao-skin-agent.exe`, licenses and bundled themes.
 
 ## Behavioral evidence
 
@@ -49,8 +50,8 @@ verified_at: ""
 - The planned local Windows VM path is temporarily unavailable for trustworthy input/visual capture; native CI supplies compilation/PE/package proof, but cannot replace login/visual acceptance.
 - Public HKCU Run registration cannot observe Windows Settings' undocumented external disable database. UI therefore reports registration, never silently recreates a deleted value, as approved in Spec.
 - A portable package move leaves an old absolute Run path until the user explicitly closes/reopens the parent switch. This is intentional to avoid overriding an external disable choice.
-- Windows-specific product code compiled on native Windows x64/x86/ARM64 runners in run `33440186944`; the first x64 test run failed only on the non-native absolute-path fixture described above. Do not mark complete until the corrected native CI rerun passes and VM evidence is obtained or explicitly waived by a human verifier.
+- Windows-specific product code compiled and packaged on native Windows x64/x86/ARM64 runners in run `33441260595`, including x64 native regressions and all three helper layout checks. Do not mark complete until VM evidence is obtained or explicitly waived by a human verifier.
 
 ## Verdict
 
-Pending. Local implementation and gates pass, but native Windows CI and real Windows runtime/visual acceptance remain open.
+Pending. Local implementation, full gates and native Windows CI pass; real Windows runtime/visual acceptance and the required fresh-context or human verdict remain open.
