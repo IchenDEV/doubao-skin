@@ -6,7 +6,7 @@
 
 # Doubao Skin
 
-**A native theme manager for Doubao and Doubao Work on macOS, with experimental WorkBuddy support.**
+**A native theme manager for Doubao and Doubao Work on macOS and Windows, with experimental WorkBuddy support on macOS.**
 
 [Theme gallery](https://doubao-skin.idevlab.dev) · [Guide & downloads](https://doubao-skin.idevlab.dev/guide#download) · [Create & contribute](https://doubao-skin.idevlab.dev/contribute)
 
@@ -20,7 +20,7 @@
 
 ![Doubao Skin online gallery](docs/images/gallery.png)
 
-> macOS is supported today; Windows is planned. This is an independent project, not an official Doubao or WorkBuddy product, and it does not modify official app bundles in `/Applications`.
+> macOS and Windows are supported. This is an independent project, not an official Doubao or WorkBuddy product, and it does not modify official app bundles.
 
 ## Real transformed pages
 
@@ -41,10 +41,10 @@ These screenshots were captured from a real local Doubao Work window with themes
 
 ## Features
 
-- Native macOS app for browsing, previewing, installing, applying, and restoring themes.
-- 30 built-in themes across solid colors, atmospheric backgrounds, editor palettes, and brand-inspired styles.
+- Native macOS and Windows app for browsing, previewing, installing, applying, and restoring themes.
+- 34 built-in themes across solid colors, atmospheric backgrounds, editor palettes, and brand-inspired styles.
 - Online theme store with verifiable `.doubao-skin.zip` packages.
-- Universal ZIP and DMG packages for both Apple Silicon and Intel Macs.
+- Universal macOS ZIP/DMG plus separate Windows x64, x86, and ARM64 ZIPs.
 - One Rust toolchain shared by the desktop app, CLI, Codex plugin, and Claude Code plugin.
 - Live injection and offline-clone modes while the official app bundle remains untouched.
 - Experimental WorkBuddy 5.3.14 support: v2 themes use compatibility mode, while v3 themes load only when `targets.workbuddy` is declared. WorkBuddy remains live-mode only, without protocol-bridge or offline-clone support.
@@ -57,6 +57,9 @@ Download the latest build from [GitHub Releases](https://github.com/IchenDEV/dou
 
 - `Doubao-Skin-macOS-universal.dmg`: recommended; open it and drag the app to Applications.
 - `Doubao-Skin-macOS-universal.zip`: unzip and run directly.
+- `Doubao-Skin-Windows-x64.zip`: for most Windows PCs.
+- `Doubao-Skin-Windows-arm64.zip`: for Snapdragon and other ARM Windows PCs.
+- `Doubao-Skin-Windows-x86.zip`: for 32-bit Windows only.
 - `.sha256`: SHA-256 checksums for each package.
 
 If macOS blocks the first launch, go to **System Settings → Privacy & Security**, scroll down to “Security”, click **Open Anyway**, and enter your admin password.
@@ -70,15 +73,15 @@ Release packages use one continuous community self-signed certificate. They are 
 
 WorkBuddy has been verified with version 5.3.14. If it is already running without local debugging enabled, the first Apply action explains the impact and changes to **Restart and Apply**; only that second explicit action may quit and restart WorkBuddy. Save any in-progress work first. If WorkBuddy is later quit by the user, Doubao Skin does not relaunch it.
 
-The in-app store installs remote themes directly. You can also drag a local package into the window or import one with **Install Theme…** / `Command-O`. Installed themes live in `~/Library/Application Support/Doubao Skin/themes/`.
+The in-app store installs remote themes directly. You can also drag a local package into the window or import one with **Install Theme…** / `Command-O` on macOS. Installed themes use the platform data directory: `~/Library/Application Support/Doubao Skin/themes/` on macOS, `%LOCALAPPDATA%\Doubao Skin\themes\` on Windows, and `$XDG_DATA_HOME/Doubao Skin/themes/` on Linux (falling back to `~/.local/share`).
 
 ## Themes
 
-Browse and filter every theme at [doubao-skin.idevlab.dev](https://doubao-skin.idevlab.dev). The current set contains 30 themes:
+Browse and filter every theme at [doubao-skin.idevlab.dev](https://doubao-skin.idevlab.dev). The current set contains 34 themes:
 
 - **Solid and editor palettes:** Violet Night, Ocean Cyan, Forest, Pure Dark, Peach Sunset, Huaxia Blue, plus Catppuccin, Dracula, Nord, Gruvbox, Solarized, and One Half adaptations.
 - **Atmospheric backgrounds:** Gothic Void, Sakura Night, Cyber Neon, Mist Forest, Cozy Room, Neon Koi, Moon Pine, Crimson Rain, and Machine Overseer.
-- **Bright and brand-inspired:** QQ Light Blue, Whale Maid, Tea Party, Flower Club, Starry Room, Snack Giggle, Dessert Giggle, GitHub Repository, and Claude Warm.
+- **Bright, brand, and fan-inspired:** QQ Light Blue, Whale Maid, Tea Party, Flower Club, Starry Room, Snack Giggle, Dessert Giggle, GitHub Repository, Claude Warm, Teyvat Dandelion Wind, Liyue Lanterns, Gugugaga Administrator, and Gugugaga Snowfield.
 
 Asset provenance and licenses are recorded in each `theme.json`, the [theme research notes](design/theme-standard/codex-theme-research.md), and [third-party notices](THIRD_PARTY_NOTICES.md).
 
@@ -105,43 +108,43 @@ Claude Code:
 
 Plugin sources are under [`plugins/doubao-skin`](plugins/doubao-skin). The website also publishes an [Agent Skills Discovery Draft 0.2.0 index](https://doubao-skin.idevlab.dev/.well-known/agent-skills/index.json).
 
-## Rust CLI
+## Developer CLI
 
-`doubao-theme` is a standalone command-line tool that does not depend on Node.js, Python, or GPUI.
+`doubao-skin` supports theme development and plugin automation. It uses separate Release assets and is never bundled into the desktop package.
 
 ### Install
 
-One-line install (macOS only):
+On Windows, Scoop selects x64, x86, or ARM64 automatically:
+
+```powershell
+scoop install https://github.com/IchenDEV/doubao-skin/releases/latest/download/doubao-skin.json
+```
+
+On macOS or Linux, the installer detects the current platform and verifies the checksum:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
 ```
 
-The script downloads the prebuilt universal binary from GitHub Releases, verifies its checksum, and places it in `/usr/local/bin`. Set `INSTALL_DIR` to choose a different location, or `VERSION` to pin a specific release:
-
-```bash
-VERSION=v0.1.0 INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/IchenDEV/doubao-skin/main/scripts/install-cli.sh | sh
-```
-
-You can also download `doubao-theme-macOS-universal.tar.gz` from [GitHub Releases](https://github.com/IchenDEV/doubao-skin/releases/latest) and extract it manually.
-
 ### Usage
 
 ```bash
-doubao-theme list
-doubao-theme create themes/my-theme \
+doubao-skin list
+doubao-skin create themes/my-theme \
   --name "My Theme" --description "A calm dark theme" \
   --accent "#5b7ee5" --appearance both --author "Local user"
-doubao-theme check themes/my-theme
-doubao-theme preview themes/my-theme
-doubao-theme pack themes/my-theme dist/my-theme.doubao-skin.zip
+doubao-skin check themes/my-theme
+doubao-skin preview themes/my-theme
+doubao-skin pack themes/my-theme dist/my-theme.doubao-skin.zip
 ```
 
-Additional commands include `install`, `apply`, `restore`, `build`, and `remove-build`. Run `doubao-theme --help` for the complete interface.
+`list`, `create`, `check`, `preview`, `pack`, and `install` are portable. `apply` and `restore` require the official macOS or Windows client; the offline-clone commands `build` and `remove-build` are macOS-only.
+
+Run `doubao-skin --help` for the complete interface.
 
 ## Build from source
 
-Requirements: macOS, Rust 1.97.1+, Node.js 24.19+, and pnpm 12.
+Requirements: Rust 1.97.1+, Node.js 24.19+, and pnpm 12. Desktop packages must be built on their target operating system.
 
 ```bash
 # Test and validate the whole project
@@ -151,10 +154,13 @@ Requirements: macOS, Rust 1.97.1+, Node.js 24.19+, and pnpm 12.
 cargo run -p doubao-skin-desktop
 
 # Build for the host architecture
-./scripts/build-macos.sh
+./scripts/package.sh desktop-macos
 
 # Build a universal Apple Silicon + Intel package
-./scripts/build-macos.sh --universal
+./scripts/package.sh desktop-macos --universal
+
+# Build a Windows x64 package from Windows Git Bash
+./scripts/package.sh desktop-windows x86_64-pc-windows-msvc
 ```
 
 Website:
@@ -182,12 +188,12 @@ workflow            Artifact-driven delivery and verification records
 
 ## Create and contribute themes
 
-Use `doubao-theme create` or `$create-doubao-theme` to generate a `schemaVersion: 3` theme, and declare its Doubao, DoubaoWork, and WorkBuddy scope with `--targets`. See the [theme standard](design/theme-standard/README.md), [v3 multi-host guide](design/theme-standard/theme-v3.md), and [v3 JSON schema](design/theme-standard/theme-v3.schema.json). Existing v1/v2 user themes remain readable.
+Use `doubao-skin create` or `$create-doubao-theme` to generate a `schemaVersion: 3` theme, and declare its Doubao, DoubaoWork, and WorkBuddy scope with `--targets`. See the [theme standard](design/theme-standard/README.md), [v3 multi-host guide](design/theme-standard/theme-v3.md), and [v3 JSON schema](design/theme-standard/theme-v3.schema.json). Existing v1/v2 user themes remain readable.
 
 Before opening a pull request:
 
 ```bash
-cargo run -p skin-core --bin doubao-theme -- check themes/my-theme
+cargo run -p skin-core --bin doubao-skin -- check themes/my-theme
 corepack pnpm --dir apps/web sync
 ./scripts/check.sh all
 ```

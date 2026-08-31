@@ -1,10 +1,10 @@
 //! Native theme core for Doubao and DoubaoWork, with a DoubaoWork model bridge.
 //!
-//! Reskins the selected Chromium-based macOS app by overriding CSS design
-//! tokens on its embedded pages. Theme delivery supports both official apps:
+//! Reskins the selected Chromium-based app by overriding CSS design tokens on
+//! its embedded pages. Theme delivery supports both official apps:
 //!
-//! - [`live`]: inject at runtime over the Chrome DevTools Protocol
-//! - [`build`]: DoubaoWork-only offline clone + patch + re-sign into
+//! - [`live`]: inject at runtime over the Chrome DevTools Protocol on macOS and Windows
+//! - [`build`]: macOS-only DoubaoWork offline clone + patch + re-sign into
 //!   `~/Applications/DoubaoWork-Skin.app`
 
 pub mod authoring;

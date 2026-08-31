@@ -45,7 +45,7 @@ export default function GalleryClient({
       <label className="search-field">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-4-4" />
+          <path d="M20 20 L16 16" />
         </svg>
         <input
           type="search"

@@ -9,8 +9,7 @@
 
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::path::Path;
-use std::process::Command;
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -18,7 +17,8 @@ use std::time::Duration;
 use crate::theme::Theme;
 use crate::ws::Cdp;
 
-pub const APP_BINARY: &str = "/Applications/DoubaoWork.app/Contents/MacOS/DoubaoWork";
+mod platform;
+
 pub const DEFAULT_PORT: u16 = 9222;
 pub const DOUBAO_PORT: u16 = 9223;
 pub const WORKBUDDY_PORT: u16 = 9224;
@@ -27,6 +27,27 @@ const WORKBUDDY_RENDERER_URL: &str =
     "file:///Applications/WorkBuddy.app/Contents/Resources/app.asar/renderer/index.html";
 
 const GENERIC_PAGE_PATTERNS: &[&str] = &["side_panel.html", "popup.html", "options.html"];
+const INITIAL_INJECTION_TIMEOUT: Duration = Duration::from_secs(30);
+
+fn ensure_live_supported(target_os: &str, target: TargetApp) -> Result<(), String> {
+    if target_os == "macos" || (target_os == "windows" && target != TargetApp::WorkBuddy) {
+        Ok(())
+    } else if target == TargetApp::WorkBuddy {
+        Err("WorkBuddy 实时主题目前仅支持 macOS".into())
+    } else {
+        Err("实时应用主题仅支持 macOS 和 Windows".into())
+    }
+}
+
+fn timed_out_injection_error(
+    failure_elapsed: Option<Duration>,
+    last_error: Option<&str>,
+) -> Option<String> {
+    failure_elapsed
+        .is_some_and(|elapsed| elapsed >= INITIAL_INJECTION_TIMEOUT)
+        .then(|| last_error.map(str::to_owned))
+        .flatten()
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TargetApp {
@@ -66,30 +87,6 @@ impl TargetApp {
         }
     }
 
-    pub const fn app_path(self) -> &'static str {
-        match self {
-            Self::Doubao => "/Applications/Doubao.app",
-            Self::DoubaoWork => "/Applications/DoubaoWork.app",
-            Self::WorkBuddy => "/Applications/WorkBuddy.app",
-        }
-    }
-
-    pub const fn binary_path(self) -> &'static str {
-        match self {
-            Self::Doubao => "/Applications/Doubao.app/Contents/MacOS/Doubao",
-            Self::DoubaoWork => APP_BINARY,
-            Self::WorkBuddy => "/Applications/WorkBuddy.app/Contents/MacOS/Electron",
-        }
-    }
-
-    pub const fn process_pattern(self) -> &'static str {
-        match self {
-            Self::Doubao => "Doubao.app/Contents/MacOS/Doubao",
-            Self::DoubaoWork => "DoubaoWork.app/Contents/MacOS/DoubaoWork",
-            Self::WorkBuddy => "^/Applications/WorkBuddy\\.app/Contents/MacOS/Electron($| )",
-        }
-    }
-
     pub fn port(self) -> u16 {
         let (override_name, fallback) = match self {
             Self::Doubao => ("DOUBAO_SKIN_DOUBAO_CDP_PORT", DOUBAO_PORT),
@@ -103,16 +100,29 @@ impl TargetApp {
             .unwrap_or(fallback)
     }
 
-    const fn launch_marker(self) -> &'static str {
+    fn launch_marker(self) -> PathBuf {
         match self {
-            Self::Doubao => "/tmp/doubao-skin-doubao-launched-at",
-            Self::DoubaoWork => "/tmp/doubao-skin-doubao-work-launched-at",
-            Self::WorkBuddy => "/tmp/doubao-skin-workbuddy-launched-at",
+            Self::Doubao => std::env::temp_dir().join("doubao-skin-doubao-launched-at"),
+            Self::DoubaoWork => std::env::temp_dir().join("doubao-skin-doubao-work-launched-at"),
+            Self::WorkBuddy => std::env::temp_dir().join("doubao-skin-workbuddy-launched-at"),
         }
     }
 
     pub fn is_installed(self) -> bool {
-        Path::new(self.binary_path()).is_file()
+        self.installed_binary().is_some()
+    }
+
+    fn installed_binary(self) -> Option<PathBuf> {
+        platform::installed_binary(self)
+    }
+
+    fn install_hint(self) -> String {
+        platform::install_hint(self)
+    }
+
+    #[cfg(target_os = "macos")]
+    pub(crate) fn installed_app_bundle(self) -> Option<PathBuf> {
+        platform::installed_app_bundle(self)
     }
 
     pub fn matches_identity_url(self, url: &str) -> bool {
@@ -255,11 +265,7 @@ pub(crate) fn prepare_state_for_observation(
 }
 
 fn process_running(target: TargetApp) -> bool {
-    Command::new("pgrep")
-        .args(["-f", target.process_pattern()])
-        .output()
-        .map(|output| output.status.success())
-        .unwrap_or(false)
+    platform::process_running(target)
 }
 
 pub fn prepare_state(target: TargetApp) -> Result<PrepareState, String> {
@@ -305,14 +311,14 @@ fn ensure_running<F: FnMut(String)>(
             return Err(format!(
                 "未找到{}：{}",
                 target.display_name(),
-                target.app_path()
+                target.install_hint()
             ));
         }
         PrepareState::RestartConfirmationRequired if !allow_restart => {
             return Err("WorkBuddy 正在运行，需要明确确认重启后才能应用主题".into());
         }
         PrepareState::RestartConfirmationRequired => {
-            tell_app(target, "quit", false);
+            platform::tell_app(target, "quit", false);
             for _ in 0..12 {
                 if !process_running(target) {
                     break;
@@ -320,19 +326,19 @@ fn ensure_running<F: FnMut(String)>(
                 std::thread::sleep(Duration::from_millis(500));
             }
             if process_running(target) {
-                kill_app(target);
+                platform::kill_app(target);
             }
         }
         PrepareState::LaunchRequired if target != TargetApp::WorkBuddy => {
             // Preserve the established Doubao behavior: a running instance
             // without the debug flag is restarted before launching.
-            tell_app(target, "quit", false);
+            platform::tell_app(target, "quit", false);
             std::thread::sleep(Duration::from_secs(3));
-            kill_app(target);
+            platform::kill_app(target);
         }
         PrepareState::LaunchRequired => {}
     }
-    launch_app(target, &mut log)?;
+    platform::launch_app(target, &mut log)?;
     for _ in 0..60 {
         if port_up(port) {
             let list = targets(port)?;
@@ -370,67 +376,6 @@ fn mark_launched(target: TargetApp) {
     let _ = std::fs::write(target.launch_marker(), now.to_string());
 }
 
-fn tell_app(target: TargetApp, action: &str, spawn: bool) {
-    let script = format!("tell application id \"{}\" to {action}", target.bundle_id());
-    let mut command = Command::new("osascript");
-    command
-        .args(["-e", &script])
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null());
-    if spawn {
-        let _ = command.spawn();
-    } else {
-        let _ = command.output();
-    }
-}
-
-/// Launch the app through LaunchServices with the debug flag: a directly
-/// exec'd binary can end up in a wedged state (no windows, unresponsive
-/// renderers) on some systems.
-fn launch_app<F: FnMut(String)>(target: TargetApp, mut log: F) -> Result<(), String> {
-    let port = target.port();
-    log(format!(
-        "launching {} --remote-debugging-port={port}",
-        target.display_name()
-    ));
-    mark_launched(target);
-    Command::new("open")
-        .arg("-a")
-        .arg(target.app_path())
-        .arg("--args")
-        .arg("--remote-debugging-address=127.0.0.1")
-        .arg(format!("--remote-debugging-port={port}"))
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn()
-        .map_err(|e| format!("cannot launch app: {e}"))?;
-    // nudge a window open (like clicking the Dock icon): when the previous
-    // session was saved window-less, pages would boot without a window and
-    // their renderers never answer CDP
-    tell_app(target, "reopen", true);
-    Ok(())
-}
-
-/// Kill the app. A wedged instance must be hard-killed: a graceful
-/// AppleScript quit can persist a window-less session whose renderers then
-/// never answer CDP on the next launch.
-fn kill_app(target: TargetApp) {
-    let _ = Command::new("pkill")
-        .args(["-f", target.process_pattern()])
-        .output();
-    for _ in 0..20 {
-        let running = Command::new("pgrep")
-            .args(["-f", target.process_pattern()])
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false);
-        if !running {
-            break;
-        }
-        std::thread::sleep(Duration::from_millis(500));
-    }
-}
-
 /// Watch pages and inject the theme. Runs until `stop` is set, the debug
 /// port goes away, or (with `once`) after a single pass.
 ///
@@ -465,6 +410,7 @@ pub fn run_with_restart_permission<F: FnMut(String)>(
     allow_restart: bool,
     mut log: F,
 ) -> Result<(), String> {
+    ensure_live_supported(std::env::consts::OS, target)?;
     if !theme.supports_target(target) {
         return Err(format!(
             "主题 {} 不支持 {}",
@@ -499,6 +445,9 @@ pub fn run_with_restart_permission<F: FnMut(String)>(
     let mut dead_probe_tick = 0u32;
     let mut wedge_restarted = false;
     let mut revive_attempted = false;
+    let mut applied_once = false;
+    let mut first_injection_failure_at: Option<std::time::Instant> = None;
+    let mut last_injection_error: Option<String> = None;
     while !stop.load(Ordering::Relaxed) {
         let list = match targets(port) {
             Ok(l) => l,
@@ -523,7 +472,7 @@ pub fn run_with_restart_permission<F: FnMut(String)>(
                 down_ticks += 1;
                 if down_ticks >= 5 && !port_up(port) {
                     log("relaunching app with the debug port…".into());
-                    if launch_app(target, &mut log).is_err() {
+                    if platform::launch_app(target, &mut log).is_err() {
                         log("relaunch failed, will keep waiting".into());
                     } else {
                         launched_by_us_at = Some(std::time::Instant::now());
@@ -623,8 +572,8 @@ pub fn run_with_restart_permission<F: FnMut(String)>(
                 // wedged, hard-kill and relaunch (no extra waiting: these
                 // targets already proved dead once before the wake)
                 log("pages still unresponsive after wake — restarting the app…".into());
-                kill_app(target);
-                let _ = launch_app(target, &mut log);
+                platform::kill_app(target);
+                let _ = platform::launch_app(target, &mut log);
                 launched_by_us_at = Some(std::time::Instant::now());
                 injected.clear();
                 dead.clear();
@@ -638,8 +587,8 @@ pub fn run_with_restart_permission<F: FnMut(String)>(
             if since.elapsed() > Duration::from_secs(8) {
                 // stage 1: occluded-app freeze — just wake it up
                 log("pages unresponsive — waking the app (may be occluded)…".into());
-                tell_app(target, "reopen", false);
-                tell_app(target, "activate", false);
+                platform::tell_app(target, "reopen", false);
+                platform::tell_app(target, "activate", false);
                 revive_attempted = true;
                 all_dead_since = None;
                 // give the renderers a moment to wake, then force fresh
@@ -745,16 +694,32 @@ pub fn run_with_restart_permission<F: FnMut(String)>(
                 Ok(session) => {
                     sessions.insert(p.id.to_string(), session);
                     injected.insert(p.id.to_string());
+                    applied_once = true;
+                    first_injection_failure_at = None;
+                    last_injection_error = None;
                     log(format!("  injected: {}", &p.url[..p.url.len().min(70)]));
                 }
-                Err(_) => {
-                    // unresponsive or mid-navigation — mark dead, stay quiet
+                Err(error) => {
+                    // Unresponsive or mid-navigation: keep watching, but
+                    // retain the error until the first successful injection.
                     dead.insert(p.id.to_string());
+                    if !applied_once {
+                        first_injection_failure_at.get_or_insert_with(std::time::Instant::now);
+                        last_injection_error = Some(error.clone());
+                    }
                     log(format!(
-                        "  target not responding, watching quietly: {}",
-                        &p.url[..p.url.len().min(60)]
+                        "  target not responding, watching quietly: {} ({error})",
+                        &p.url[..p.url.len().min(60)],
                     ));
                 }
+            }
+        }
+        if !applied_once {
+            let failure_elapsed = first_injection_failure_at.map(|started| started.elapsed());
+            if let Some(error) =
+                timed_out_injection_error(failure_elapsed, last_injection_error.as_deref())
+            {
+                return Err(format!("{}主题注入失败：{error}", target.display_name()));
             }
         }
         if once {
@@ -781,6 +746,7 @@ document.querySelectorAll('[data-doubao-theme-composer]').forEach(function(el){e
 /// persisted data. Success means at least one responsive page executed the
 /// cleanup contract; a listening port or an already-closed app is not proof.
 pub fn restore<F: FnMut(String)>(target: TargetApp, mut log: F) -> Result<usize, String> {
+    ensure_live_supported(std::env::consts::OS, target)?;
     let port = target.port();
     if !port_up(port) {
         return Err(format!(
@@ -893,46 +859,53 @@ mod tests {
     use super::*;
 
     #[test]
+    fn live_mode_reports_its_platform_boundary_before_using_app_paths() {
+        assert!(ensure_live_supported("macos", TargetApp::WorkBuddy).is_ok());
+        assert!(ensure_live_supported("windows", TargetApp::Doubao).is_ok());
+        assert_eq!(
+            ensure_live_supported("linux", TargetApp::Doubao).unwrap_err(),
+            "实时应用主题仅支持 macOS 和 Windows"
+        );
+        assert_eq!(
+            ensure_live_supported("windows", TargetApp::WorkBuddy).unwrap_err(),
+            "WorkBuddy 实时主题目前仅支持 macOS"
+        );
+    }
+
+    #[test]
+    fn initial_injection_failure_times_out_with_the_last_error() {
+        assert_eq!(
+            timed_out_injection_error(
+                Some(Duration::from_secs(29)),
+                Some("platform random source unavailable")
+            ),
+            None
+        );
+        assert_eq!(
+            timed_out_injection_error(
+                Some(Duration::from_secs(30)),
+                Some("platform random source unavailable")
+            ),
+            Some("platform random source unavailable".to_string())
+        );
+    }
+
+    #[test]
     fn target_metadata_keeps_all_supported_apps_isolated() {
         assert_eq!(TargetApp::Doubao.id(), "doubao");
         assert_eq!(TargetApp::Doubao.display_name(), "豆包");
         assert_eq!(TargetApp::Doubao.bundle_id(), "com.bot.pc.doubao");
-        assert_eq!(TargetApp::Doubao.app_path(), "/Applications/Doubao.app");
         assert_eq!(TargetApp::Doubao.port(), 9223);
 
         assert_eq!(TargetApp::DoubaoWork.id(), "doubao-work");
         assert_eq!(TargetApp::DoubaoWork.display_name(), "豆包工作");
         assert_eq!(TargetApp::DoubaoWork.bundle_id(), "com.work.pc.doubao");
-        assert_eq!(
-            TargetApp::DoubaoWork.app_path(),
-            "/Applications/DoubaoWork.app"
-        );
         assert_eq!(TargetApp::DoubaoWork.port(), DEFAULT_PORT);
 
         assert_eq!(TargetApp::WorkBuddy.id(), "workbuddy");
         assert_eq!(TargetApp::WorkBuddy.display_name(), "WorkBuddy");
         assert_eq!(TargetApp::WorkBuddy.bundle_id(), "com.workbuddy.workbuddy");
-        assert_eq!(
-            TargetApp::WorkBuddy.app_path(),
-            "/Applications/WorkBuddy.app"
-        );
-        assert_eq!(
-            TargetApp::WorkBuddy.binary_path(),
-            "/Applications/WorkBuddy.app/Contents/MacOS/Electron"
-        );
         assert_eq!(TargetApp::WorkBuddy.port(), 9224);
-        assert_eq!(
-            TargetApp::WorkBuddy.process_pattern(),
-            "^/Applications/WorkBuddy\\.app/Contents/MacOS/Electron($| )"
-        );
-        assert_ne!(
-            TargetApp::Doubao.process_pattern(),
-            TargetApp::DoubaoWork.process_pattern()
-        );
-        assert_ne!(
-            TargetApp::DoubaoWork.process_pattern(),
-            TargetApp::WorkBuddy.process_pattern()
-        );
         assert_ne!(
             TargetApp::Doubao.launch_marker(),
             TargetApp::DoubaoWork.launch_marker()

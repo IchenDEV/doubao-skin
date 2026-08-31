@@ -14,7 +14,7 @@ pub struct WebSocket {
 
 fn rand_bytes(n: usize) -> std::io::Result<Vec<u8>> {
     let mut buf = vec![0u8; n];
-    std::fs::File::open("/dev/urandom")?.read_exact(&mut buf)?;
+    getrandom::fill(&mut buf).map_err(std::io::Error::other)?;
     Ok(buf)
 }
 
@@ -340,5 +340,20 @@ impl Cdp {
 
     pub fn close(self) {
         self.ws.close();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn websocket_random_bytes_come_from_the_host_platform() {
+        let first = rand_bytes(16).expect("platform random source");
+        let second = rand_bytes(16).expect("platform random source");
+
+        assert_eq!(first.len(), 16);
+        assert_eq!(second.len(), 16);
+        assert_ne!(first, second);
     }
 }

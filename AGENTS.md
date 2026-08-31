@@ -16,7 +16,7 @@ Doubao Skin is a macOS theme tool for the official DoubaoWork app. The repositor
 - Rust: `./scripts/check.sh rust`
 - Web: `pnpm --dir apps/web sync && ./scripts/check.sh web`
 - Native app: `cargo run -p doubao-skin-desktop`
-- Package: `./scripts/build-macos.sh`
+- Package: `./scripts/package.sh desktop-macos`
 
 ## Boundaries
 

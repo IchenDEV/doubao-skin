@@ -64,6 +64,33 @@
       "shadow": "0 12px 34px rgba(65,43,50,.14)",
       "transitionMs": 180
     },
+    "icons": {
+      "attach": "icons/attach.png",
+      "cloud": "icons/cloud.png",
+      "confirm": "icons/confirm.png",
+      "connector": "icons/tools.png",
+      "contentCreation": "icons/content-creation.png",
+      "conversation": "icons/conversation.png",
+      "copy": "icons/conversation.png",
+      "dailyWork": "icons/daily-work.png",
+      "design": "icons/content-creation.png",
+      "knowledge": "icons/knowledge.png",
+      "main": "icons/main-anime.png",
+      "moreSkills": "icons/tools.png",
+      "newTask": "icons/new-task.png",
+      "project": "icons/project.png",
+      "readAloud": "icons/voice.png",
+      "remote": "icons/remote.png",
+      "research": "icons/knowledge.png",
+      "scheduled": "icons/scheduled.png",
+      "search": "icons/search.png",
+      "send": "icons/send.png",
+      "sidebar": "icons/sidebar.png",
+      "skills": "icons/skills.png",
+      "stop": "icons/stop.png",
+      "tools": "icons/tools.png",
+      "voice": "icons/voice.png"
+    },
     "layout": {
       "chatMargin": 32,
       "chatMaxWidth": 960,
@@ -112,23 +139,6 @@
           "selectionColor": "rgba(176,108,136,0.28)",
           "userMessageBackground": "#b06c88",
           "userMessageText": "#ffffff"
-        },
-        "icons": {
-          "attach": "icons/attach.svg",
-          "cloud": "icons/cloud.svg",
-          "confirm": "icons/confirm.svg",
-          "connector": "icons/connector.svg",
-          "conversation": "icons/conversation.svg",
-          "main": "icons/main-anime.png",
-          "newTask": "icons/new-task.svg",
-          "project": "icons/project.svg",
-          "remote": "icons/remote.svg",
-          "scheduled": "icons/scheduled.svg",
-          "send": "icons/send.svg",
-          "skills": "icons/skills.svg",
-          "stop": "icons/stop.svg",
-          "tools": "icons/tools.svg",
-          "voice": "icons/voice.svg"
         }
       },
       "light": {
@@ -159,23 +169,6 @@
           "selectionColor": "rgba(150,59,96,0.24)",
           "userMessageBackground": "rgba(150,59,96,1)",
           "userMessageText": "#ffffff"
-        },
-        "icons": {
-          "attach": "icons/attach.svg",
-          "cloud": "icons/cloud.svg",
-          "confirm": "icons/confirm.svg",
-          "connector": "icons/connector.svg",
-          "conversation": "icons/conversation.svg",
-          "main": "icons/main-anime.png",
-          "newTask": "icons/new-task.svg",
-          "project": "icons/project.svg",
-          "remote": "icons/remote.svg",
-          "scheduled": "icons/scheduled.svg",
-          "send": "icons/send.svg",
-          "skills": "icons/skills.svg",
-          "stop": "icons/stop.svg",
-          "tools": "icons/tools.svg",
-          "voice": "icons/voice.svg"
         }
       }
     }

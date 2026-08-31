@@ -415,6 +415,12 @@ validate_all() {
 
 check_pr() {
   body=${PR_BODY:-}
+  pr_is_draft=${PR_IS_DRAFT-}
+  case "$pr_is_draft" in
+    true|false) ;;
+    *) fail "PR_IS_DRAFT must be 'true' or 'false', found '$pr_is_draft'" ;;
+  esac
+
   [ -n "$body" ] || fail "PR_BODY is empty"
   change_path=$(printf '%s\n' "$body" | grep -Eo 'workflow/changes/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*' | head -1 || true)
   [ -n "$change_path" ] || fail "PR body must link a workflow/changes/<id> artifact"
@@ -424,8 +430,21 @@ check_pr() {
   require_status "$change_dir/intent.md" accepted
   require_status "$change_dir/spec.md" accepted
   require_status "$change_dir/plan.md" accepted
-  require_status "$change_dir/verification.md" passed
-  echo "devflow: PR gate passed for $change_id"
+  verification="$change_dir/verification.md"
+  [ -f "$verification" ] || fail "$verification: artifact does not exist"
+  verification_status=$(metadata "$verification" status)
+
+  if [ "$pr_is_draft" = true ]; then
+    case "$verification_status" in
+      pending|passed) ;;
+      failed) fail "$verification: failed verification blocks Draft PRs" ;;
+      *) fail "$verification: invalid status '${verification_status:-missing}'" ;;
+    esac
+    echo "devflow: Draft PR gate passed for $change_id (verification: $verification_status)"
+  else
+    require_status "$verification" passed
+    echo "devflow: Ready PR gate passed for $change_id"
+  fi
 }
 
 command=${1:-}

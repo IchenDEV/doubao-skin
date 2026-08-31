@@ -65,30 +65,31 @@
       "transitionMs": 180
     },
     "icons": {
-      "attach": "icons/attach.svg",
-      "cloud": "icons/cloud.svg",
-      "confirm": "icons/confirm.svg",
-      "connector": "icons/connector.svg",
-      "contentCreation": "icons/content-creation.svg",
-      "conversation": "icons/conversation.svg",
-      "copy": "icons/copy.svg",
-      "dailyWork": "icons/daily-work.svg",
-      "design": "icons/design.svg",
-      "knowledge": "icons/knowledge.svg",
+      "attach": "icons/attach.png",
+      "cloud": "icons/cloud.png",
+      "confirm": "icons/confirm.png",
+      "connector": "icons/tools.png",
+      "contentCreation": "icons/content-creation.png",
+      "conversation": "icons/conversation.png",
+      "copy": "icons/conversation.png",
+      "dailyWork": "icons/daily-work.png",
+      "design": "icons/content-creation.png",
+      "knowledge": "icons/knowledge.png",
       "main": "icons/main-anime.png",
-      "moreSkills": "icons/more-skills.svg",
-      "newTask": "icons/new-task.svg",
-      "project": "icons/project.svg",
-      "readAloud": "icons/read-aloud.svg",
-      "remote": "icons/remote.svg",
-      "research": "icons/research.svg",
-      "scheduled": "icons/scheduled.svg",
-      "send": "icons/send.svg",
-      "sidebar": "icons/sidebar.svg",
-      "skills": "icons/skills.svg",
-      "stop": "icons/stop.svg",
-      "tools": "icons/tools.svg",
-      "voice": "icons/voice.svg"
+      "moreSkills": "icons/tools.png",
+      "newTask": "icons/new-task.png",
+      "project": "icons/project.png",
+      "readAloud": "icons/voice.png",
+      "remote": "icons/remote.png",
+      "research": "icons/knowledge.png",
+      "scheduled": "icons/scheduled.png",
+      "search": "icons/search.png",
+      "send": "icons/send.png",
+      "sidebar": "icons/sidebar.png",
+      "skills": "icons/skills.png",
+      "stop": "icons/stop.png",
+      "tools": "icons/tools.png",
+      "voice": "icons/voice.png"
     },
     "layout": {
       "chatMargin": 32,
@@ -182,16 +183,8 @@
     ]
   },
   "targets": {
-    "doubao": {
-      "css": [
-        "styles/doubao-family.css"
-      ]
-    },
-    "doubao-work": {
-      "css": [
-        "styles/doubao-family.css"
-      ]
-    },
+    "doubao": {},
+    "doubao-work": {},
     "workbuddy": {}
   },
   "version": "2.0.0"

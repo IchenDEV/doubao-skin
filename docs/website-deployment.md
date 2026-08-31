@@ -55,7 +55,8 @@ Commit the source theme and generated database, previews, catalog, and theme pac
 - CI is green for the production commit.
 - The Vercel project uses `apps/web` as its root.
 - Preview and Production link to the public GitHub repository and exact universal Release asset.
-- The website says “macOS 通用版”; Windows is non-clickable and marked Coming Soon.
+- The website detects macOS or Windows locally, recommends the matching desktop asset, and keeps all architectures manually selectable.
+- The CLI section remains visibly separate from desktop downloads and links Windows to the Scoop manifest while macOS/Linux use the platform-detecting installer.
 - Home, guide, contribution, theme detail, and theme-package links work on Preview.
 - `robots.txt`, `sitemap.xml`, canonical metadata and structured data use `https://doubao-skin.idevlab.dev`.
 - `/themes/catalog.json` returns schema version 1 and a non-empty theme array.

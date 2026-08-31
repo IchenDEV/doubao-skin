@@ -71,16 +71,16 @@ html[data-skin="my-theme"][data-skin-target="doubao-work"] {
 先预演，不会改文件：
 
 ```bash
-doubao-theme migrate-v3 themes/<theme-id> --json
+doubao-skin migrate-v3 themes/<theme-id> --json
 ```
 
 确认目标范围和来源信息后写入：
 
 ```bash
-doubao-theme migrate-v3 themes/<theme-id> --write --json
-doubao-theme check themes/<theme-id> --json
-doubao-theme preview themes/<theme-id> --json
-doubao-theme pack themes/<theme-id> dist/<theme-id>.doubao-skin.zip --json
+doubao-skin migrate-v3 themes/<theme-id> --write --json
+doubao-skin check themes/<theme-id> --json
+doubao-skin preview themes/<theme-id> --json
+doubao-skin pack themes/<theme-id> dist/<theme-id>.doubao-skin.zip --json
 ```
 
 迁移会把通用视觉字段移到 `shared`，把来源整理到 `provenance`，将主题版本提升到下一个主版本，并显式声明三个现有应用。随后必须人工复核：

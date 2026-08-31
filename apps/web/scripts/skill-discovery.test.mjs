@@ -56,13 +56,14 @@ test("the repository exposes the two theme skills through one plugin package", (
   }
 });
 
-test("Codex and Claude manifests share package identity and workspace version", () => {
+test("Web, Codex, and Claude manifests share the workspace version", () => {
   const codex = readJson(
     path.join(pluginRoot, ".codex-plugin/plugin.json"),
   );
   const claude = readJson(
     path.join(pluginRoot, ".claude-plugin/plugin.json"),
   );
+  const web = readJson(path.join(webRoot, "package.json"));
   for (const field of [
     "name",
     "version",
@@ -77,6 +78,7 @@ test("Codex and Claude manifests share package identity and workspace version", 
     assert.deepEqual(codex[field], claude[field], `${field} must stay aligned`);
   }
   assert.equal(codex.version, workspaceVersion());
+  assert.equal(web.version, workspaceVersion());
   assert.equal(codex.skills, "./skills/");
   for (const field of [
     "displayName",

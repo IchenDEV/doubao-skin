@@ -2,66 +2,78 @@
 set -eu
 
 REPO="IchenDEV/doubao-skin"
-BINARY_NAME="doubao-theme"
-INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+BINARY_NAME="doubao-skin"
+INSTALL_DIR=${INSTALL_DIR:-/usr/local/bin}
+
+platform_asset() {
+  os=$(uname -s)
+  machine=$(uname -m)
+  case "$os" in
+    Darwin) printf '%s' "doubao-skin-cli-macOS-universal.tar.gz" ;;
+    Linux)
+      case "$machine" in
+        x86_64|amd64) printf '%s' "doubao-skin-cli-Linux-x64.tar.gz" ;;
+        aarch64|arm64) printf '%s' "doubao-skin-cli-Linux-arm64.tar.gz" ;;
+        *) echo "Unsupported Linux architecture: $machine" >&2; exit 1 ;;
+      esac
+      ;;
+    *)
+      echo "This installer supports macOS and Linux. On Windows, install the CLI with Scoop." >&2
+      exit 1
+      ;;
+  esac
+}
+
+download_base() {
+  if [ -n "${VERSION:-}" ]; then
+    case "$VERSION" in v*) tag=$VERSION ;; *) tag="v$VERSION" ;; esac
+    printf 'https://github.com/%s/releases/download/%s' "$REPO" "$tag"
+  else
+    printf 'https://github.com/%s/releases/latest/download' "$REPO"
+  fi
+}
+
+verify_checksum() {
+  directory=$1
+  checksum_file=$2
+  (
+    cd "$directory"
+    if command -v shasum >/dev/null 2>&1; then
+      shasum -a 256 -c "$checksum_file"
+    elif command -v sha256sum >/dev/null 2>&1; then
+      sha256sum -c "$checksum_file"
+    else
+      echo "No SHA-256 tool available" >&2
+      exit 1
+    fi
+  )
+}
 
 main() {
-  check_platform
-  version=$(resolve_version)
-  asset="doubao-theme-macOS-universal.tar.gz"
-  url="https://github.com/$REPO/releases/download/$version/$asset"
-  checksum_url="${url}.sha256"
+  asset=$(platform_asset)
+  base=$(download_base)
+  temporary_directory=$(mktemp -d)
+  trap 'rm -rf "$temporary_directory"' EXIT HUP INT TERM
 
-  tmp=$(mktemp -d)
-  cleanup() { rm -rf "$tmp"; }
-  trap cleanup EXIT HUP INT TERM
-
-  printf "Downloading %s %s...\n" "$BINARY_NAME" "$version"
-  curl -fsSL "$url" -o "$tmp/$asset"
-  curl -fsSL "$checksum_url" -o "$tmp/$asset.sha256"
-
-  printf "Verifying checksum...\n"
-  (cd "$tmp" && shasum -a 256 -c "$asset.sha256")
-
-  tar -xzf "$tmp/$asset" -C "$tmp"
+  echo "Downloading $asset..."
+  curl -fsSL "$base/$asset" -o "$temporary_directory/$asset"
+  curl -fsSL "$base/$asset.sha256" -o "$temporary_directory/$asset.sha256"
+  verify_checksum "$temporary_directory" "$asset.sha256"
+  tar -xzf "$temporary_directory/$asset" -C "$temporary_directory"
 
   if [ ! -d "$INSTALL_DIR" ]; then
     mkdir -p "$INSTALL_DIR"
   fi
-
   if [ -w "$INSTALL_DIR" ]; then
-    cp "$tmp/$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
+    cp "$temporary_directory/$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
     chmod 755 "$INSTALL_DIR/$BINARY_NAME"
   else
-    printf "Installing to %s requires elevated permissions.\n" "$INSTALL_DIR"
-    sudo cp "$tmp/$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
+    echo "Installing to $INSTALL_DIR requires elevated permissions."
+    sudo cp "$temporary_directory/$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
     sudo chmod 755 "$INSTALL_DIR/$BINARY_NAME"
   fi
 
-  printf "Installed %s to %s/%s\n" "$version" "$INSTALL_DIR" "$BINARY_NAME"
   "$INSTALL_DIR/$BINARY_NAME" --version
-}
-
-check_platform() {
-  os=$(uname -s)
-  if [ "$os" != "Darwin" ]; then
-    printf "doubao-theme is currently macOS-only (detected: %s)\n" "$os" >&2
-    exit 1
-  fi
-}
-
-resolve_version() {
-  if [ -n "${VERSION:-}" ]; then
-    printf '%s' "$VERSION"
-    return
-  fi
-  release_url="https://api.github.com/repos/$REPO/releases/latest"
-  tag=$(curl -fsSL "$release_url" | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1)
-  if [ -z "$tag" ]; then
-    printf "Could not determine latest release from %s\n" "$release_url" >&2
-    exit 1
-  fi
-  printf '%s' "$tag"
 }
 
 main

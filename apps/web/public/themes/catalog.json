@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-31T05:25:21.082Z",
+  "generatedAt": "2026-08-31T07:14:47.648Z",
   "themes": [
     {
       "id": "violet-night",
@@ -1438,15 +1438,11 @@
             "dark"
           ],
           "css": {
-            "dark": [
-              "styles/doubao-family.css"
-            ],
-            "light": [
-              "styles/doubao-family.css"
-            ]
+            "dark": [],
+            "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "tailored"
+          "supportLevel": "shared"
         },
         "doubao-work": {
           "appearances": [
@@ -1454,15 +1450,11 @@
             "dark"
           ],
           "css": {
-            "dark": [
-              "styles/doubao-family.css"
-            ],
-            "light": [
-              "styles/doubao-family.css"
-            ]
+            "dark": [],
+            "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "tailored"
+          "supportLevel": "shared"
         },
         "workbuddy": {
           "appearances": [
@@ -1482,8 +1474,8 @@
       "iconUrl": "/themes/doubao-snack-giggle.icon.png",
       "accent": "#d66a45",
       "packageUrl": "/themes/packages/doubao-snack-giggle.doubao-skin.zip",
-      "sha256": "344063da3cb8e383d39c3e3ce80b657719853b3dfc1f5f0059795da8f3b2eb4e",
-      "packageSize": 1029995
+      "sha256": "abe2cb9470b10e6f160d2f6a82322d25e738c3b326e5c7190953cf7407a72991",
+      "packageSize": 1853918
     },
     {
       "id": "doubao-dessert-giggle",
@@ -1541,8 +1533,8 @@
       "iconUrl": "/themes/doubao-dessert-giggle.icon.png",
       "accent": "#b06c88",
       "packageUrl": "/themes/packages/doubao-dessert-giggle.doubao-skin.zip",
-      "sha256": "78ed4c6f57d65a9835e99fd7292c58594d0a3c68d5e4431b6ca9e5cbc00831d4",
-      "packageSize": 1059229
+      "sha256": "d4c49a0e2dc936224f1acd542f251a972ef8ba9eaddc31c35707a7ee344db702",
+      "packageSize": 1958477
     },
     {
       "id": "huaxia-blue",
@@ -1783,6 +1775,250 @@
       "packageUrl": "/themes/packages/machine-overseer.doubao-skin.zip",
       "sha256": "4d7a353702e14efbdc30881bc5e3859a96a6ebbda8f10fbcebb4041e8439c91e",
       "packageSize": 1164770
+    },
+    {
+      "id": "teyvat-dandelion-wind",
+      "name": "风与蒲公英",
+      "description": "非官方同人主题：温迪与琴守望风与蒲公英的蒙德",
+      "version": "2.0.0",
+      "author": "豆皮",
+      "category": "gallery",
+      "tags": [
+        "浅色",
+        "原神同人",
+        "蒙德",
+        "角色",
+        "彩色图标"
+      ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
+      "previewUrl": "/themes/teyvat-dandelion-wind.preview.jpg",
+      "thumbnailUrl": "/themes/teyvat-dandelion-wind.preview.card.jpg",
+      "iconUrl": "/themes/teyvat-dandelion-wind.icon.png",
+      "accent": "#248f88",
+      "packageUrl": "/themes/packages/teyvat-dandelion-wind.doubao-skin.zip",
+      "sha256": "9a3c8bf8bcfd5ce5d7911b764510c607dfd449c642e3d18f66b532081a1c443f",
+      "packageSize": 1946079
+    },
+    {
+      "id": "teyvat-liyue-lanterns",
+      "name": "璃月华灯",
+      "description": "非官方同人主题：钟离与胡桃共赏璃月华灯",
+      "version": "2.0.0",
+      "author": "豆皮",
+      "category": "gallery",
+      "tags": [
+        "深色",
+        "原神同人",
+        "璃月",
+        "角色",
+        "彩色图标"
+      ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
+      "previewUrl": "/themes/teyvat-liyue-lanterns.preview.jpg",
+      "thumbnailUrl": "/themes/teyvat-liyue-lanterns.preview.card.jpg",
+      "iconUrl": "/themes/teyvat-liyue-lanterns.icon.png",
+      "accent": "#d89a32",
+      "packageUrl": "/themes/packages/teyvat-liyue-lanterns.doubao-skin.zip",
+      "sha256": "1ac0ce2b2bf1d83ca594cb24de614660ddb02377145903c24686d7091e7287cb",
+      "packageSize": 1641857
+    },
+    {
+      "id": "gugugaga-administrator",
+      "name": "咕嘎管理员",
+      "description": "非官方同人主题：熟悉的企鹅服咕嘎管理员坐镇暖金指挥室",
+      "version": "2.0.0",
+      "author": "豆皮",
+      "category": "gallery",
+      "tags": [
+        "深色",
+        "咕咕嘎嘎",
+        "企鹅",
+        "工业",
+        "彩色图标"
+      ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
+      "previewUrl": "/themes/gugugaga-administrator.preview.jpg",
+      "thumbnailUrl": "/themes/gugugaga-administrator.preview.card.jpg",
+      "iconUrl": "/themes/gugugaga-administrator.icon.png",
+      "accent": "#f2b827",
+      "packageUrl": "/themes/packages/gugugaga-administrator.doubao-skin.zip",
+      "sha256": "ede894c9183ff283e44259635f76dd8844599b7c757c55277f88cb3382853522",
+      "packageSize": 1093147
+    },
+    {
+      "id": "gugugaga-snowfield",
+      "name": "咕嘎雪原",
+      "description": "非官方同人主题：熟悉的企鹅服咕嘎管理员驻守静谧雪原前哨",
+      "version": "2.0.0",
+      "author": "豆皮",
+      "category": "gallery",
+      "tags": [
+        "浅色",
+        "咕咕嘎嘎",
+        "企鹅",
+        "雪原",
+        "彩色图标"
+      ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
+      "previewUrl": "/themes/gugugaga-snowfield.preview.jpg",
+      "thumbnailUrl": "/themes/gugugaga-snowfield.preview.card.jpg",
+      "iconUrl": "/themes/gugugaga-snowfield.icon.png",
+      "accent": "#e97b32",
+      "packageUrl": "/themes/packages/gugugaga-snowfield.doubao-skin.zip",
+      "sha256": "08a05b83968d2d50f58c7bdc6a15904267a73aa6466e0e83bb21d955d9834f78",
+      "packageSize": 1070667
     }
   ]
 }

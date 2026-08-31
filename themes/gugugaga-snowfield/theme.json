@@ -1,0 +1,193 @@
+{
+  "$schema": "../../design/theme-standard/theme-v3.schema.json",
+  "author": "豆皮",
+  "description": "非官方同人主题：熟悉的企鹅服咕嘎管理员驻守静谧雪原前哨",
+  "id": "gugugaga-snowfield",
+  "name": "咕嘎雪原",
+  "preview": {
+    "accent": "#e97b32",
+    "appearance": "light",
+    "aspectRatio": "16:9",
+    "image": "preview.jpg"
+  },
+  "provenance": {
+    "artwork": "Newly generated reference-aligned penguin-suit heroine, snowfield, and icon illustrations; no reference pixels or community artwork bundled",
+    "inspiredBy": "User-supplied Gugugaga character identity reference; unofficial fan theme",
+    "license": "Newly generated unofficial fan adaptation; no endorsement, authorization, or commercial clearance claimed",
+    "sourceAccessedAt": "2026-08-30"
+  },
+  "schemaVersion": 3,
+  "shared": {
+    "appearance": "both",
+    "background": {
+      "animation": "none",
+      "blur": 0,
+      "fit": "cover",
+      "opacity": 1,
+      "position": "center",
+      "src": "bg.jpg",
+      "type": "image",
+      "veil": 0.04
+    },
+    "composer": {
+      "background": "rgba(249,253,255,0.94)",
+      "border": "1px solid rgba(35,104,151,0.28)",
+      "caretColor": "#df6d2d",
+      "gap": 10,
+      "iconColor": "#285e86",
+      "iconSize": 20,
+      "maxHeight": 240,
+      "minHeight": 54,
+      "padding": 14,
+      "placeholderColor": "rgba(23,60,91,0.54)",
+      "radius": 23,
+      "sendButtonBackground": "#e97b32",
+      "sendButtonIconColor": "#ffffff",
+      "textColor": "#173c5b"
+    },
+    "content": {
+      "assistantMessageBackground": "rgba(249,253,255,0.94)",
+      "assistantMessageText": "#173c5b",
+      "chatBackground": "rgba(235,246,254,0.74)",
+      "codeBackground": "#dceef9",
+      "codeHeaderBackground": "#cce3f2",
+      "scrollbarColor": "rgba(40,94,134,0.22)",
+      "scrollbarHoverColor": "rgba(40,94,134,0.40)",
+      "selectionColor": "rgba(71,159,210,0.22)",
+      "userMessageBackground": "#df6d2d",
+      "userMessageText": "#ffffff"
+    },
+    "effects": {
+      "blur": 18,
+      "motion": "gentle",
+      "radiusScale": 1.2,
+      "shadow": "0 12px 34px rgba(27,87,128,0.14)",
+      "transitionMs": 180
+    },
+    "icons": {
+      "attach": "icons/project.png",
+      "cloud": "icons/cloud.png",
+      "confirm": "icons/send.png",
+      "connector": "icons/tools.png",
+      "contentCreation": "icons/content-creation.png",
+      "conversation": "icons/conversation.png",
+      "copy": "icons/daily-work.png",
+      "dailyWork": "icons/daily-work.png",
+      "design": "icons/content-creation.png",
+      "knowledge": "icons/knowledge.png",
+      "main": "icons/main.png",
+      "moreSkills": "icons/skills.png",
+      "newTask": "icons/new-task.png",
+      "project": "icons/project.png",
+      "readAloud": "icons/voice.png",
+      "remote": "icons/remote.png",
+      "research": "icons/knowledge.png",
+      "scheduled": "icons/scheduled.png",
+      "search": "icons/knowledge.png",
+      "send": "icons/send.png",
+      "sidebar": "icons/project.png",
+      "skills": "icons/skills.png",
+      "stop": "icons/scheduled.png",
+      "tools": "icons/tools.png",
+      "voice": "icons/voice.png"
+    },
+    "layout": {
+      "chatMargin": 30,
+      "chatMaxWidth": 900,
+      "composerMaxWidth": 770,
+      "density": "comfortable",
+      "selfMessageMaxWidth": 420,
+      "sidebarWidth": 258
+    },
+    "surfaceOpacity": 0.66,
+    "typography": {
+      "body": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
+      "code": "ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace",
+      "lineHeight": 1.64,
+      "scale": 1.01,
+      "ui": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif"
+    },
+    "variants": {
+      "dark": {
+        "background": {
+          "veil": 0.58
+        },
+        "composer": {
+          "background": "rgba(20,46,68,0.94)",
+          "border": "1px solid rgba(121,198,237,0.34)",
+          "caretColor": "#ff9b58",
+          "gap": 10,
+          "iconColor": "#b9e4f9",
+          "iconSize": 20,
+          "maxHeight": 240,
+          "minHeight": 54,
+          "padding": 14,
+          "placeholderColor": "rgba(237,249,255,0.56)",
+          "radius": 23,
+          "sendButtonBackground": "#ef8440",
+          "sendButtonIconColor": "#173149",
+          "textColor": "#edf9ff"
+        },
+        "content": {
+          "assistantMessageBackground": "rgba(20,46,68,0.94)",
+          "assistantMessageText": "#edf9ff",
+          "chatBackground": "rgba(12,33,51,0.82)",
+          "codeBackground": "#0c2438",
+          "codeHeaderBackground": "#1b405d",
+          "scrollbarColor": "rgba(185,228,249,0.22)",
+          "scrollbarHoverColor": "rgba(185,228,249,0.40)",
+          "selectionColor": "rgba(121,198,237,0.26)",
+          "userMessageBackground": "#ef8440",
+          "userMessageText": "#173149"
+        }
+      },
+      "light": {
+        "composer": {
+          "background": "rgba(249,253,255,0.94)",
+          "border": "1px solid rgba(35,104,151,0.28)",
+          "caretColor": "#df6d2d",
+          "gap": 10,
+          "iconColor": "#285e86",
+          "iconSize": 20,
+          "maxHeight": 240,
+          "minHeight": 54,
+          "padding": 14,
+          "placeholderColor": "rgba(23,60,91,0.54)",
+          "radius": 23,
+          "sendButtonBackground": "#e97b32",
+          "sendButtonIconColor": "#ffffff",
+          "textColor": "#173c5b"
+        },
+        "content": {
+          "assistantMessageBackground": "rgba(249,253,255,0.94)",
+          "assistantMessageText": "#173c5b",
+          "chatBackground": "rgba(235,246,254,0.74)",
+          "codeBackground": "#dceef9",
+          "codeHeaderBackground": "#cce3f2",
+          "scrollbarColor": "rgba(40,94,134,0.22)",
+          "scrollbarHoverColor": "rgba(40,94,134,0.40)",
+          "selectionColor": "rgba(71,159,210,0.22)",
+          "userMessageBackground": "#df6d2d",
+          "userMessageText": "#ffffff"
+        }
+      }
+    }
+  },
+  "store": {
+    "category": "gallery",
+    "sortOrder": 34,
+    "tags": [
+      "浅色",
+      "咕咕嘎嘎",
+      "企鹅",
+      "雪原",
+      "彩色图标"
+    ]
+  },
+  "targets": {
+    "doubao": {},
+    "doubao-work": {},
+    "workbuddy": {}
+  },
+  "version": "2.0.0"
+}

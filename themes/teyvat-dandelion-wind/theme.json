@@ -1,0 +1,193 @@
+{
+  "$schema": "../../design/theme-standard/theme-v3.schema.json",
+  "author": "豆皮",
+  "description": "非官方同人主题：温迪与琴守望风与蒲公英的蒙德",
+  "id": "teyvat-dandelion-wind",
+  "name": "风与蒲公英",
+  "preview": {
+    "accent": "#248f88",
+    "appearance": "light",
+    "aspectRatio": "16:9",
+    "image": "preview.jpg"
+  },
+  "provenance": {
+    "artwork": "Newly generated ImageGen character fan art, environment, and icon illustrations; no official or community artwork bundled",
+    "inspiredBy": "Venti, Jean, and Mondstadt from Genshin Impact; unofficial fan theme",
+    "license": "Original non-official fan adaptation; no endorsement or authorization claimed",
+    "sourceAccessedAt": "2026-08-30"
+  },
+  "schemaVersion": 3,
+  "shared": {
+    "appearance": "both",
+    "background": {
+      "animation": "none",
+      "blur": 0,
+      "fit": "cover",
+      "opacity": 1,
+      "position": "center",
+      "src": "bg.jpg",
+      "type": "image",
+      "veil": 0.06
+    },
+    "composer": {
+      "background": "rgba(249,255,252,0.92)",
+      "border": "1px solid rgba(45,137,130,0.30)",
+      "caretColor": "#248f88",
+      "gap": 10,
+      "iconColor": "#236c69",
+      "iconSize": 20,
+      "maxHeight": 240,
+      "minHeight": 54,
+      "padding": 14,
+      "placeholderColor": "rgba(24,60,61,0.56)",
+      "radius": 22,
+      "sendButtonBackground": "#248f88",
+      "sendButtonIconColor": "#ffffff",
+      "textColor": "#183c3d"
+    },
+    "content": {
+      "assistantMessageBackground": "rgba(250,255,253,0.92)",
+      "assistantMessageText": "#183c3d",
+      "chatBackground": "rgba(239,252,249,0.74)",
+      "codeBackground": "#dff3ef",
+      "codeHeaderBackground": "#cfe9e5",
+      "scrollbarColor": "rgba(35,108,105,0.24)",
+      "scrollbarHoverColor": "rgba(35,108,105,0.42)",
+      "selectionColor": "rgba(36,143,136,0.22)",
+      "userMessageBackground": "#257f79",
+      "userMessageText": "#ffffff"
+    },
+    "effects": {
+      "blur": 18,
+      "motion": "gentle",
+      "radiusScale": 1.18,
+      "shadow": "0 12px 34px rgba(24,72,71,0.14)",
+      "transitionMs": 180
+    },
+    "icons": {
+      "attach": "icons/project.png",
+      "cloud": "icons/cloud.png",
+      "confirm": "icons/send.png",
+      "connector": "icons/tools.png",
+      "contentCreation": "icons/content-creation.png",
+      "conversation": "icons/conversation.png",
+      "copy": "icons/daily-work.png",
+      "dailyWork": "icons/daily-work.png",
+      "design": "icons/content-creation.png",
+      "knowledge": "icons/knowledge.png",
+      "main": "icons/main.png",
+      "moreSkills": "icons/skills.png",
+      "newTask": "icons/new-task.png",
+      "project": "icons/project.png",
+      "readAloud": "icons/voice.png",
+      "remote": "icons/remote.png",
+      "research": "icons/knowledge.png",
+      "scheduled": "icons/scheduled.png",
+      "search": "icons/knowledge.png",
+      "send": "icons/send.png",
+      "sidebar": "icons/project.png",
+      "skills": "icons/skills.png",
+      "stop": "icons/scheduled.png",
+      "tools": "icons/tools.png",
+      "voice": "icons/voice.png"
+    },
+    "layout": {
+      "chatMargin": 30,
+      "chatMaxWidth": 900,
+      "composerMaxWidth": 770,
+      "density": "comfortable",
+      "selfMessageMaxWidth": 420,
+      "sidebarWidth": 258
+    },
+    "surfaceOpacity": 0.64,
+    "typography": {
+      "body": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
+      "code": "ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace",
+      "lineHeight": 1.64,
+      "scale": 1.01,
+      "ui": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif"
+    },
+    "variants": {
+      "dark": {
+        "background": {
+          "veil": 0.58
+        },
+        "composer": {
+          "background": "rgba(20,43,47,0.94)",
+          "border": "1px solid rgba(119,224,208,0.34)",
+          "caretColor": "#75dbc9",
+          "gap": 10,
+          "iconColor": "#b8f3e8",
+          "iconSize": 20,
+          "maxHeight": 240,
+          "minHeight": 54,
+          "padding": 14,
+          "placeholderColor": "rgba(236,255,250,0.58)",
+          "radius": 22,
+          "sendButtonBackground": "#4fbcae",
+          "sendButtonIconColor": "#102a2d",
+          "textColor": "#ecfffa"
+        },
+        "content": {
+          "assistantMessageBackground": "rgba(20,43,47,0.94)",
+          "assistantMessageText": "#ecfffa",
+          "chatBackground": "rgba(11,29,34,0.82)",
+          "codeBackground": "#0d2428",
+          "codeHeaderBackground": "#193a3e",
+          "scrollbarColor": "rgba(184,243,232,0.22)",
+          "scrollbarHoverColor": "rgba(184,243,232,0.40)",
+          "selectionColor": "rgba(117,219,201,0.26)",
+          "userMessageBackground": "#3ca99e",
+          "userMessageText": "#082426"
+        }
+      },
+      "light": {
+        "composer": {
+          "background": "rgba(249,255,252,0.92)",
+          "border": "1px solid rgba(45,137,130,0.30)",
+          "caretColor": "#248f88",
+          "gap": 10,
+          "iconColor": "#236c69",
+          "iconSize": 20,
+          "maxHeight": 240,
+          "minHeight": 54,
+          "padding": 14,
+          "placeholderColor": "rgba(24,60,61,0.56)",
+          "radius": 22,
+          "sendButtonBackground": "#248f88",
+          "sendButtonIconColor": "#ffffff",
+          "textColor": "#183c3d"
+        },
+        "content": {
+          "assistantMessageBackground": "rgba(250,255,253,0.92)",
+          "assistantMessageText": "#183c3d",
+          "chatBackground": "rgba(239,252,249,0.74)",
+          "codeBackground": "#dff3ef",
+          "codeHeaderBackground": "#cfe9e5",
+          "scrollbarColor": "rgba(35,108,105,0.24)",
+          "scrollbarHoverColor": "rgba(35,108,105,0.42)",
+          "selectionColor": "rgba(36,143,136,0.22)",
+          "userMessageBackground": "#257f79",
+          "userMessageText": "#ffffff"
+        }
+      }
+    }
+  },
+  "store": {
+    "category": "gallery",
+    "sortOrder": 31,
+    "tags": [
+      "浅色",
+      "原神同人",
+      "蒙德",
+      "角色",
+      "彩色图标"
+    ]
+  },
+  "targets": {
+    "doubao": {},
+    "doubao-work": {},
+    "workbuddy": {}
+  },
+  "version": "2.0.0"
+}

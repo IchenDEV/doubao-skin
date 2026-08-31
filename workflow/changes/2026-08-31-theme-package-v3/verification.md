@@ -40,13 +40,13 @@ The baseline digest covers current source state only. Later gates compare identi
 - Added the `theme_package` deep module and CSS AST validator. `cargo test -p skin-core --test theme_package_v3` — 10/10 passed, covering explicit support, merge/null deletion, target appearance changes, effective CSS order, v1/v2 compatibility, future-schema rejection, exact-case/symlink/resource validation, and CSS scope/property/URL/at-rule/reserved-variable attacks.
 - Parser dependencies compile and their redistribution notices are recorded: `lightningcss 1.0.0-alpha.72`, `parcel_selectors 0.28.3`, `jsonschema 0.52.1`, and `roxmltree 0.21.1`.
 - `cargo test -p skin-core --test authoring` — 9/9 passed. This includes v3 creation, dark-only base semantics, dry-run/write migration, deterministic contract files, preview regeneration, safety rejection, and no-overwrite behavior.
-- `cargo test -p skin-core --test doubao_theme_cli` — 4/4 passed. `create` requires explicit targets; `check`, `pack`, `install`, `apply`, `restore`, and `migrate-v3` retain stable JSON/exit contracts.
-- `cargo test -p doubao-skin-desktop --bin doubao-skin` — 10/10 passed. Target switches now filter unsupported installed/store themes, refresh target previews, and distinguish `专属适配` / `共享适配` / `兼容模式`.
+- `cargo test -p skin-core --test doubao_skin_cli` — 4/4 passed. `create` requires explicit targets; `check`, `pack`, `install`, `apply`, `restore`, and `migrate-v3` retain stable JSON/exit contracts under the renamed `doubao-skin` CLI.
+- `cargo test -p doubao-skin-desktop --bin doubao-skin` — 12/12 passed. Target switches now filter unsupported installed/store themes, refresh target previews, and distinguish `专属适配` / `共享适配` / `兼容模式`.
 - `migrate-v3` dry-run completed for 30/30 bundled directories. After the user explicitly authorized “先批量迁移”, write mode migrated all remaining 29 themes without an intermediate failure.
-- The source invariant is now 30/30 `schemaVersion: 3`, theme version `2.0.0`, `shared.appearance: both`, and explicit `doubao` / `doubao-work` / `workbuddy` target keys. All 30 preserve ID, name, description, author, preview, store metadata, provenance values, and their original non-CSS resources.
-- Thirty CLI `check` operations, thirty Rust `pack` operations, and thirty ZIP integrity checks passed. No package includes an unreferenced root `theme.css`.
-- `pnpm --dir apps/web sync` generated 30 database rows, 30 v3 catalog records, and 30 installable packages. Every catalog record has three target support entries and a valid SHA-256 digest.
-- `pnpm --dir apps/web check` — passed against the complete v3 catalog (10 Node tests, TypeScript, and 38-page Next build).
+- The source invariant was first reached for the accepted 30-theme baseline. During Draft PR preparation, `origin/main` added four approved fan themes plus new full-color PNG resources for Snack/Dessert. Conflict integration migrated all six affected v2 manifests, so the current invariant is 34/34 `schemaVersion: 3`, theme version `2.0.0`, `shared.appearance: both`, and explicit `doubao` / `doubao-work` / `workbuddy` target keys.
+- Thirty-four CLI `check` operations, Rust `pack` operations, and package integrity checks pass. No package includes an unreferenced root `theme.css`.
+- `pnpm --dir apps/web sync` generated 34 database rows, 34 v3 catalog records, and 34 installable packages. Every catalog record has three target support entries and a valid SHA-256 digest.
+- `./scripts/check.sh web` — passed against the complete v3 catalog (16 Node tests, TypeScript, dependency audit, and 42-page Next build).
 - `cargo clippy -p skin-core --all-targets -- -D warnings` and `cargo clippy -p doubao-skin-desktop --all-targets -- -D warnings` — passed.
 - `./scripts/check.sh workflow`, `./scripts/check.sh rust`, `./scripts/check.sh web`, and `./scripts/check.sh all` — passed. The Web gate includes the dependency audit (`No known vulnerabilities found`).
 - `git diff --check` — passed.
@@ -54,10 +54,10 @@ The baseline digest covers current source state only. Later gates compare identi
 
 ### Bulk migration closure
 
-- The migration removed 30 legacy root CSS files and retained all visual/resource declarations in structured v3 fields. Only `doubao-snack-giggle` still requires package CSS: its scoped `styles/doubao-family.css` preserves the six-color icon palette for Doubao and DoubaoWork while WorkBuddy remains on the shared structured adapter.
+- The migration removed the legacy root CSS files and retained cross-host visual/resource declarations in structured v3 fields. The main-branch PNG upgrade exposed a real compatibility gap: masking raster icons destroys their colors. The trusted runtime adapter now detects raster icon resources and renders them full-color without widening the untrusted v3 CSS whitelist or adding theme-ID branches.
 - A full Rust run exposed four expected migration-edge failures. Two old tests were updated from all-v2 to the final all-v3 invariant. The v3 backdrop test now verifies the absence of a second legacy gradient. The real icon-palette regression was fixed by keeping its target-scoped colors and moving SVG-image masking into the trusted engine adapter. v1/v2 compatibility remains locked by the synthetic legacy fixture.
 - v3 UI swatches now derive from trusted semantic CSS when a package has no declared CSS; legacy themes continue deriving swatches from their original CSS.
-- Final tracked theme-source shape is 30 modified manifests, 30 deleted unreferenced root CSS files, one new target-scoped CSS file, and zero modified image/icon/background resources.
+- Final source shape is 34 v3 manifests and zero package CSS files. The four newly merged fan themes and the Snack/Dessert PNG upgrades retain their main-branch images and full-color icon resources.
 
 ### Sample package closure
 
@@ -65,14 +65,14 @@ The baseline digest covers current source state only. Later gates compare identi
 - CLI report resolves light/dark for all three targets. Doubao and DoubaoWork are `shared / explicit`; WorkBuddy is `tailored / explicit` because it explicitly removes inherited icons.
 - The sample package contains only `theme.json`, `preview.jpg`, `bg.jpg`, and `icons/main.png`; the Rust packer, not Node `zip`, produced it.
 - A sample-only Web sync emitted the same target report into SQLite/catalog, produced one installable package, and passed the production Next build. Its source preview SHA-256 remained `d957dfa15e9a9d5123002748050c1a12cfcf1a2e1a0bf9cbc71b4c08da5fa6a5`; sync no longer rewrites author previews. The pre-test generated catalog was then restored; no partial v3 catalog remains checked in.
-- Full sync now succeeds for all 30 v3 themes without bypassing Rust validation. The tracked catalog output is a complete 30-theme v3 generation, not the earlier sample-only output.
+- Full sync now succeeds for all 34 v3 themes without bypassing Rust validation. The tracked catalog output is a complete 34-theme v3 generation, not the earlier sample-only output.
 
 ### Installable test package — 2026-08-31
 
-- `BUNDLE_ALL_THEMES=1 ./scripts/build-macos.sh --universal` completed with cached Apple Silicon and Intel release builds. The resulting App and bundled `doubao-theme` binary are both universal `x86_64 arm64`; the CLI reports `doubao-theme 0.3.2`.
-- The App contains exactly 30 theme directories, 30 `schemaVersion: 3` manifests, and 30 explicit WorkBuddy target declarations. The ZIP extraction and read-only DMG mount each retained all 30 themes.
+- `CODESIGN_IDENTITY=- BUNDLE_ALL_THEMES=1 ./scripts/package.sh desktop-macos --universal` and `CODESIGN_IDENTITY=- ./scripts/package.sh cli --universal-macos` completed. The App executable and standalone `doubao-skin` CLI are both universal `x86_64 arm64`; the CLI reports `doubao-skin 0.4.0`.
+- The App contains exactly 34 theme directories, 34 `schemaVersion: 3` manifests, and 34 explicit WorkBuddy target declarations. ZIP extraction and read-only DMG mounting each retained all 34 themes.
 - ZIP, DMG, and extracted/mounted App `codesign --verify --deep --strict` checks passed. ZIP and DMG integrity checks passed, and the DMG contains the expected `/Applications` link.
-- Test artifacts: `Doubao-Skin-macOS-universal.zip` (36 MB, SHA-256 `09a69a271bdd226ed451615c5ba02360e8fc076da5ad68e9321d8c90d97ce8d6`), `Doubao-Skin-macOS-universal.dmg` (40 MB, SHA-256 `89d1fecb7e1f074ae42ecc8aaa6cfff6bb5e360a454e91b6506e3717ef6f787b`), and `doubao-theme-macOS-universal.tar.gz` (7.7 MB, SHA-256 `7329db9238fd9c7badfc1aed8df5b1c455249ea8ea0b9caed8715210da063c4b`).
+- Test artifacts: `Doubao-Skin-macOS-universal.zip` (36,821,522 bytes, SHA-256 `786b1084e3289dadfe4986b1ba7ca1293ca080b59f63f40dbda852c5e3d796d5`), `Doubao-Skin-macOS-universal.dmg` (40,325,628 bytes, SHA-256 `35e01132fed4e6dd9fa4a55f57ab002649c068f7bc1b72b059fc6ae1b8792c98`), and `doubao-skin-cli-macOS-universal.tar.gz` (8,057,915 bytes, SHA-256 `5172cbf5939b5adbb0eb4db8654311c99c7d8b6a4991759e8d691898c303897a`).
 - The configured long-lived certificate is present and its certificate fingerprint still matches `C37941DCA5C5E4FDAAB45685C803547EA3AFBCAD3E2534FE23FCA89F5839FC52`, but local `codesign` rejects it as an available identity. The test package therefore uses an explicit ad-hoc hardened-runtime signature (`Signature=adhoc`, no TeamIdentifier). This is acceptable only for local testing; it is not evidence for the stable-signature release gate.
 
 ## Visual evidence
@@ -105,8 +105,8 @@ The approved execution remains limited to repository files, temporary package/in
 ## Deviations and residual risk
 
 - The accepted Plan originally required the six-scenario whale sample gate before writing the other 29 migrations. WorkBuddy dark brought the sample to 4/6; the user then explicitly authorized “先批量迁移”. The accepted Plan records this order deviation. It authorizes the bulk source/catalog build but does not convert the absent Doubao evidence into a pass or relax the final Review/Release Gate.
-- Source, catalog, package round trips, and `./scripts/check.sh all` are complete for all 30 v3 themes. This is no longer a mixed v2/v3 source state.
-- The full 180 real-window matrix, its narrow-window representative matrix, the two unavailable Doubao whale scenarios, and a fresh-context verdict remain pending. They must not be reported as passed.
+- Source, catalog, package round trips, and `./scripts/check.sh all` are complete for all 34 v3 themes. This is no longer a mixed v2/v3 source state.
+- The original 180-scene baseline matrix plus the 24 scenes introduced by the four newly merged themes, its narrow-window representative matrix, the two unavailable Doubao whale scenarios, and a fresh-context verdict remain pending. They must not be reported as passed.
 - The user separately authorized a test package and PR after accepting the Plan. A Draft PR is permitted so review and test-package feedback can proceed while verification remains pending; merge, deployment, Release creation, and the production catalog switch remain unauthorized.
 
 ## Verdict

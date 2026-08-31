@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review, converted_to_draft]
 
 permissions:
   contents: read
@@ -24,6 +25,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' }}
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
+          PR_IS_DRAFT: ${{ github.event.pull_request.draft }}
         run: ./scripts/devflow check-pr
 
   rust:
@@ -50,8 +52,74 @@ jobs:
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Run tests
         run: cargo test --workspace --all-targets --locked
-      - name: Check packaging script
-        run: bash -n scripts/build-macos.sh
+      - name: Check packaging scripts
+        run: |
+          bash -n scripts/package.sh scripts/package/*.sh
+      - name: Build and verify universal macOS CLI
+        run: |
+          ./scripts/package.sh cli --universal-macos
+          (cd dist && shasum -a 256 -c doubao-skin-cli-macOS-universal.tar.gz.sha256)
+          verify_dir=$(mktemp -d "$RUNNER_TEMP/doubao-skin-cli-verify.XXXXXX")
+          trap 'rm -rf "$verify_dir"' EXIT HUP INT TERM
+          test "$(tar -tzf dist/doubao-skin-cli-macOS-universal.tar.gz | wc -l | tr -d ' ')" -eq 2
+          tar -tzf dist/doubao-skin-cli-macOS-universal.tar.gz | grep -qx doubao-skin
+          tar -tzf dist/doubao-skin-cli-macOS-universal.tar.gz | grep -qx LICENSE
+          tar -xzf dist/doubao-skin-cli-macOS-universal.tar.gz -C "$verify_dir"
+          lipo "$verify_dir/doubao-skin" -verify_arch x86_64
+          lipo "$verify_dir/doubao-skin" -verify_arch arm64
+          codesign --verify --strict "$verify_dir/doubao-skin"
+          expected_version=$(awk -F '"' '/^version =/ { print $2; exit }' Cargo.toml)
+          test "$("$verify_dir/doubao-skin" --version)" = "doubao-skin $expected_version"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: macOS-CLI-universal
+          path: |
+            dist/doubao-skin-cli-macOS-universal.tar.gz
+            dist/doubao-skin-cli-macOS-universal.tar.gz.sha256
+          if-no-files-found: error
+
+  windows:
+    name: Windows native ${{ matrix.label }}
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            label: x64
+          - target: i686-pc-windows-msvc
+            label: x86
+          - target: aarch64-pc-windows-msvc
+            label: arm64
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust toolchain
+        shell: bash
+        run: |
+          rustup show
+          rustup target add ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          key: windows-${{ matrix.target }}
+      - name: Run Windows core regressions
+        if: ${{ matrix.target == 'x86_64-pc-windows-msvc' }}
+        shell: bash
+        run: cargo test -p skin-core --lib --locked
+      - name: Build desktop and CLI packages on Windows
+        shell: bash
+        run: |
+          ./scripts/package.sh desktop-windows ${{ matrix.target }}
+          ./scripts/package.sh cli ${{ matrix.target }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Windows-native-${{ matrix.label }}
+          path: |
+            dist/Doubao-Skin-Windows-${{ matrix.label }}.zip
+            dist/Doubao-Skin-Windows-${{ matrix.label }}.zip.sha256
+            dist/doubao-skin-cli-Windows-${{ matrix.label }}.zip
+            dist/doubao-skin-cli-Windows-${{ matrix.label }}.zip.sha256
+          if-no-files-found: error
 
   web:
     name: Web application

@@ -1,4 +1,4 @@
-//! Theme authoring helpers used by the `doubao-theme` command-line tool.
+//! Theme authoring helpers used by the `doubao-skin` command-line tool.
 
 use std::collections::BTreeSet;
 use std::fs;

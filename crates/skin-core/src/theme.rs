@@ -39,14 +39,17 @@ pub fn default_themes_dir() -> PathBuf {
         .unwrap_or_else(|_| Path::new(env!("CARGO_MANIFEST_DIR")).join("../../themes"))
 }
 
-/// Finds app-bundled themes for both `Contents/MacOS/<gui>` and
-/// `Contents/Resources/bin/doubao-theme` executable locations.
+/// Finds themes bundled beside a Windows executable or under macOS Resources.
 pub fn bundled_themes_dir_for_executable(executable: &Path) -> Option<PathBuf> {
     let parent = executable.parent()?;
     let container = parent.parent()?;
-    [container.join("Resources/themes"), container.join("themes")]
-        .into_iter()
-        .find(|candidate| candidate.is_dir())
+    [
+        parent.join("themes"),
+        container.join("Resources/themes"),
+        container.join("themes"),
+    ]
+    .into_iter()
+    .find(|candidate| candidate.is_dir())
 }
 
 pub const DEFAULT_THEME_STORE_URL: &str = "https://doubao-skin.idevlab.dev/themes/catalog.json";
@@ -56,26 +59,30 @@ pub(crate) const MAX_PACKAGE_BYTES: u64 = 200 * 1024 * 1024;
 const MAX_PACKAGE_CONTENT_BYTES: u64 = 512 * 1024 * 1024;
 const MAX_PACKAGE_ENTRIES: usize = 2_048;
 
+fn product_directory(base: Option<PathBuf>) -> PathBuf {
+    base.unwrap_or_else(std::env::temp_dir).join("Doubao Skin")
+}
+
+pub fn app_data_dir() -> PathBuf {
+    std::env::var_os("DOUBAO_SKIN_DATA_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| product_directory(dirs::data_local_dir()))
+}
+
 /// User-installed themes live outside the signed app bundle so updates do not
 /// remove them. Tests and local builds can override this path explicitly.
 pub fn user_themes_dir() -> PathBuf {
     if let Some(dir) = std::env::var_os("DOUBAO_SKIN_USER_THEMES_DIR") {
         return PathBuf::from(dir);
     }
-    std::env::var_os("HOME")
-        .map(PathBuf::from)
-        .map(|home| home.join("Library/Application Support/Doubao Skin/themes"))
-        .unwrap_or_else(|| std::env::temp_dir().join("Doubao Skin/themes"))
+    app_data_dir().join("themes")
 }
 
 pub fn theme_store_cache_dir() -> PathBuf {
     if let Some(dir) = std::env::var_os("DOUBAO_SKIN_THEME_STORE_CACHE_DIR") {
         return PathBuf::from(dir);
     }
-    std::env::var_os("HOME")
-        .map(PathBuf::from)
-        .map(|home| home.join("Library/Caches/Doubao Skin/theme-store"))
-        .unwrap_or_else(|| std::env::temp_dir().join("Doubao Skin/theme-store"))
+    product_directory(dirs::cache_dir()).join("theme-store")
 }
 
 pub fn theme_store_url() -> String {
@@ -261,6 +268,7 @@ pub struct ContentStyle {
 #[derive(Debug, Clone, Default)]
 pub struct ThemeIcons {
     pub main: Option<PathBuf>,
+    pub search: Option<PathBuf>,
     pub new_task: Option<PathBuf>,
     pub scheduled: Option<PathBuf>,
     pub skills: Option<PathBuf>,
@@ -634,6 +642,9 @@ impl Theme {
             main: variant
                 .and_then(|icons| icons.main.clone())
                 .or_else(|| self.icons.main.clone()),
+            search: variant
+                .and_then(|icons| icons.search.clone())
+                .or_else(|| self.icons.search.clone()),
             new_task: variant
                 .and_then(|icons| icons.new_task.clone())
                 .or_else(|| self.icons.new_task.clone()),
@@ -1069,6 +1080,7 @@ struct ContentMeta {
 #[serde(rename_all = "camelCase")]
 struct IconsMeta {
     main: Option<String>,
+    search: Option<String>,
     new_task: Option<String>,
     scheduled: Option<String>,
     skills: Option<String>,
@@ -1919,6 +1931,7 @@ impl Theme {
         }
         for (name, path) in [
             ("--skin-icon-main", self.icons.main.as_deref()),
+            ("--skin-icon-search", self.icons.search.as_deref()),
             ("--skin-icon-new-task", self.icons.new_task.as_deref()),
             ("--skin-icon-scheduled", self.icons.scheduled.as_deref()),
             ("--skin-icon-skills", self.icons.skills.as_deref()),
@@ -2018,7 +2031,22 @@ impl Theme {
             || self.variants.light.as_ref().is_some_and(|v| v.icons.any())
             || self.variants.dark.as_ref().is_some_and(|v| v.icons.any())
         {
-            css.push_str("\nhtml[data-skin] svg[data-doubao-theme-icon]{background-color:currentColor!important;mask:var(--doubao-theme-icon) center/contain no-repeat!important;-webkit-mask:var(--doubao-theme-icon) center/contain no-repeat!important;}html[data-skin] svg[data-doubao-theme-icon] *{opacity:0!important;}html[data-skin] img[data-doubao-theme-icon]{content:var(--doubao-theme-icon)!important;object-fit:contain!important;}html[data-skin] body img[data-doubao-theme-icon]:not([data-doubao-theme-icon=main]){content:\"\"!important;background-color:currentColor!important;mask:var(--doubao-theme-icon) center/contain no-repeat!important;-webkit-mask:var(--doubao-theme-icon) center/contain no-repeat!important;}html[data-skin] img[data-doubao-theme-icon=main]{content:var(--skin-icon-main)!important;}html[data-skin] svg[data-doubao-theme-icon=main]{background:var(--skin-icon-main) center/contain no-repeat!important;mask:none!important;-webkit-mask:none!important;}html[data-skin] [data-doubao-theme-icon=main]{--doubao-theme-icon:var(--skin-icon-main);}html[data-skin] [data-doubao-theme-icon=new-task]{--doubao-theme-icon:var(--skin-icon-new-task);}html[data-skin] [data-doubao-theme-icon=scheduled]{--doubao-theme-icon:var(--skin-icon-scheduled);}html[data-skin] [data-doubao-theme-icon=skills]{--doubao-theme-icon:var(--skin-icon-skills);}html[data-skin] [data-doubao-theme-icon=cloud]{--doubao-theme-icon:var(--skin-icon-cloud);}html[data-skin] [data-doubao-theme-icon=remote]{--doubao-theme-icon:var(--skin-icon-remote);}html[data-skin] [data-doubao-theme-icon=conversation]{--doubao-theme-icon:var(--skin-icon-conversation);}html[data-skin] [data-doubao-theme-icon=project]{--doubao-theme-icon:var(--skin-icon-project);}html[data-skin] [data-doubao-theme-icon=confirm]{--doubao-theme-icon:var(--skin-icon-confirm);}html[data-skin] [data-doubao-theme-icon=connector]{--doubao-theme-icon:var(--skin-icon-connector);}html[data-skin] [data-doubao-theme-icon=send]{--doubao-theme-icon:var(--skin-icon-send);}html[data-skin] [data-doubao-theme-icon=stop]{--doubao-theme-icon:var(--skin-icon-stop);}html[data-skin] [data-doubao-theme-icon=attach]{--doubao-theme-icon:var(--skin-icon-attach);}html[data-skin] [data-doubao-theme-icon=voice]{--doubao-theme-icon:var(--skin-icon-voice);}html[data-skin] [data-doubao-theme-icon=tools]{--doubao-theme-icon:var(--skin-icon-tools);}html[data-skin] [data-doubao-theme-icon=knowledge]{--doubao-theme-icon:var(--skin-icon-knowledge);}html[data-skin] [data-doubao-theme-icon=more-skills]{--doubao-theme-icon:var(--skin-icon-more-skills);}html[data-skin] [data-doubao-theme-icon=daily-work]{--doubao-theme-icon:var(--skin-icon-daily-work);}html[data-skin] [data-doubao-theme-icon=content-creation]{--doubao-theme-icon:var(--skin-icon-content-creation);}html[data-skin] [data-doubao-theme-icon=research]{--doubao-theme-icon:var(--skin-icon-research);}html[data-skin] [data-doubao-theme-icon=design]{--doubao-theme-icon:var(--skin-icon-design);}html[data-skin] [data-doubao-theme-icon=read-aloud]{--doubao-theme-icon:var(--skin-icon-read-aloud);}html[data-skin] [data-doubao-theme-icon=copy]{--doubao-theme-icon:var(--skin-icon-copy);}html[data-skin] [data-doubao-theme-icon=sidebar]{--doubao-theme-icon:var(--skin-icon-sidebar);}");
+            css.push_str("\nhtml[data-skin] svg[data-doubao-theme-icon]{background-color:currentColor!important;mask:var(--doubao-theme-icon) center/contain no-repeat!important;-webkit-mask:var(--doubao-theme-icon) center/contain no-repeat!important;}html[data-skin] svg[data-doubao-theme-icon] *{opacity:0!important;}html[data-skin] img[data-doubao-theme-icon]{content:var(--doubao-theme-icon)!important;object-fit:contain!important;}html[data-skin] img[data-doubao-theme-icon=main]{content:var(--skin-icon-main)!important;}html[data-skin] svg[data-doubao-theme-icon=main]{background:var(--skin-icon-main) center/contain no-repeat!important;mask:none!important;-webkit-mask:none!important;}html[data-skin] [data-doubao-theme-icon=main]{--doubao-theme-icon:var(--skin-icon-main);}html[data-skin] [data-doubao-theme-icon=new-task]{--doubao-theme-icon:var(--skin-icon-new-task);}html[data-skin] [data-doubao-theme-icon=scheduled]{--doubao-theme-icon:var(--skin-icon-scheduled);}html[data-skin] [data-doubao-theme-icon=skills]{--doubao-theme-icon:var(--skin-icon-skills);}html[data-skin] [data-doubao-theme-icon=cloud]{--doubao-theme-icon:var(--skin-icon-cloud);}html[data-skin] [data-doubao-theme-icon=remote]{--doubao-theme-icon:var(--skin-icon-remote);}html[data-skin] [data-doubao-theme-icon=conversation]{--doubao-theme-icon:var(--skin-icon-conversation);}html[data-skin] [data-doubao-theme-icon=project]{--doubao-theme-icon:var(--skin-icon-project);}html[data-skin] [data-doubao-theme-icon=confirm]{--doubao-theme-icon:var(--skin-icon-confirm);}html[data-skin] [data-doubao-theme-icon=connector]{--doubao-theme-icon:var(--skin-icon-connector);}html[data-skin] [data-doubao-theme-icon=send]{--doubao-theme-icon:var(--skin-icon-send);}html[data-skin] [data-doubao-theme-icon=stop]{--doubao-theme-icon:var(--skin-icon-stop);}html[data-skin] [data-doubao-theme-icon=attach]{--doubao-theme-icon:var(--skin-icon-attach);}html[data-skin] [data-doubao-theme-icon=voice]{--doubao-theme-icon:var(--skin-icon-voice);}html[data-skin] [data-doubao-theme-icon=tools]{--doubao-theme-icon:var(--skin-icon-tools);}html[data-skin] [data-doubao-theme-icon=knowledge]{--doubao-theme-icon:var(--skin-icon-knowledge);}html[data-skin] [data-doubao-theme-icon=more-skills]{--doubao-theme-icon:var(--skin-icon-more-skills);}html[data-skin] [data-doubao-theme-icon=daily-work]{--doubao-theme-icon:var(--skin-icon-daily-work);}html[data-skin] [data-doubao-theme-icon=content-creation]{--doubao-theme-icon:var(--skin-icon-content-creation);}html[data-skin] [data-doubao-theme-icon=research]{--doubao-theme-icon:var(--skin-icon-research);}html[data-skin] [data-doubao-theme-icon=design]{--doubao-theme-icon:var(--skin-icon-design);}html[data-skin] [data-doubao-theme-icon=read-aloud]{--doubao-theme-icon:var(--skin-icon-read-aloud);}html[data-skin] [data-doubao-theme-icon=copy]{--doubao-theme-icon:var(--skin-icon-copy);}html[data-skin] [data-doubao-theme-icon=sidebar]{--doubao-theme-icon:var(--skin-icon-sidebar);}");
+            css.push_str("html[data-skin] [data-doubao-theme-icon=search]{--doubao-theme-icon:var(--skin-icon-search);}");
+        }
+        if self.icons.has_raster()
+            || self
+                .variants
+                .light
+                .as_ref()
+                .is_some_and(|variant| variant.icons.has_raster())
+            || self
+                .variants
+                .dark
+                .as_ref()
+                .is_some_and(|variant| variant.icons.has_raster())
+        {
+            css.push_str("\nhtml[data-skin]{--skin-generated-icon-mode:full-color;}html[data-skin] svg[data-doubao-theme-icon]:not([data-doubao-theme-icon=main]){color:transparent!important;background:var(--doubao-theme-icon) center/contain no-repeat!important;background-color:transparent!important;mask:none!important;-webkit-mask:none!important;}html[data-skin] img[data-doubao-theme-icon]:not([data-doubao-theme-icon=main]){content:var(--doubao-theme-icon)!important;object-fit:contain!important;background:none!important;mask:none!important;-webkit-mask:none!important;}html[data-skin] [data-doubao-theme-icon=new-task],html[data-skin] [data-doubao-theme-icon=scheduled]{transform:translateY(-1px)!important;}");
         }
         if self.effects.motion.as_deref() == Some("none") {
             css.push_str("\nhtml[data-skin] *,html[data-skin] *::before,html[data-skin] *::after{animation-duration:0.001ms!important;animation-iteration-count:1!important;transition-duration:0.001ms!important;}");
@@ -2161,6 +2189,7 @@ impl Theme {
         let dark = self.variants.dark.as_ref().map(|variant| &variant.icons);
         serde_json::json!({
             "main": self.icons.main.is_some() || light.is_some_and(|icons| icons.main.is_some()) || dark.is_some_and(|icons| icons.main.is_some()),
+            "search": self.icons.search.is_some() || light.is_some_and(|icons| icons.search.is_some()) || dark.is_some_and(|icons| icons.search.is_some()),
             "new-task": self.icons.new_task.is_some() || light.is_some_and(|icons| icons.new_task.is_some()) || dark.is_some_and(|icons| icons.new_task.is_some()),
             "scheduled": self.icons.scheduled.is_some() || light.is_some_and(|icons| icons.scheduled.is_some()) || dark.is_some_and(|icons| icons.scheduled.is_some()),
             "skills": self.icons.skills.is_some() || light.is_some_and(|icons| icons.skills.is_some()) || dark.is_some_and(|icons| icons.skills.is_some()),
@@ -2230,6 +2259,7 @@ impl Theme {
         let dark = self.variants.dark.as_ref().map(|variant| &variant.icons);
         let icons = serde_json::json!({
             "main": self.icons.main.is_some() || light.is_some_and(|icons| icons.main.is_some()) || dark.is_some_and(|icons| icons.main.is_some()),
+            "search": self.icons.search.is_some() || light.is_some_and(|icons| icons.search.is_some()) || dark.is_some_and(|icons| icons.search.is_some()),
             "new-task": self.icons.new_task.is_some() || light.is_some_and(|icons| icons.new_task.is_some()) || dark.is_some_and(|icons| icons.new_task.is_some()),
             "scheduled": self.icons.scheduled.is_some() || light.is_some_and(|icons| icons.scheduled.is_some()) || dark.is_some_and(|icons| icons.scheduled.is_some()),
             "skills": self.icons.skills.is_some() || light.is_some_and(|icons| icons.skills.is_some()) || dark.is_some_and(|icons| icons.skills.is_some()),
@@ -2506,8 +2536,26 @@ function appMode(){
 function chosenMode(){return MODE==='auto'?appMode():MODE;}
 function appearanceValue(value,mode){if(value&&value.__doubaoSkinByAppearance===true)return Object.prototype.hasOwnProperty.call(value,mode)?value[mode]:null;return value;}
 function iconTarget(el){if(el.matches&&el.matches('svg,img'))return el;return el.querySelector&&el.querySelector('svg,img');}
+function markComposerIcons(){
+  document.querySelectorAll('[data-doubao-theme-composer]').forEach(function(el){el.removeAttribute('data-doubao-theme-composer');});
+  document.querySelectorAll('textarea,[contenteditable=true],[role=textbox]').forEach(function(editable){
+    var r=editable.getBoundingClientRect(),s=getComputedStyle(editable);if(r.width<120||r.height<12||s.display==='none'||s.visibility==='hidden')return;
+    var node=editable.parentElement,best=null,bestWidth=0;
+    for(var depth=0;node&&depth<12;depth++,node=node.parentElement){var box=node.getBoundingClientRect(),style=getComputedStyle(node),isComposerSize=box.width>=Math.min(320,innerWidth*.28)&&box.height>=44&&box.height<=innerHeight*.96;if(!isComposerSize)continue;if(parseFloat(style.borderRadius)>=12&&box.width>bestWidth){best=node;bestWidth=box.width;}}
+    if(!best)return;best.setAttribute('data-doubao-theme-composer','');
+    var controls=[];best.querySelectorAll('svg,img').forEach(function(target){var control=target.closest('button,[role=button],[class*=cursor-pointer]');if(control&&best.contains(control)&&controls.indexOf(control)<0)controls.push(control);});
+    controls.sort(function(a,b){return a.getBoundingClientRect().left-b.getBoundingClientRect().left;});
+    function label(control){return [control.getAttribute('aria-label'),control.getAttribute('title'),control.getAttribute('description'),control.textContent].filter(Boolean).join(' ').trim();}
+    function mark(control,slot){var target=control&&iconTarget(control);if(target&&ICONS[slot])target.setAttribute('data-doubao-theme-icon',slot);}
+    if(ICONS.tools)controls.forEach(function(control){if(/本地电脑|local computer/i.test(label(control)))mark(control,'tools');});
+    if(ICONS.tools){var connector=controls.find(function(control){var target=iconTarget(control);return target&&target.getAttribute('data-doubao-theme-icon')==='connector';}),after=connector&&controls.slice(controls.indexOf(connector)+1).find(function(control){return !label(control)&&iconTarget(control);});if(after)mark(after,'tools');}
+    var unlabeled=controls.filter(function(control){var box=control.getBoundingClientRect();return !label(control)&&box.width>=28&&box.width<=44&&box.height>=28&&box.height<=44&&iconTarget(control);});
+    if(ICONS.attach&&unlabeled[0])mark(unlabeled[0],'attach');
+    if(ICONS.voice){var mic=unlabeled.slice().reverse().find(function(control){var box=control.getBoundingClientRect(),radius=parseFloat(getComputedStyle(control).borderRadius)||0,target=iconTarget(control);return radius>=box.width*.38&&target&&target.getAttribute('data-doubao-theme-icon')!=='attach';});if(mic)mark(mic,'voice');}
+  });
+}
 function markIcons(){
-  var rules={'new-task':/new work|new task|新工作任务|新建任务/i,scheduled:/scheduled|定时任务/i,'more-skills':/更多技能|more skills?/i,knowledge:/企业知识|enterprise knowledge/i,skills:/技能\s*[·•]\s*连接器|伙伴|skills?/i,connector:/^\s*(connector|连接器)\s*$/i,cloud:/cloud|云盘/i,remote:/remote|手机遥控/i,conversation:/conversation|主对话/i,project:/project|项目|看看/i,confirm:/confirm|按需确认/i,'daily-work':/处理日常工作|^工作任务$|daily work|work task/i,'content-creation':/内容创作|content creation/i,research:/完成调研分析|调研分析|research/i,design:/设计与创意|design and creative/i,'read-aloud':/自动播报|朗读|read aloud|speaker|静音|mute/i,sidebar:/打开侧栏|关闭侧栏|sidebar/i,copy:/复制|copy/i,send:/send|发送|提交/i,stop:/stop|停止|取消生成/i,attach:/attach|附件|上传|文件/i,voice:/voice|语音|麦克风|Auto\s*(高|低)/i,tools:/^\s*(tool|tools|工具|更多)\s*$/i};
+  var rules={search:/搜索|search/i,'new-task':/new work|new task|新工作任务|新建任务/i,scheduled:/scheduled|定时任务/i,'more-skills':/更多技能|more skills?/i,knowledge:/企业知识|enterprise knowledge/i,skills:/技能\s*[·•]\s*连接器|伙伴|skills?/i,connector:/connector|连接器/i,cloud:/cloud|云盘/i,remote:/remote|手机遥控/i,conversation:/conversation|主对话/i,project:/project|项目|看看/i,confirm:/confirm|按需确认/i,'daily-work':/处理日常工作|^工作任务$|daily work|work task/i,'content-creation':/内容创作|content creation/i,research:/完成调研分析|调研分析|research/i,design:/设计与创意|design and creative/i,'read-aloud':/自动播报|朗读|read aloud|speaker|静音|mute/i,sidebar:/打开侧栏|关闭侧栏|打开侧边工作台|关闭侧边工作台|sidebar|side workbench/i,copy:/复制|copy/i,send:/send|发送|提交/i,stop:/stop|停止|取消生成/i,attach:/attach|附件|上传|文件/i,voice:/voice|语音|麦克风|microphone/i,tools:/本地电脑|local computer|^\s*(tool|tools|工具|更多)\s*$/i};
   function markNearbyText(slot){
     if(!ICONS[slot])return;
     Array.from(document.querySelectorAll('span')).forEach(function(label){
@@ -2522,15 +2570,9 @@ function markIcons(){
     Object.keys(rules).some(function(slot){if(ICONS[slot]&&rules[slot].test(text)){var target=iconTarget(el);if(target)target.setAttribute('data-doubao-theme-icon',slot);return true;}return false;});
   });
   markNearbyText('new-task');markNearbyText('conversation');markNearbyText('daily-work');markNearbyText('content-creation');markNearbyText('research');markNearbyText('design');
+  markComposerIcons();
   if(ICONS.copy){var sideIcon=document.querySelector('[data-doubao-theme-icon=sidebar]'),side=sideIcon&&(sideIcon.closest('button,[role=button]')||sideIcon);if(side&&side.parentElement){var siblings=Array.from(side.parentElement.children).filter(function(el){return el.matches('button,[role=button]');}),sideIndex=siblings.indexOf(side);if(sideIndex>0){var candidate=siblings[sideIndex-1],label=[candidate.getAttribute('aria-label'),candidate.getAttribute('title'),candidate.textContent].filter(Boolean).join(' ').trim(),target=iconTarget(candidate);if(!label&&target)target.setAttribute('data-doubao-theme-icon','copy');}}}
   if(ICONS.main){var marked=false;document.querySelectorAll('img,svg,[role=img]').forEach(function(el){var identity=[el.getAttribute('alt'),el.getAttribute('aria-label'),el.getAttribute('title'),el.getAttribute('data-testid'),el.id,el.getAttribute('class'),el.getAttribute('src')].filter(Boolean).join(' ');if(/doubao[-_ ]?(logo|icon)|豆包(?:工作)?(?:图标|logo)|(?:app|product|brand)[-_ ]?logo/i.test(identity)){el.setAttribute('data-doubao-theme-icon','main');marked=true;}});if(!marked){var candidates=Array.from(document.querySelectorAll('main img,main svg,[role=main] img,[role=main] svg,img,svg')).filter(function(el){var r=el.getBoundingClientRect(),s=getComputedStyle(el);return r.width>=52&&r.width<=144&&r.height>=52&&r.height<=144&&r.width/r.height>.72&&r.width/r.height<1.38&&r.left>Math.max(180,innerWidth*.18)&&r.top>40&&r.bottom<innerHeight*.72&&s.visibility!=='hidden'&&s.display!=='none';}).sort(function(a,b){var ar=a.getBoundingClientRect(),br=b.getBoundingClientRect();return Math.abs(ar.left+ar.width/2-innerWidth*.52)+Math.abs(ar.top+ar.height/2-innerHeight*.39)-Math.abs(br.left+br.width/2-innerWidth*.52)-Math.abs(br.top+br.height/2-innerHeight*.39);});if(candidates[0])candidates[0].setAttribute('data-doubao-theme-icon','main');}}
-  document.querySelectorAll('[data-doubao-theme-composer]').forEach(function(el){el.removeAttribute('data-doubao-theme-composer');});
-  document.querySelectorAll('textarea,[contenteditable=true],[role=textbox]').forEach(function(editor){
-    var r=editor.getBoundingClientRect(),s=getComputedStyle(editor);if(r.width<120||r.height<12||s.display==='none'||s.visibility==='hidden')return;
-    var node=editor.parentElement,best=null,bestWidth=0;
-    for(var depth=0;node&&depth<12;depth++,node=node.parentElement){var box=node.getBoundingClientRect(),style=getComputedStyle(node),isComposerSize=box.width>=Math.min(320,innerWidth*.28)&&box.height>=44&&box.height<=innerHeight*.96;if(!isComposerSize)continue;if(parseFloat(style.borderRadius)>=12&&box.width>bestWidth){best=node;bestWidth=box.width;}}
-    if(best)best.setAttribute('data-doubao-theme-composer','');
-  });
 }
 function ensureBackdrop(){
   var old=document.getElementById('doubao-skin-backdrop');
@@ -2823,6 +2865,7 @@ fn appearance_variant_css(mode: &str, variant: &AppearanceVariant) -> String {
     }
     for (name, path) in [
         ("--skin-icon-main", variant.icons.main.as_deref()),
+        ("--skin-icon-search", variant.icons.search.as_deref()),
         ("--skin-icon-new-task", variant.icons.new_task.as_deref()),
         ("--skin-icon-scheduled", variant.icons.scheduled.as_deref()),
         ("--skin-icon-skills", variant.icons.skills.as_deref()),
@@ -2881,6 +2924,7 @@ fn appearance_variant_css(mode: &str, variant: &AppearanceVariant) -> String {
 impl ThemeIcons {
     fn any(&self) -> bool {
         self.main.is_some()
+            || self.search.is_some()
             || self.new_task.is_some()
             || self.scheduled.is_some()
             || self.skills.is_some()
@@ -2904,6 +2948,48 @@ impl ThemeIcons {
             || self.read_aloud.is_some()
             || self.copy.is_some()
             || self.sidebar.is_some()
+    }
+
+    fn has_raster(&self) -> bool {
+        [
+            &self.main,
+            &self.search,
+            &self.new_task,
+            &self.scheduled,
+            &self.skills,
+            &self.cloud,
+            &self.remote,
+            &self.conversation,
+            &self.project,
+            &self.confirm,
+            &self.connector,
+            &self.send,
+            &self.stop,
+            &self.attach,
+            &self.voice,
+            &self.tools,
+            &self.knowledge,
+            &self.more_skills,
+            &self.daily_work,
+            &self.content_creation,
+            &self.research,
+            &self.design,
+            &self.read_aloud,
+            &self.copy,
+            &self.sidebar,
+        ]
+        .into_iter()
+        .flatten()
+        .any(|path| {
+            path.extension()
+                .and_then(|extension| extension.to_str())
+                .is_some_and(|extension| {
+                    matches!(
+                        extension.to_ascii_lowercase().as_str(),
+                        "png" | "jpg" | "jpeg" | "webp" | "gif"
+                    )
+                })
+        })
     }
 }
 
@@ -3025,6 +3111,7 @@ fn icons_from_meta(root: &Path, meta: IconsMeta, label: &str) -> Result<ThemeIco
     };
     Ok(ThemeIcons {
         main: resolve(meta.main, "main")?,
+        search: resolve(meta.search, "search")?,
         new_task: resolve(meta.new_task, "newTask")?,
         scheduled: resolve(meta.scheduled, "scheduled")?,
         skills: resolve(meta.skills, "skills")?,
@@ -3964,6 +4051,18 @@ mod tests {
     }
 
     #[test]
+    fn platform_directories_keep_product_data_below_the_system_base() {
+        assert_eq!(
+            product_directory(Some(PathBuf::from("/platform/data"))),
+            PathBuf::from("/platform/data/Doubao Skin")
+        );
+        assert_eq!(
+            product_directory(Some(PathBuf::from(r"C:\Users\tester\AppData\Local"))),
+            PathBuf::from(r"C:\Users\tester\AppData\Local").join("Doubao Skin")
+        );
+    }
+
+    #[test]
     fn theme_store_uses_public_default_and_env_override() {
         assert_eq!(
             DEFAULT_THEME_STORE_URL,
@@ -4105,7 +4204,7 @@ mod tests {
     #[test]
     fn loads_bundled_themes() {
         let themes = list(&default_themes_dir());
-        assert_eq!(themes.len(), 30, "expected 30 bundled themes");
+        assert_eq!(themes.len(), 34, "expected 34 bundled themes");
         assert!(
             themes.iter().all(|theme| theme.schema_version == 3),
             "all bundled themes should use the v3 manifest"
@@ -4309,9 +4408,11 @@ mod tests {
             .expect("doubao-dessert-giggle");
         let dessert_preview = dessert.preview_style();
         assert!(dessert.icons.main.is_some());
+        assert!(dessert.icons.search.is_some());
         assert!(dessert_preview.icons.main.is_some());
         assert!(dessert_preview.icons.new_task.is_some());
         assert!(dessert_preview.icons.voice.is_some());
+        assert!(dessert_preview.icons.sidebar.is_some());
     }
 
     #[test]
@@ -4349,7 +4450,7 @@ mod tests {
         let themes = list(&default_themes_dir());
         assert_eq!(
             themes.len(),
-            30,
+            34,
             "audit must cover the complete bundled catalog"
         );
 
@@ -4388,8 +4489,8 @@ mod tests {
 
         assert_eq!(
             translucent_themes.len(),
-            29,
-            "29 bundled themes currently rely on at least one translucent preview color"
+            33,
+            "33 bundled themes currently rely on at least one translucent preview color"
         );
     }
 
@@ -4473,35 +4574,105 @@ mod tests {
     }
 
     #[test]
-    fn snack_theme_owns_its_icon_palette() {
-        let theme =
-            load(&default_themes_dir(), "doubao-snack-giggle").expect("doubao-snack-giggle");
-        let css = theme.effective_css();
+    fn snack_and_dessert_themes_use_full_color_png_icons() {
+        for id in ["doubao-snack-giggle", "doubao-dessert-giggle"] {
+            let theme = load(&default_themes_dir(), id).expect(id);
+            let css = theme.effective_css();
 
-        for token in [
-            "--snack-icon-cocoa",
-            "--snack-icon-peach",
-            "--snack-icon-drool",
-            "--snack-icon-mint",
-            "--snack-icon-grape",
-            "--snack-icon-berry",
-        ] {
-            assert!(css.contains(token), "missing {token}");
+            assert!(css.contains("--skin-generated-icon-mode:full-color"));
+            for icon in [
+                "search",
+                "new-task",
+                "scheduled",
+                "skills",
+                "cloud",
+                "remote",
+                "conversation",
+                "project",
+                "confirm",
+                "send",
+                "stop",
+                "attach",
+                "tools",
+                "voice",
+                "knowledge",
+                "daily-work",
+                "content-creation",
+                "sidebar",
+            ] {
+                assert!(
+                    css.contains(&format!("--skin-icon-{icon}:url(\"data:image/png;base64,")),
+                    "{id} is missing a PNG asset for {icon}"
+                );
+                assert!(
+                    css.contains(&format!("[data-doubao-theme-icon={icon}]")),
+                    "{id} is missing a runtime mapping for {icon}"
+                );
+            }
+            assert!(
+                !css.contains("[data-doubao-theme-icon] svg:first-of-type"),
+                "icon styling must target only the marked glyph, not its button or trailing chevron"
+            );
+            assert!(
+                css.contains("html[data-skin] [data-doubao-theme-icon=new-task]"),
+                "{id} must optically raise the two top navigation icons"
+            );
         }
-        assert!(css.contains("data-doubao-theme-icon=\"new-task\""));
-        assert!(css.contains("data-doubao-theme-icon=\"conversation\""));
-        assert!(css.contains("data-doubao-theme-icon=\"daily-work\""));
-        assert!(css.contains("data-doubao-theme-icon=\"content-creation\""));
-        assert!(css.contains("data-doubao-theme-icon=\"research\""));
-        assert!(css.contains("data-doubao-theme-icon=\"design\""));
-        assert!(css.contains(
-            "body img[data-doubao-theme-icon]:not([data-doubao-theme-icon=main]){content:\"\"!important;background-color:currentColor!important;mask:var(--doubao-theme-icon)"
-        ));
-        assert!(css.contains("data-skin-target=\"doubao-work\""));
-        assert!(
-            !css.contains("[data-doubao-theme-icon] svg:first-of-type"),
-            "icon colors must target only the marked glyph, not its button or trailing chevron"
-        );
+    }
+
+    #[test]
+    fn iconic_fan_themes_replace_all_visible_controls_with_full_color_png_icons() {
+        for id in [
+            "teyvat-dandelion-wind",
+            "teyvat-liyue-lanterns",
+            "gugugaga-administrator",
+            "gugugaga-snowfield",
+        ] {
+            let theme = load(&default_themes_dir(), id).expect(id);
+            let css = theme.effective_css();
+
+            assert!(
+                css.contains("--skin-generated-icon-mode:full-color"),
+                "{id} must opt into full-color generated PNG icons"
+            );
+            for icon in [
+                "search",
+                "new-task",
+                "scheduled",
+                "skills",
+                "cloud",
+                "remote",
+                "conversation",
+                "project",
+                "confirm",
+                "send",
+                "stop",
+                "attach",
+                "tools",
+                "voice",
+                "knowledge",
+                "daily-work",
+                "content-creation",
+                "sidebar",
+            ] {
+                assert!(
+                    css.contains(&format!("--skin-icon-{icon}:url(\"data:image/png;base64,")),
+                    "{id} is missing a PNG asset for {icon}"
+                );
+                assert!(
+                    css.contains(&format!("[data-doubao-theme-icon={icon}]")),
+                    "{id} is missing a runtime mapping for {icon}"
+                );
+            }
+            assert!(
+                !css.contains("[data-doubao-theme-icon] svg:first-of-type"),
+                "icon styling must target only the marked glyph, not its button or trailing chevron"
+            );
+            assert!(
+                css.contains("html[data-skin] [data-doubao-theme-icon=new-task]"),
+                "{id} must optically raise the two top navigation icons"
+            );
+        }
     }
 
     #[test]
@@ -4590,7 +4761,7 @@ mod tests {
               "layout":{"sidebarWidth":260,"chatMaxWidth":960,"composerMaxWidth":780},
               "composer":{"background":"#fffaf8","border":"1px solid #e0b0b8","textColor":"#40251f","placeholderColor":"#765b54","caretColor":"#d85f76","iconColor":"#8f3f55","radius":24,"minHeight":56,"padding":15,"gap":11,"iconSize":22},
               "content":{"userMessageBackground":"#d85f76","codeBackground":"#f7e8eb","selectionColor":"rgba(216,95,118,.2)"},
-              "icons":{"main":"icons/root-main.svg","send":"icons/send.svg","knowledge":"icons/knowledge.svg","readAloud":"icons/read-aloud.svg"},
+              "icons":{"main":"icons/root-main.svg","search":"icons/search.png","send":"icons/send.svg","knowledge":"icons/knowledge.svg","readAloud":"icons/read-aloud.svg"},
               "variants":{"light":{"composer":{"background":"#ffffff","border":"1px solid #dddddd","placeholderColor":"#665544","iconColor":"#aa3344"},"icons":{"main":"icons/main.svg"}},"dark":{"composer":{"background":"#202124","border":"1px solid #555555"},"icons":{"main":"icons/main.svg"}}},
               "effects":{"radiusScale":1.2,"shadow":"0 8px 24px rgba(0,0,0,.12)","transitionMs":180}
             }"##,
@@ -4631,6 +4802,9 @@ mod tests {
             br#"<svg xmlns="http://www.w3.org/2000/svg"/>"#,
         )
         .unwrap();
+        image::RgbaImage::from_pixel(32, 32, image::Rgba([255u8, 120, 90, 180]))
+            .save(dir.join("icons/search.png"))
+            .unwrap();
 
         let theme = load(&dir, dir.to_str().unwrap()).unwrap();
         assert_eq!(theme.schema_version, 2);
@@ -4660,6 +4834,8 @@ mod tests {
         assert!(css.contains("--input-guidance-input-container-background:#fffaf8!important"));
         assert!(css.contains("--g-send-msg-bubble-bg:#d85f76!important"));
         assert!(css.contains("--skin-icon-send:url(\"data:image/svg+xml;base64,"));
+        assert!(css.contains("--skin-icon-search:url(\"data:image/png;base64,"));
+        assert!(css.contains("[data-doubao-theme-icon=search]"));
         assert!(css.contains("--skin-icon-knowledge:url(\"data:image/svg+xml;base64,"));
         assert!(css.contains("--skin-icon-read-aloud:url(\"data:image/svg+xml;base64,"));
         assert!(
@@ -4685,6 +4861,7 @@ mod tests {
         assert!(js.contains("data-doubao-theme-icon"));
         assert!(js.contains("function iconTarget"));
         assert!(js.contains("function markNearbyText"));
+        assert!(js.contains("function markComposerIcons"));
         assert!(js.contains("markNearbyText('new-task')"));
         assert!(js.contains("markNearbyText('conversation')"));
         assert!(js.contains("markNearbyText('daily-work')"));
@@ -4719,10 +4896,14 @@ mod tests {
             "a square bordered inner layer must not become the composer fallback"
         );
         assert!(js.contains("\"main\":true"));
+        assert!(js.contains("\"search\":true"));
         assert!(js.contains("\"knowledge\":true"));
         assert!(js.contains("\"read-aloud\":true"));
         assert!(js.contains("[draggable=true]"));
-        assert!(js.contains("Auto\\s*(高|低)"));
+        assert!(js.contains("打开侧边工作台|关闭侧边工作台"));
+        assert!(js.contains("本地电脑|local computer"));
+        assert!(js.contains("connector|连接器"));
+        assert!(!js.contains("Auto\\s*(高|低)"));
         std::fs::remove_dir_all(&dir).ok();
     }
 

@@ -215,6 +215,7 @@
       "type": "object",
       "properties": {
         "main": { "$ref": "#/$defs/resourcePath" },
+        "search": { "$ref": "#/$defs/resourcePath" },
         "newTask": { "$ref": "#/$defs/resourcePath" },
         "scheduled": { "$ref": "#/$defs/resourcePath" },
         "skills": { "$ref": "#/$defs/resourcePath" },
@@ -363,6 +364,7 @@
           "type": "object",
           "properties": {
             "main": { "oneOf": [{ "$ref": "#/$defs/resourcePath" }, { "type": "null" }] },
+            "search": { "oneOf": [{ "$ref": "#/$defs/resourcePath" }, { "type": "null" }] },
             "newTask": { "oneOf": [{ "$ref": "#/$defs/resourcePath" }, { "type": "null" }] },
             "scheduled": { "oneOf": [{ "$ref": "#/$defs/resourcePath" }, { "type": "null" }] },
             "skills": { "oneOf": [{ "$ref": "#/$defs/resourcePath" }, { "type": "null" }] },

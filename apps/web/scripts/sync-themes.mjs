@@ -76,15 +76,15 @@ function runThemeCli(args) {
   try {
     output = execFileSync(
       "cargo",
-      ["run", "-q", "-p", "skin-core", "--bin", "doubao-theme", "--", ...args, "--json"],
+      ["run", "-q", "-p", "skin-core", "--bin", "doubao-skin", "--", ...args, "--json"],
       { cwd: repoDir, encoding: "utf8" },
     );
   } catch (error) {
     const response = JSON.parse(String(error.stdout ?? "{}"));
-    throw new Error(response.error?.message ?? `doubao-theme ${args[0]} failed`);
+    throw new Error(response.error?.message ?? `doubao-skin ${args[0]} failed`);
   }
   const response = JSON.parse(output);
-  if (!response.ok) throw new Error(response.error?.message ?? `doubao-theme ${args[0]} failed`);
+  if (!response.ok) throw new Error(response.error?.message ?? `doubao-skin ${args[0]} failed`);
   return response.result;
 }
 
@@ -106,6 +106,101 @@ function safeRelativeAsset(directory, relative, label) {
     throw new Error(`${label} must stay inside the theme directory`);
   }
   return path.join(directory, normalized);
+}
+
+function svgPaint(value, fallback) {
+  const paint = typeof value === "string" && value.trim() ? value.trim() : fallback;
+  return paint.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
+}
+
+async function renderPackagePreview(directory, info, colors, backgroundName) {
+  const relative = info.preview?.image;
+  if (!relative) return null;
+  const destination = safeRelativeAsset(directory, relative, "preview.image");
+  if (fs.existsSync(destination)) return destination;
+  const width = 1200;
+  const height = 675;
+  const backgroundPath = backgroundName
+    ? safeRelativeAsset(directory, backgroundName, "background")
+    : null;
+  const hasBackground = backgroundPath && fs.existsSync(backgroundPath);
+  const visual = info.schemaVersion === 3 ? info.shared : info;
+  const previewAppearance = info.preview?.appearance === "light" ? "light" : "dark";
+  const variant = visual?.variants?.[previewAppearance] ?? {};
+  const previewContent = { ...visual?.content, ...variant.content };
+  const previewComposer = { ...visual?.composer, ...variant.composer };
+  const neutral = previewAppearance === "light" ? "#f5f5f3" : "#121318";
+  const neutral2 = previewAppearance === "light" ? "#ebecea" : "#1a1c22";
+  const accent = svgPaint(info.preview?.accent, colors.accent);
+  const base = svgPaint(previewContent.chatBackground, colors.base);
+  const base2 = svgPaint(previewComposer.background, colors.base2);
+  const primary = svgPaint(previewContent.chatBackground, colors.primary);
+  const floating = svgPaint(previewContent.assistantMessageBackground, colors.float);
+  const text = svgPaint(previewContent.assistantMessageText, colors.text);
+  const muted = svgPaint(colors.muted, "#9a9ba3");
+  const hairline = svgPaint(colors.hairline, "#2c2e34");
+  const assistant = svgPaint(previewContent.assistantMessageBackground, floating);
+  const assistantText = svgPaint(previewContent.assistantMessageText, text);
+  const user = svgPaint(previewContent.userMessageBackground, colors.accent);
+  const userText = svgPaint(previewContent.userMessageText, "#ffffff");
+  const composer = svgPaint(previewComposer.background, floating);
+  const surface = hasBackground ? Math.max(0.58, visual?.surfaceOpacity ?? 0.68) : 1;
+
+  const baseLayer = hasBackground
+    ? await sharp(backgroundPath).resize(width, height, { fit: "cover" }).toBuffer()
+    : Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="g" cx="82%" cy="8%" r="90%">
+          <stop offset="0" stop-color="${accent}" stop-opacity=".32"/>
+          <stop offset=".48" stop-color="${base2}" stop-opacity=".22"/>
+          <stop offset="1" stop-color="${base}"/>
+        </radialGradient></defs>
+        <rect width="100%" height="100%" fill="${neutral}"/>
+        <rect width="100%" height="100%" fill="url(#g)"/>
+      </svg>`);
+
+  const overlay = Buffer.from(`<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${width}" height="${height}" fill="${hasBackground ? neutral2 : base}" fill-opacity="${hasBackground ? 0.16 : 0}"/>
+    <rect x="24" y="24" width="1152" height="627" rx="22" fill="${primary}" fill-opacity="${surface}" stroke="${hairline}" stroke-width="2"/>
+    <path d="M24 70H1176" stroke="${hairline}" stroke-width="2"/>
+    <circle cx="56" cy="47" r="8" fill="#ff5f57"/><circle cx="82" cy="47" r="8" fill="#febc2e"/><circle cx="108" cy="47" r="8" fill="#28c840"/>
+    <path d="M248 70V651" stroke="${hairline}" stroke-width="2"/>
+    <rect x="25" y="71" width="222" height="579" fill="${base2}" fill-opacity="${Math.max(0.7, surface)}"/>
+    <rect x="48" y="102" width="42" height="42" rx="11" fill="${accent}" fill-opacity=".22"/>
+    <circle cx="69" cy="123" r="9" fill="${accent}"/>
+    <rect x="104" y="108" width="96" height="11" rx="5.5" fill="${text}" fill-opacity=".82"/>
+    <rect x="104" y="128" width="68" height="8" rx="4" fill="${muted}" fill-opacity=".7"/>
+    <rect x="44" y="178" width="160" height="12" rx="6" fill="${muted}" fill-opacity=".46"/>
+    <rect x="44" y="217" width="176" height="42" rx="10" fill="${accent}" fill-opacity=".17"/>
+    <rect x="60" y="232" width="104" height="11" rx="5.5" fill="${text}" fill-opacity=".82"/>
+    <rect x="44" y="282" width="142" height="11" rx="5.5" fill="${muted}" fill-opacity=".58"/>
+    <rect x="44" y="320" width="168" height="11" rx="5.5" fill="${muted}" fill-opacity=".48"/>
+    <rect x="44" y="358" width="126" height="11" rx="5.5" fill="${muted}" fill-opacity=".48"/>
+    <rect x="299" y="105" width="198" height="13" rx="6.5" fill="${text}" fill-opacity=".76"/>
+    <rect x="299" y="130" width="122" height="9" rx="4.5" fill="${muted}" fill-opacity=".6"/>
+    <rect x="300" y="188" width="466" height="104" rx="18" fill="${assistant}" fill-opacity="${surface}" stroke="${hairline}" stroke-width="1.5"/>
+    <rect x="326" y="216" width="312" height="11" rx="5.5" fill="${assistantText}" fill-opacity=".82"/>
+    <rect x="326" y="239" width="366" height="10" rx="5" fill="${assistantText}" fill-opacity=".56"/>
+    <rect x="326" y="261" width="218" height="10" rx="5" fill="${assistantText}" fill-opacity=".56"/>
+    <rect x="759" y="329" width="360" height="72" rx="18" fill="${user}"/>
+    <rect x="790" y="355" width="246" height="11" rx="5.5" fill="${userText}" fill-opacity=".9"/>
+    <rect x="300" y="438" width="402" height="74" rx="18" fill="${assistant}" fill-opacity="${surface}" stroke="${hairline}" stroke-width="1.5"/>
+    <rect x="326" y="463" width="272" height="11" rx="5.5" fill="${assistantText}" fill-opacity=".72"/>
+    <rect x="326" y="486" width="198" height="10" rx="5" fill="${assistantText}" fill-opacity=".52"/>
+    <rect x="300" y="556" width="819" height="65" rx="24" fill="${composer}" fill-opacity="${Math.max(0.82, surface)}" stroke="${accent}" stroke-opacity=".42" stroke-width="2"/>
+    <rect x="330" y="583" width="156" height="10" rx="5" fill="${muted}" fill-opacity=".64"/>
+    <circle cx="1084" cy="588" r="21" fill="${accent}"/>
+    <path d="M1084 598V579M1076 587L1084 579L1092 587" fill="none" stroke="${userText}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`);
+
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  const rendered = await sharp(baseLayer)
+    .composite([{ input: overlay }])
+    .jpeg({ quality: 86, chromaSubsampling: "4:4:4" })
+    .toBuffer();
+  if (!fs.existsSync(destination) || !fs.readFileSync(destination).equals(rendered)) {
+    fs.writeFileSync(destination, rendered);
+  }
+  return destination;
 }
 
 async function exportPreview(source, id) {
@@ -130,11 +225,42 @@ function exportIcon(directory, info, id) {
   return `/themes/${path.basename(destination)}`;
 }
 
+function archiveContentSignature(archivePath) {
+  const listing = execFileSync("unzip", ["-v", archivePath], { encoding: "utf8" });
+  return listing
+    .split(/\r?\n/)
+    .flatMap((line) => {
+      const columns = line.trim().split(/\s+/);
+      if (columns.length < 8 || !/^\d+$/.test(columns[0]) || !/^[0-9a-f]{8}$/i.test(columns[6])) {
+        return [];
+      }
+      return [`${columns[0]}\t${columns[6].toLowerCase()}\t${columns.slice(7).join(" ")}`];
+    })
+    .sort()
+    .join("\n");
+}
+
+function archiveContentsMatch(left, right) {
+  try {
+    const leftSignature = archiveContentSignature(left);
+    return leftSignature.length > 0 && leftSignature === archiveContentSignature(right);
+  } catch {
+    return false;
+  }
+}
+
 function exportPackage(directory, id) {
   fs.mkdirSync(publicPackagesDir, { recursive: true });
   const destination = path.join(publicPackagesDir, `${id}.doubao-skin.zip`);
-  fs.rmSync(destination, { force: true });
-  runThemeCli(["pack", directory, destination]);
+  const candidate = `${destination}.candidate`;
+  fs.rmSync(candidate, { force: true });
+  runThemeCli(["pack", directory, candidate]);
+  if (fs.existsSync(destination) && archiveContentsMatch(destination, candidate)) {
+    fs.rmSync(candidate, { force: true });
+  } else {
+    fs.rmSync(destination, { force: true });
+    fs.renameSync(candidate, destination);
+  }
   const bytes = fs.readFileSync(destination);
   return {
     packageUrl: `/themes/packages/${path.basename(destination)}`,
@@ -161,8 +287,13 @@ if (requestedThemes.size > 0 && themeDirectories.length !== requestedThemes.size
 
 fs.mkdirSync(path.dirname(databasePath), { recursive: true });
 fs.mkdirSync(publicThemesDir, { recursive: true });
-fs.rmSync(publicPackagesDir, { recursive: true, force: true });
 fs.mkdirSync(publicPackagesDir, { recursive: true });
+const expectedPackages = new Set(themeDirectories.map((name) => `${name}.doubao-skin.zip`));
+for (const entry of fs.readdirSync(publicPackagesDir)) {
+  if (entry.endsWith(".candidate") || (entry.endsWith(".doubao-skin.zip") && !expectedPackages.has(entry))) {
+    fs.rmSync(path.join(publicPackagesDir, entry), { force: true });
+  }
+}
 const preparedThemes = [];
 const catalogThemes = [];
 
@@ -191,10 +322,7 @@ for (const [index, directoryName] of themeDirectories.entries()) {
   if (backgroundName && fs.existsSync(path.join(directory, backgroundName))) {
     [bgDetail, bgCard] = await exportImage(path.join(directory, backgroundName), id);
   }
-  const previewSource = safeRelativeAsset(directory, info.preview.image, "preview.image");
-  if (!fs.existsSync(previewSource) || !fs.statSync(previewSource).isFile()) {
-    throw new Error(`${id}: preview image is missing`);
-  }
+  const previewSource = await renderPackagePreview(directory, info, colors, backgroundName);
   const [previewDetail, previewCard] = await exportPreview(previewSource, id);
   const iconUrl = exportIcon(directory, previewInfo, id);
   const packageInfo = exportPackage(directory, id);
