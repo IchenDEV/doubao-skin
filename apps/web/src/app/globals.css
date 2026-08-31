@@ -334,7 +334,7 @@ h3 {
 
 .theme-row {
   position: relative;
-  min-height: 98px;
+  min-height: 112px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   border-radius: 13px;
@@ -380,6 +380,30 @@ h3 {
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.theme-row-copy .theme-row-targets {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: visible;
+  white-space: normal;
+}
+
+.theme-row-targets small {
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: var(--ink-2);
+  background: var(--surface-active);
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.theme-row-targets i {
+  margin-inline-start: 4px;
+  color: var(--ink-3);
+  font-style: normal;
 }
 
 .theme-row-type {
@@ -1412,7 +1436,7 @@ h3 {
   }
 
   .theme-row {
-    min-height: 88px;
+    min-height: 96px;
     grid-template-columns: 96px minmax(0, 1fr) 66px;
     column-gap: 12px;
     padding: 10px 8px;
@@ -1442,6 +1466,15 @@ h3 {
 
   .theme-row-copy span {
     font-size: 12px;
+  }
+
+  .theme-row-targets i {
+    display: none;
+  }
+
+  .theme-row-targets small {
+    padding-inline: 5px;
+    font-size: 9px;
   }
 
   .section-title-row,
@@ -1492,6 +1525,7 @@ h3 {
     min-width: 56px;
     padding: 0 8px;
   }
+
 }
 
 @media (prefers-reduced-motion: reduce) {

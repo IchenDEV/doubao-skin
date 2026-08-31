@@ -21,6 +21,10 @@ use crate::ws::Cdp;
 pub const APP_BINARY: &str = "/Applications/DoubaoWork.app/Contents/MacOS/DoubaoWork";
 pub const DEFAULT_PORT: u16 = 9222;
 pub const DOUBAO_PORT: u16 = 9223;
+pub const WORKBUDDY_PORT: u16 = 9224;
+
+const WORKBUDDY_RENDERER_URL: &str =
+    "file:///Applications/WorkBuddy.app/Contents/Resources/app.asar/renderer/index.html";
 
 const GENERIC_PAGE_PATTERNS: &[&str] = &["side_panel.html", "popup.html", "options.html"];
 
@@ -28,15 +32,17 @@ const GENERIC_PAGE_PATTERNS: &[&str] = &["side_panel.html", "popup.html", "optio
 pub enum TargetApp {
     Doubao,
     DoubaoWork,
+    WorkBuddy,
 }
 
 impl TargetApp {
-    pub const ALL: [Self; 2] = [Self::Doubao, Self::DoubaoWork];
+    pub const ALL: [Self; 3] = [Self::Doubao, Self::DoubaoWork, Self::WorkBuddy];
 
     pub const fn id(self) -> &'static str {
         match self {
             Self::Doubao => "doubao",
             Self::DoubaoWork => "doubao-work",
+            Self::WorkBuddy => "workbuddy",
         }
     }
 
@@ -48,6 +54,7 @@ impl TargetApp {
         match self {
             Self::Doubao => "豆包",
             Self::DoubaoWork => "豆包工作",
+            Self::WorkBuddy => "WorkBuddy",
         }
     }
 
@@ -55,6 +62,7 @@ impl TargetApp {
         match self {
             Self::Doubao => "com.bot.pc.doubao",
             Self::DoubaoWork => "com.work.pc.doubao",
+            Self::WorkBuddy => "com.workbuddy.workbuddy",
         }
     }
 
@@ -62,6 +70,7 @@ impl TargetApp {
         match self {
             Self::Doubao => "/Applications/Doubao.app",
             Self::DoubaoWork => "/Applications/DoubaoWork.app",
+            Self::WorkBuddy => "/Applications/WorkBuddy.app",
         }
     }
 
@@ -69,6 +78,7 @@ impl TargetApp {
         match self {
             Self::Doubao => "/Applications/Doubao.app/Contents/MacOS/Doubao",
             Self::DoubaoWork => APP_BINARY,
+            Self::WorkBuddy => "/Applications/WorkBuddy.app/Contents/MacOS/Electron",
         }
     }
 
@@ -76,6 +86,7 @@ impl TargetApp {
         match self {
             Self::Doubao => "Doubao.app/Contents/MacOS/Doubao",
             Self::DoubaoWork => "DoubaoWork.app/Contents/MacOS/DoubaoWork",
+            Self::WorkBuddy => "^/Applications/WorkBuddy\\.app/Contents/MacOS/Electron($| )",
         }
     }
 
@@ -83,6 +94,7 @@ impl TargetApp {
         let (override_name, fallback) = match self {
             Self::Doubao => ("DOUBAO_SKIN_DOUBAO_CDP_PORT", DOUBAO_PORT),
             Self::DoubaoWork => ("DOUBAO_SKIN_DOUBAO_WORK_CDP_PORT", DEFAULT_PORT),
+            Self::WorkBuddy => ("DOUBAO_SKIN_WORKBUDDY_CDP_PORT", WORKBUDDY_PORT),
         };
         std::env::var(override_name)
             .ok()
@@ -95,6 +107,7 @@ impl TargetApp {
         match self {
             Self::Doubao => "/tmp/doubao-skin-doubao-launched-at",
             Self::DoubaoWork => "/tmp/doubao-skin-doubao-work-launched-at",
+            Self::WorkBuddy => "/tmp/doubao-skin-workbuddy-launched-at",
         }
     }
 
@@ -108,21 +121,30 @@ impl TargetApp {
             Self::DoubaoWork => {
                 url.starts_with("doubaowork://") || url.starts_with("chrome://doubaowork-")
             }
+            Self::WorkBuddy => url.split(['?', '#']).next() == Some(WORKBUDDY_RENDERER_URL),
         }
     }
 
     fn matches_page_url(self, url: &str, identity_confirmed: bool) -> bool {
-        self.matches_identity_url(url)
-            || (identity_confirmed
-                && GENERIC_PAGE_PATTERNS
-                    .iter()
-                    .any(|pattern| url.contains(pattern)))
+        match self {
+            Self::WorkBuddy => self.matches_identity_url(url),
+            Self::Doubao | Self::DoubaoWork => {
+                self.matches_identity_url(url)
+                    || (identity_confirmed
+                        && GENERIC_PAGE_PATTERNS
+                            .iter()
+                            .any(|pattern| url.contains(pattern)))
+            }
+        }
+    }
+
+    pub const fn relaunch_after_port_loss(self) -> bool {
+        !matches!(self, Self::WorkBuddy)
     }
 }
 
 pub fn theme_js(theme: &Theme, target: TargetApp) -> String {
-    let css = theme.injected_css();
-    theme.bootstrap_js(Some(&css), Some(target.id()))
+    theme.bootstrap_js_for_target(target)
 }
 
 /// Minimal HTTP GET over std TcpStream (localhost only).
@@ -179,6 +201,11 @@ fn port_up(port: u16) -> bool {
     http_get(port, "/json/version", Duration::from_secs(1)).is_ok()
 }
 
+fn port_listening(port: u16) -> bool {
+    let address = std::net::SocketAddr::from(([127, 0, 0, 1], port));
+    TcpStream::connect_timeout(&address, Duration::from_millis(250)).is_ok()
+}
+
 pub(crate) fn targets(port: u16) -> Result<Vec<serde_json::Value>, String> {
     let body = http_get(port, "/json", Duration::from_secs(3))?;
     serde_json::from_slice(&body).map_err(|e| format!("bad /json: {e}"))
@@ -194,36 +221,117 @@ fn targets_belong_to(target: TargetApp, list: &[serde_json::Value]) -> bool {
     })
 }
 
-fn ensure_running<F: FnMut(String)>(target: TargetApp, mut log: F) -> Result<bool, String> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PrepareState {
+    Ready,
+    LaunchRequired,
+    RestartConfirmationRequired,
+    NotInstalled,
+    WrongPortOwner,
+}
+
+pub(crate) fn prepare_state_for_observation(
+    target: TargetApp,
+    installed: bool,
+    running: bool,
+    port_listening: bool,
+    port_owned: bool,
+) -> PrepareState {
+    if port_listening {
+        return if port_owned {
+            PrepareState::Ready
+        } else {
+            PrepareState::WrongPortOwner
+        };
+    }
+    if !installed {
+        return PrepareState::NotInstalled;
+    }
+    if target == TargetApp::WorkBuddy && running {
+        PrepareState::RestartConfirmationRequired
+    } else {
+        PrepareState::LaunchRequired
+    }
+}
+
+fn process_running(target: TargetApp) -> bool {
+    Command::new("pgrep")
+        .args(["-f", target.process_pattern()])
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
+
+pub fn prepare_state(target: TargetApp) -> Result<PrepareState, String> {
     let port = target.port();
-    if port_up(port) {
-        let list = targets(port)?;
-        if !targets_belong_to(target, &list) {
+    let listening = port_listening(port);
+    let owned = if listening {
+        targets(port)
+            .map(|list| targets_belong_to(target, &list))
+            .unwrap_or(false)
+    } else {
+        false
+    };
+    Ok(prepare_state_for_observation(
+        target,
+        target.is_installed(),
+        process_running(target),
+        listening,
+        owned,
+    ))
+}
+
+fn ensure_running<F: FnMut(String)>(
+    target: TargetApp,
+    allow_restart: bool,
+    mut log: F,
+) -> Result<bool, String> {
+    let port = target.port();
+    match prepare_state(target)? {
+        PrepareState::Ready => {
+            log(format!(
+                "{} debug port already up — reusing the running instance",
+                target.display_name()
+            ));
+            return Ok(false);
+        }
+        PrepareState::WrongPortOwner => {
             return Err(format!(
                 "{} 端口 {port} 已被其他程序占用，请关闭占用后再试",
                 target.display_name()
             ));
         }
-        log(format!(
-            "{} debug port already up — reusing the running instance",
-            target.display_name()
-        ));
-        return Ok(false);
+        PrepareState::NotInstalled => {
+            return Err(format!(
+                "未找到{}：{}",
+                target.display_name(),
+                target.app_path()
+            ));
+        }
+        PrepareState::RestartConfirmationRequired if !allow_restart => {
+            return Err("WorkBuddy 正在运行，需要明确确认重启后才能应用主题".into());
+        }
+        PrepareState::RestartConfirmationRequired => {
+            tell_app(target, "quit", false);
+            for _ in 0..12 {
+                if !process_running(target) {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(500));
+            }
+            if process_running(target) {
+                kill_app(target);
+            }
+        }
+        PrepareState::LaunchRequired if target != TargetApp::WorkBuddy => {
+            // Preserve the established Doubao behavior: a running instance
+            // without the debug flag is restarted before launching.
+            tell_app(target, "quit", false);
+            std::thread::sleep(Duration::from_secs(3));
+            kill_app(target);
+        }
+        PrepareState::LaunchRequired => {}
     }
-    if !target.is_installed() {
-        return Err(format!(
-            "未找到{}：{}",
-            target.display_name(),
-            target.app_path()
-        ));
-    }
-    // a running instance without the debug flag must be restarted first:
-    // graceful quit, then hard-kill whatever remains (a wedged instance may
-    // never finish quitting, and a leftover process makes the next launch
-    // restore a window-less session with renderers that never answer CDP)
-    tell_app(target, "quit", false);
-    std::thread::sleep(Duration::from_secs(3));
-    kill_app(target);
     launch_app(target, &mut log)?;
     for _ in 0..60 {
         if port_up(port) {
@@ -290,6 +398,7 @@ fn launch_app<F: FnMut(String)>(target: TargetApp, mut log: F) -> Result<(), Str
         .arg("-a")
         .arg(target.app_path())
         .arg("--args")
+        .arg("--remote-debugging-address=127.0.0.1")
         .arg(format!("--remote-debugging-port={port}"))
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
@@ -343,10 +452,28 @@ pub fn run<F: FnMut(String)>(
     target: TargetApp,
     once: bool,
     stop: Arc<AtomicBool>,
+    log: F,
+) -> Result<(), String> {
+    run_with_restart_permission(theme, target, once, stop, false, log)
+}
+
+pub fn run_with_restart_permission<F: FnMut(String)>(
+    theme: &Theme,
+    target: TargetApp,
+    once: bool,
+    stop: Arc<AtomicBool>,
+    allow_restart: bool,
     mut log: F,
 ) -> Result<(), String> {
+    if !theme.supports_target(target) {
+        return Err(format!(
+            "主题 {} 不支持 {}",
+            theme.name,
+            target.display_name()
+        ));
+    }
     let port = target.port();
-    let ensure_running_launched = ensure_running(target, &mut log)?;
+    let ensure_running_launched = ensure_running(target, allow_restart, &mut log)?;
     let js = theme_js(theme, target);
     let mut injected: std::collections::HashSet<String> = std::collections::HashSet::new();
     let mut dead: std::collections::HashSet<String> = std::collections::HashSet::new();
@@ -378,6 +505,13 @@ pub fn run<F: FnMut(String)>(
             Err(_) => {
                 if once {
                     log("debug port went away (app quit?) — exiting".into());
+                    return Ok(());
+                }
+                if !target.relaunch_after_port_loss() {
+                    log(format!(
+                        "{} closed — ending the watcher without relaunch",
+                        target.display_name()
+                    ));
                     return Ok(());
                 }
                 // app quit: keep watching; if it doesn't come back on its own,
@@ -477,7 +611,8 @@ pub fn run<F: FnMut(String)>(
             .map(|t| t.elapsed() < Duration::from_secs(120))
             .unwrap_or(false)
             || launched_recently(target);
-        if startup
+        if target.relaunch_after_port_loss()
+            && startup
             && !booting
             && !wedge_restarted
             && !windowed.is_empty()
@@ -758,7 +893,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn target_metadata_keeps_the_two_official_apps_isolated() {
+    fn target_metadata_keeps_all_supported_apps_isolated() {
         assert_eq!(TargetApp::Doubao.id(), "doubao");
         assert_eq!(TargetApp::Doubao.display_name(), "豆包");
         assert_eq!(TargetApp::Doubao.bundle_id(), "com.bot.pc.doubao");
@@ -773,14 +908,40 @@ mod tests {
             "/Applications/DoubaoWork.app"
         );
         assert_eq!(TargetApp::DoubaoWork.port(), DEFAULT_PORT);
+
+        assert_eq!(TargetApp::WorkBuddy.id(), "workbuddy");
+        assert_eq!(TargetApp::WorkBuddy.display_name(), "WorkBuddy");
+        assert_eq!(TargetApp::WorkBuddy.bundle_id(), "com.workbuddy.workbuddy");
+        assert_eq!(
+            TargetApp::WorkBuddy.app_path(),
+            "/Applications/WorkBuddy.app"
+        );
+        assert_eq!(
+            TargetApp::WorkBuddy.binary_path(),
+            "/Applications/WorkBuddy.app/Contents/MacOS/Electron"
+        );
+        assert_eq!(TargetApp::WorkBuddy.port(), 9224);
+        assert_eq!(
+            TargetApp::WorkBuddy.process_pattern(),
+            "^/Applications/WorkBuddy\\.app/Contents/MacOS/Electron($| )"
+        );
         assert_ne!(
             TargetApp::Doubao.process_pattern(),
             TargetApp::DoubaoWork.process_pattern()
         );
         assert_ne!(
+            TargetApp::DoubaoWork.process_pattern(),
+            TargetApp::WorkBuddy.process_pattern()
+        );
+        assert_ne!(
             TargetApp::Doubao.launch_marker(),
             TargetApp::DoubaoWork.launch_marker()
         );
+        assert_ne!(
+            TargetApp::DoubaoWork.launch_marker(),
+            TargetApp::WorkBuddy.launch_marker()
+        );
+        assert_eq!(TargetApp::ALL.len(), 3);
     }
 
     #[test]
@@ -817,6 +978,67 @@ mod tests {
     }
 
     #[test]
+    fn workbuddy_only_matches_the_verified_main_renderer() {
+        let root =
+            "file:///Applications/WorkBuddy.app/Contents/Resources/app.asar/renderer/index.html";
+        for url in [
+            root.to_string(),
+            format!("{root}#/home"),
+            format!("{root}?source=launch"),
+            format!("{root}?source=launch#/home"),
+        ] {
+            assert!(TargetApp::WorkBuddy.matches_identity_url(&url), "{url}");
+            assert!(TargetApp::WorkBuddy.matches_page_url(&url, true), "{url}");
+        }
+        for url in [
+            "file:///Applications/WorkBuddy.app/Contents/Resources/app.asar/renderer/other.html",
+            "file:///Applications/Other.app/Contents/Resources/app.asar/renderer/index.html",
+            "file:///tmp/index.html",
+            "https://www.workbuddy.cn/space/home",
+            "devtools://devtools/bundled/inspector.html",
+            "chrome-extension://example/side_panel.html",
+        ] {
+            assert!(!TargetApp::WorkBuddy.matches_identity_url(url), "{url}");
+            assert!(!TargetApp::WorkBuddy.matches_page_url(url, true), "{url}");
+        }
+    }
+
+    #[test]
+    fn workbuddy_lifecycle_requires_explicit_restart_and_never_relaunches_after_quit() {
+        assert_eq!(
+            prepare_state_for_observation(TargetApp::WorkBuddy, false, false, false, false),
+            PrepareState::NotInstalled
+        );
+        assert_eq!(
+            prepare_state_for_observation(TargetApp::WorkBuddy, true, false, false, false),
+            PrepareState::LaunchRequired
+        );
+        assert_eq!(
+            prepare_state_for_observation(TargetApp::WorkBuddy, true, true, false, false),
+            PrepareState::RestartConfirmationRequired
+        );
+        assert_eq!(
+            prepare_state_for_observation(TargetApp::WorkBuddy, true, true, true, true),
+            PrepareState::Ready
+        );
+        assert_eq!(
+            prepare_state_for_observation(TargetApp::WorkBuddy, true, true, true, false),
+            PrepareState::WrongPortOwner
+        );
+        assert_eq!(
+            prepare_state_for_observation(TargetApp::Doubao, true, true, false, false),
+            PrepareState::LaunchRequired
+        );
+        assert_eq!(
+            prepare_state_for_observation(TargetApp::DoubaoWork, true, true, false, false),
+            PrepareState::LaunchRequired
+        );
+        assert!(!TargetApp::WorkBuddy.relaunch_after_port_loss());
+        assert!(TargetApp::Doubao.relaunch_after_port_loss());
+        assert!(TargetApp::DoubaoWork.relaunch_after_port_loss());
+    }
+
+    #[test]
     fn restore_script_only_removes_skin_owned_runtime_and_markers() {
         let js = restore_js();
         for owned_marker in [
@@ -842,9 +1064,11 @@ mod tests {
             crate::theme::load(&themes, "doubao-snack-giggle").expect("doubao-snack-giggle");
         let doubao = theme_js(&theme, TargetApp::Doubao);
         let work = theme_js(&theme, TargetApp::DoubaoWork);
+        let workbuddy = theme_js(&theme, TargetApp::WorkBuddy);
 
         assert!(doubao.contains("TARGET=\"doubao\""));
         assert!(work.contains("TARGET=\"doubao-work\""));
+        assert!(workbuddy.contains("TARGET=\"workbuddy\""));
         assert!(doubao.contains("data-skin-target"));
         assert!(doubao.contains(
             "html[data-skin][data-skin-target=doubao] #chat-route-main{background-color:transparent!important;}"

@@ -27,6 +27,7 @@ fn run(root: &Path, args: &[&str]) -> Output {
         .env("DOUBAO_SKIN_USER_THEMES_DIR", root.join("installed"))
         .env("DOUBAO_SKIN_DOUBAO_CDP_PORT", "9")
         .env("DOUBAO_SKIN_DOUBAO_WORK_CDP_PORT", "9")
+        .env("DOUBAO_SKIN_WORKBUDDY_CDP_PORT", "9")
         .output()
         .unwrap()
 }
@@ -43,6 +44,7 @@ fn help_and_argument_errors_use_the_stable_exit_contract() {
         "create",
         "check",
         "preview",
+        "migrate-v3",
         "pack",
         "install",
         "apply",
@@ -138,6 +140,8 @@ fn cli_completes_create_check_preview_pack_install_and_list() {
             "dark",
             "--author",
             "测试作者",
+            "--targets",
+            "doubao,doubao-work,workbuddy",
             "--json",
         ],
     );
@@ -150,6 +154,11 @@ fn cli_completes_create_check_preview_pack_install_and_list() {
     assert_eq!(created["ok"], true);
     assert_eq!(created["command"], "create");
     assert_eq!(created["result"]["id"], "evening-amber");
+    assert_eq!(created["result"]["validation"]["schemaVersion"], 3);
+    assert_eq!(
+        created["result"]["validation"]["targets"]["workbuddy"]["supportLevel"],
+        "shared"
+    );
 
     for args in [
         vec!["check", &theme, "--json"],
@@ -210,7 +219,15 @@ fn invalid_theme_and_external_failure_have_distinct_exit_codes() {
     let blocked_theme = blocked_theme.to_string_lossy().into_owned();
     let filesystem = run(
         &root,
-        &["create", &blocked_theme, "--name", "文件系统失败", "--json"],
+        &[
+            "create",
+            &blocked_theme,
+            "--name",
+            "文件系统失败",
+            "--targets",
+            "workbuddy",
+            "--json",
+        ],
     );
     assert_eq!(filesystem.status.code(), Some(4));
     let filesystem_json: serde_json::Value = serde_json::from_slice(&filesystem.stdout).unwrap();

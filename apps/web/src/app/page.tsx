@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; series?: string; view?: string }>;
+  searchParams: Promise<{ type?: string; series?: string; target?: string; view?: string }>;
 }) {
   const themes = getAllThemes();
   const params = await searchParams;
@@ -50,10 +50,11 @@ export default async function HomePage({
       </section>
 
       <GalleryClient
-        key={`${filters.type}:${filters.series}`}
+        key={`${filters.type}:${filters.series}:${filters.target}`}
         themes={themes}
         initialType={filters.type}
         initialSeries={filters.series}
+        initialTarget={filters.target}
       />
     </main>
   );

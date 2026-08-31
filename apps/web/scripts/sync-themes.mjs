@@ -50,6 +50,44 @@ function parseColors(css) {
   return colors;
 }
 
+function structuredColors(info) {
+  const visual = info.schemaVersion === 3 ? info.shared : info;
+  const appearance = info.preview?.appearance === "light" ? "light" : "dark";
+  const variant = visual?.variants?.[appearance] ?? {};
+  const content = { ...visual?.content, ...variant.content };
+  const composer = { ...visual?.composer, ...variant.composer };
+  const accent = info.preview?.accent ?? defaultColors.accent;
+  return {
+    base: content.chatBackground ?? defaultColors.base,
+    base2: composer.background ?? defaultColors.base2,
+    primary: content.assistantMessageBackground ?? defaultColors.primary,
+    float: composer.background ?? defaultColors.float,
+    text: content.assistantMessageText ?? defaultColors.text,
+    muted: composer.placeholderColor ?? defaultColors.muted,
+    hairline: content.scrollbarColor ?? defaultColors.hairline,
+    accent,
+    accentHover: accent,
+    brand: accent,
+  };
+}
+
+function runThemeCli(args) {
+  let output;
+  try {
+    output = execFileSync(
+      "cargo",
+      ["run", "-q", "-p", "skin-core", "--bin", "doubao-theme", "--", ...args, "--json"],
+      { cwd: repoDir, encoding: "utf8" },
+    );
+  } catch (error) {
+    const response = JSON.parse(String(error.stdout ?? "{}"));
+    throw new Error(response.error?.message ?? `doubao-theme ${args[0]} failed`);
+  }
+  const response = JSON.parse(output);
+  if (!response.ok) throw new Error(response.error?.message ?? `doubao-theme ${args[0]} failed`);
+  return response.result;
+}
+
 async function exportImage(source, id) {
   fs.mkdirSync(publicThemesDir, { recursive: true });
   const detail = path.join(publicThemesDir, `${id}.jpg`);
@@ -68,99 +106,6 @@ function safeRelativeAsset(directory, relative, label) {
     throw new Error(`${label} must stay inside the theme directory`);
   }
   return path.join(directory, normalized);
-}
-
-function svgPaint(value, fallback) {
-  const paint = typeof value === "string" && value.trim() ? value.trim() : fallback;
-  return paint.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
-}
-
-async function renderPackagePreview(directory, info, colors, backgroundName) {
-  const relative = info.preview?.image;
-  if (!relative) return null;
-  const destination = safeRelativeAsset(directory, relative, "preview.image");
-  const width = 1200;
-  const height = 675;
-  const backgroundPath = backgroundName
-    ? safeRelativeAsset(directory, backgroundName, "background")
-    : null;
-  const hasBackground = backgroundPath && fs.existsSync(backgroundPath);
-  const previewAppearance = info.preview?.appearance === "light" ? "light" : "dark";
-  const variant = info.variants?.[previewAppearance] ?? {};
-  const previewContent = { ...info.content, ...variant.content };
-  const previewComposer = { ...info.composer, ...variant.composer };
-  const neutral = previewAppearance === "light" ? "#f5f5f3" : "#121318";
-  const neutral2 = previewAppearance === "light" ? "#ebecea" : "#1a1c22";
-  const accent = svgPaint(info.preview?.accent, colors.accent);
-  const base = svgPaint(previewContent.chatBackground, colors.base);
-  const base2 = svgPaint(previewComposer.background, colors.base2);
-  const primary = svgPaint(previewContent.chatBackground, colors.primary);
-  const floating = svgPaint(previewContent.assistantMessageBackground, colors.float);
-  const text = svgPaint(previewContent.assistantMessageText, colors.text);
-  const muted = svgPaint(colors.muted, "#9a9ba3");
-  const hairline = svgPaint(colors.hairline, "#2c2e34");
-  const assistant = svgPaint(previewContent.assistantMessageBackground, floating);
-  const assistantText = svgPaint(previewContent.assistantMessageText, text);
-  const user = svgPaint(previewContent.userMessageBackground, colors.accent);
-  const userText = svgPaint(previewContent.userMessageText, "#ffffff");
-  const composer = svgPaint(previewComposer.background, floating);
-  const surface = hasBackground ? Math.max(0.58, info.surfaceOpacity ?? 0.68) : 1;
-
-  const baseLayer = hasBackground
-    ? await sharp(backgroundPath).resize(width, height, { fit: "cover" }).toBuffer()
-    : Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <defs><radialGradient id="g" cx="82%" cy="8%" r="90%">
-          <stop offset="0" stop-color="${accent}" stop-opacity=".32"/>
-          <stop offset=".48" stop-color="${base2}" stop-opacity=".22"/>
-          <stop offset="1" stop-color="${base}"/>
-        </radialGradient></defs>
-        <rect width="100%" height="100%" fill="${neutral}"/>
-        <rect width="100%" height="100%" fill="url(#g)"/>
-      </svg>`);
-
-  const overlay = Buffer.from(`<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-    <rect width="${width}" height="${height}" fill="${hasBackground ? neutral2 : base}" fill-opacity="${hasBackground ? 0.16 : 0}"/>
-    <rect x="24" y="24" width="1152" height="627" rx="22" fill="${primary}" fill-opacity="${surface}" stroke="${hairline}" stroke-width="2"/>
-    <path d="M24 70H1176" stroke="${hairline}" stroke-width="2"/>
-    <circle cx="56" cy="47" r="8" fill="#ff5f57"/><circle cx="82" cy="47" r="8" fill="#febc2e"/><circle cx="108" cy="47" r="8" fill="#28c840"/>
-    <path d="M248 70V651" stroke="${hairline}" stroke-width="2"/>
-    <rect x="25" y="71" width="222" height="579" fill="${base2}" fill-opacity="${Math.max(0.7, surface)}"/>
-    <rect x="48" y="102" width="42" height="42" rx="11" fill="${accent}" fill-opacity=".22"/>
-    <circle cx="69" cy="123" r="9" fill="${accent}"/>
-    <rect x="104" y="108" width="96" height="11" rx="5.5" fill="${text}" fill-opacity=".82"/>
-    <rect x="104" y="128" width="68" height="8" rx="4" fill="${muted}" fill-opacity=".7"/>
-    <rect x="44" y="178" width="160" height="12" rx="6" fill="${muted}" fill-opacity=".46"/>
-    <rect x="44" y="217" width="176" height="42" rx="10" fill="${accent}" fill-opacity=".17"/>
-    <rect x="60" y="232" width="104" height="11" rx="5.5" fill="${text}" fill-opacity=".82"/>
-    <rect x="44" y="282" width="142" height="11" rx="5.5" fill="${muted}" fill-opacity=".58"/>
-    <rect x="44" y="320" width="168" height="11" rx="5.5" fill="${muted}" fill-opacity=".48"/>
-    <rect x="44" y="358" width="126" height="11" rx="5.5" fill="${muted}" fill-opacity=".48"/>
-    <rect x="299" y="105" width="198" height="13" rx="6.5" fill="${text}" fill-opacity=".76"/>
-    <rect x="299" y="130" width="122" height="9" rx="4.5" fill="${muted}" fill-opacity=".6"/>
-    <rect x="300" y="188" width="466" height="104" rx="18" fill="${assistant}" fill-opacity="${surface}" stroke="${hairline}" stroke-width="1.5"/>
-    <rect x="326" y="216" width="312" height="11" rx="5.5" fill="${assistantText}" fill-opacity=".82"/>
-    <rect x="326" y="239" width="366" height="10" rx="5" fill="${assistantText}" fill-opacity=".56"/>
-    <rect x="326" y="261" width="218" height="10" rx="5" fill="${assistantText}" fill-opacity=".56"/>
-    <rect x="759" y="329" width="360" height="72" rx="18" fill="${user}"/>
-    <rect x="790" y="355" width="246" height="11" rx="5.5" fill="${userText}" fill-opacity=".9"/>
-    <rect x="300" y="438" width="402" height="74" rx="18" fill="${assistant}" fill-opacity="${surface}" stroke="${hairline}" stroke-width="1.5"/>
-    <rect x="326" y="463" width="272" height="11" rx="5.5" fill="${assistantText}" fill-opacity=".72"/>
-    <rect x="326" y="486" width="198" height="10" rx="5" fill="${assistantText}" fill-opacity=".52"/>
-    <rect x="300" y="556" width="819" height="65" rx="24" fill="${composer}" fill-opacity="${Math.max(0.82, surface)}" stroke="${accent}" stroke-opacity=".42" stroke-width="2"/>
-    <rect x="330" y="583" width="156" height="10" rx="5" fill="${muted}" fill-opacity=".64"/>
-    <circle cx="1084" cy="588" r="21" fill="${accent}"/>
-    <path d="M1084 598V579M1076 587L1084 579L1092 587" fill="none" stroke="${userText}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>`);
-
-  fs.mkdirSync(path.dirname(destination), { recursive: true });
-  const rendered = await sharp(baseLayer)
-    .composite([{ input: overlay }])
-    .jpeg({ quality: 86, chromaSubsampling: "4:4:4" })
-    .toBuffer();
-  if (!fs.existsSync(destination) || !fs.readFileSync(destination).equals(rendered)) {
-    fs.writeFileSync(destination, rendered);
-  }
-  return destination;
 }
 
 async function exportPreview(source, id) {
@@ -185,15 +130,11 @@ function exportIcon(directory, info, id) {
   return `/themes/${path.basename(destination)}`;
 }
 
-function exportPackage(directoryName, id) {
+function exportPackage(directory, id) {
   fs.mkdirSync(publicPackagesDir, { recursive: true });
   const destination = path.join(publicPackagesDir, `${id}.doubao-skin.zip`);
   fs.rmSync(destination, { force: true });
-  execFileSync(
-    "zip",
-    ["-X", "-q", "-r", destination, directoryName, "-x", "*/.DS_Store"],
-    { cwd: themesDir },
-  );
+  runThemeCli(["pack", directory, destination]);
   const bytes = fs.readFileSync(destination);
   return {
     packageUrl: `/themes/packages/${path.basename(destination)}`,
@@ -202,11 +143,21 @@ function exportPackage(directoryName, id) {
   };
 }
 
+const requestedThemes = new Set(
+  (process.env.DOUBAO_SKIN_SYNC_THEME_IDS ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean),
+);
 const themeDirectories = fs.readdirSync(themesDir, { withFileTypes: true })
   .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(themesDir, entry.name, "theme.json")))
   .map((entry) => entry.name)
+  .filter((id) => requestedThemes.size === 0 || requestedThemes.has(id))
   .sort();
 if (themeDirectories.length === 0) throw new Error(`No themes found under ${themesDir}`);
+if (requestedThemes.size > 0 && themeDirectories.length !== requestedThemes.size) {
+  throw new Error("DOUBAO_SKIN_SYNC_THEME_IDS contains an unknown theme id");
+}
 
 fs.mkdirSync(path.dirname(databasePath), { recursive: true });
 fs.mkdirSync(publicThemesDir, { recursive: true });
@@ -218,6 +169,7 @@ const catalogThemes = [];
 for (const [index, directoryName] of themeDirectories.entries()) {
   const directory = path.join(themesDir, directoryName);
   const info = JSON.parse(fs.readFileSync(path.join(directory, "theme.json"), "utf8"));
+  const validation = runThemeCli(["check", directory]).validation;
   const id = info.id || directoryName;
   if (id !== directoryName) throw new Error(`${directoryName}: theme id must match the directory name`);
   if (!info.version || !info.author || !info.preview?.image || !info.preview?.accent) {
@@ -228,28 +180,37 @@ for (const [index, directoryName] of themeDirectories.entries()) {
   }
   const cssPath = path.join(directory, "theme.css");
   const parsedColors = parseColors(fs.existsSync(cssPath) ? fs.readFileSync(cssPath, "utf8") : "");
-  const colors = parsedColors || defaultColors;
+  const colors = parsedColors || structuredColors(info);
+  const visual = info.schemaVersion === 3 ? info.shared : info;
+  const previewInfo = info.schemaVersion === 3 ? { ...info, ...info.shared } : info;
   let bgDetail = null;
   let bgCard = null;
-  const backgroundName = typeof info.background === "string"
-    ? info.background
-    : info.background?.src ?? info.background?.source;
+  const backgroundName = typeof visual.background === "string"
+    ? visual.background
+    : visual.background?.src ?? visual.background?.source;
   if (backgroundName && fs.existsSync(path.join(directory, backgroundName))) {
     [bgDetail, bgCard] = await exportImage(path.join(directory, backgroundName), id);
   }
-  const previewSource = await renderPackagePreview(directory, info, colors, backgroundName);
+  const previewSource = safeRelativeAsset(directory, info.preview.image, "preview.image");
+  if (!fs.existsSync(previewSource) || !fs.statSync(previewSource).isFile()) {
+    throw new Error(`${id}: preview image is missing`);
+  }
   const [previewDetail, previewCard] = await exportPreview(previewSource, id);
-  const iconUrl = exportIcon(directory, info, id);
-  const packageInfo = exportPackage(directoryName, id);
+  const iconUrl = exportIcon(directory, previewInfo, id);
+  const packageInfo = exportPackage(directory, id);
   const sortOrder = info.store.sortOrder ?? 900 + index;
   preparedThemes.push({
     id, name: info.name || id, description: info.description || "", version: info.version,
     author: info.author, category: info.store.category, tags: JSON.stringify(info.store.tags),
-    hasBackground: bgDetail ? 1 : 0, veil: info.veil ?? info.background?.veil ?? null,
+    hasBackground: bgDetail ? 1 : 0, veil: visual.veil ?? visual.background?.veil ?? null,
     colors: JSON.stringify(colors), bgDetail, bgCard, previewDetail, previewCard,
-    inspiredBy: info.inspiredBy ?? null, sourceUrl: info.sourceUrl ?? null,
-    sourceDownloads: info.sourceDownloads ?? null, sourceSnapshot: info.sourceSnapshot ?? null,
+    inspiredBy: info.provenance?.inspiredBy ?? info.inspiredBy ?? null,
+    sourceUrl: info.provenance?.sourceUrl ?? info.sourceUrl ?? null,
+    sourceDownloads: info.provenance?.sourceDownloads ?? info.sourceDownloads ?? null,
+    sourceSnapshot: info.provenance?.sourceVersion ?? info.sourceSnapshot ?? null,
     isDefaultPalette: parsedColors ? 0 : 1,
+    schemaVersion: validation.schemaVersion,
+    targets: JSON.stringify(validation.targets),
     sortOrder,
   });
   catalogThemes.push({
@@ -260,6 +221,8 @@ for (const [index, directoryName] of themeDirectories.entries()) {
     author: info.author,
     category: info.store.category,
     tags: info.store.tags,
+    schemaVersion: validation.schemaVersion,
+    targets: validation.targets,
     previewUrl: previewDetail,
     thumbnailUrl: previewCard ?? bgCard,
     iconUrl,
@@ -278,6 +241,7 @@ database.exec(`
     id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '',
     version TEXT NOT NULL, author TEXT NOT NULL, category TEXT NOT NULL DEFAULT 'misc',
     tags TEXT NOT NULL DEFAULT '[]', has_background INTEGER NOT NULL DEFAULT 0,
+    schema_version INTEGER NOT NULL DEFAULT 1, targets TEXT NOT NULL DEFAULT '{}',
     veil REAL, colors TEXT NOT NULL, bg_detail TEXT, bg_card TEXT,
     preview_detail TEXT, preview_card TEXT, inspired_by TEXT,
     source_url TEXT, source_downloads INTEGER, source_snapshot TEXT,
@@ -287,10 +251,10 @@ database.exec(`
 `);
 const insertTheme = database.prepare(`
   INSERT INTO themes (id, name, description, version, author, category, tags,
-    has_background, veil, colors, bg_detail, bg_card, preview_detail, preview_card,
+    has_background, schema_version, targets, veil, colors, bg_detail, bg_card, preview_detail, preview_card,
     inspired_by, source_url, source_downloads, source_snapshot, is_default_palette, sort_order)
   VALUES (@id, @name, @description, @version, @author, @category, @tags,
-    @hasBackground, @veil, @colors, @bgDetail, @bgCard, @previewDetail, @previewCard,
+    @hasBackground, @schemaVersion, @targets, @veil, @colors, @bgDetail, @bgCard, @previewDetail, @previewCard,
     @inspiredBy, @sourceUrl, @sourceDownloads, @sourceSnapshot, @isDefaultPalette, @sortOrder)
 `);
 

@@ -6,6 +6,7 @@ import ThemeMockup from "@/components/ThemeMockup";
 import CopyButton from "@/components/CopyButton";
 import JsonLd from "@/components/JsonLd";
 import type { Theme } from "@/lib/types";
+import { supportedTargets, supportCopy } from "@/lib/theme-targets";
 import { SITE_URL, SOCIAL_IMAGE } from "@/lib/site";
 
 export const dynamic = "force-static";
@@ -108,6 +109,11 @@ export default async function ThemePage({
             <span className="tag-chip">纯色</span>
           )}
           {theme.isDefaultPalette && <span className="tag-chip">应用默认色板</span>}
+          {supportedTargets(theme).map((target) => (
+            <span className="tag-chip" key={target.id}>
+              {target.label} · {supportCopy(target.support)}
+            </span>
+          ))}
         </div>
       </header>
 
@@ -157,6 +163,12 @@ export default async function ThemePage({
               <dd>{categoryLabel}</dd>
               <dt>标签</dt>
               <dd>{theme.tags.join(" · ")}</dd>
+              <dt>适用应用</dt>
+              <dd>
+                {supportedTargets(theme)
+                  .map((target) => `${target.label}（${supportCopy(target.support)}）`)
+                  .join(" · ")}
+              </dd>
               <dt>背景图</dt>
               <dd>
                 {theme.hasBackground

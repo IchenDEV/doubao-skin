@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-30T13:57:36.049Z",
+  "generatedAt": "2026-08-31T05:25:21.082Z",
   "themes": [
     {
       "id": "violet-night",
       "name": "暗夜紫",
       "description": "深紫罗兰底 + 紫罗兰强调色（默认主题，验证过效果）",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "pure",
       "tags": [
@@ -14,19 +14,58 @@
         "紫色",
         "专注"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/violet-night.preview.jpg",
       "thumbnailUrl": "/themes/violet-night.preview.card.jpg",
       "iconUrl": "/themes/violet-night.icon.svg",
       "accent": "#8d6fd3",
       "packageUrl": "/themes/packages/violet-night.doubao-skin.zip",
-      "sha256": "69c067ed58e65f9bad7fea28a9712c42ca4410e68831c607915d55934f1d44bd",
-      "packageSize": 22897
+      "sha256": "e90f491fd44993af1b161d9705c66326babc576374be8b2c2ec0ef3e8542bb54",
+      "packageSize": 20602
     },
     {
       "id": "ocean-cyan",
       "name": "海洋青",
       "description": "石墨蓝底 + 青色强调色",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "pure",
       "tags": [
@@ -34,19 +73,58 @@
         "青色",
         "清爽"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/ocean-cyan.preview.jpg",
       "thumbnailUrl": "/themes/ocean-cyan.preview.card.jpg",
       "iconUrl": "/themes/ocean-cyan.icon.svg",
       "accent": "#1f8c9b",
       "packageUrl": "/themes/packages/ocean-cyan.doubao-skin.zip",
-      "sha256": "2ae79957421cf47d4c19c404ce449bf551744840f5e817f0ee16576d30c94cd2",
-      "packageSize": 23409
+      "sha256": "0d273f03b47cf0f5b15aa943635532a0f4a7f26bca600c081d524eb0e7ad0743",
+      "packageSize": 21100
     },
     {
       "id": "forest",
       "name": "墨绿",
       "description": "深墨绿底 + 翠绿强调色",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "pure",
       "tags": [
@@ -54,19 +132,58 @@
         "绿色",
         "沉静"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/forest.preview.jpg",
       "thumbnailUrl": "/themes/forest.preview.card.jpg",
       "iconUrl": "/themes/forest.icon.svg",
       "accent": "#368f5e",
       "packageUrl": "/themes/packages/forest.doubao-skin.zip",
-      "sha256": "b4be1e10314df1b113dc9b0dcbf7846259a8b4e1781fee307b8dbd3cadcb8200",
-      "packageSize": 22074
+      "sha256": "bc7ef88171b2855ad265de53278b336338d89375e5124ef1a63d48c4df2d2a03",
+      "packageSize": 19799
     },
     {
       "id": "pure-dark",
       "name": "纯暗",
       "description": "保留原生深色，只整理字体和间距",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "pure",
       "tags": [
@@ -74,19 +191,58 @@
         "极简",
         "原生"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/pure-dark.preview.jpg",
       "thumbnailUrl": "/themes/pure-dark.preview.card.jpg",
       "iconUrl": "/themes/pure-dark.icon.svg",
       "accent": "#3370eb",
       "packageUrl": "/themes/packages/pure-dark.doubao-skin.zip",
-      "sha256": "03e874b854ff580bad71455769f856e141efe3aefa8ed392d0f8d59bd5860b7e",
-      "packageSize": 24075
+      "sha256": "fff0bf54ac641b7fd46e43736ea3c992c3973080cc9f65bf0bedfde3bf5cf996",
+      "packageSize": 22923
     },
     {
       "id": "peach-sunset",
       "name": "桃气日落",
       "description": "柔和桃粉与暖橙交叠，轻松又明亮",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "pure",
       "tags": [
@@ -94,19 +250,58 @@
         "粉色",
         "渐变"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/peach-sunset.preview.jpg",
       "thumbnailUrl": "/themes/peach-sunset.preview.card.jpg",
       "iconUrl": "/themes/peach-sunset.icon.svg",
       "accent": "#d85f76",
       "packageUrl": "/themes/packages/peach-sunset.doubao-skin.zip",
-      "sha256": "58e083de69cf6c91dc7d0d1f10221ce10ee98dc042f198d7493852717e197f29",
-      "packageSize": 30971
+      "sha256": "9daa78ef5aa11bf436b57224a8e456d453f5bddb9509c6b96f77fe976833d298",
+      "packageSize": 29490
     },
     {
       "id": "gothic-void",
       "name": "哥特虚空",
       "description": "虚空教堂尖塔 × 紫雾，紫罗兰强调色，半透明底透出氛围图",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "atmosphere",
       "tags": [
@@ -114,19 +309,58 @@
         "紫色",
         "氛围"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/gothic-void.preview.jpg",
       "thumbnailUrl": "/themes/gothic-void.preview.card.jpg",
       "iconUrl": "/themes/gothic-void.icon.svg",
       "accent": "#9060d1",
       "packageUrl": "/themes/packages/gothic-void.doubao-skin.zip",
-      "sha256": "fefe3b7eb334385172020581e5456300fd6168bd1b35dcfeb701c36df1140af0",
-      "packageSize": 384058
+      "sha256": "7248535849c024806cdcde1fa9b9c4a35da8b882a2972540a073b2d374afb232",
+      "packageSize": 382470
     },
     {
       "id": "sakura-night",
       "name": "夜樱",
       "description": "夜色樱花林 × 粉紫月光，樱粉强调色，半透明底透出氛围图",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "atmosphere",
       "tags": [
@@ -134,19 +368,58 @@
         "粉色",
         "樱花"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/sakura-night.preview.jpg",
       "thumbnailUrl": "/themes/sakura-night.preview.card.jpg",
       "iconUrl": "/themes/sakura-night.icon.svg",
       "accent": "#bb6485",
       "packageUrl": "/themes/packages/sakura-night.doubao-skin.zip",
-      "sha256": "c039c94ea0cf2a40ec6666510617cf54231055567c1b2c2b13030d0e8b46c85a",
-      "packageSize": 1086134
+      "sha256": "bd17b7e74fdc8cb98b1d0073eb9dae4d7941edc92435a64d049a541f65c792e2",
+      "packageSize": 1084388
     },
     {
       "id": "cyber-neon",
       "name": "赛博霓虹",
       "description": "雨夜赛博都市霓虹，青色强调色，半透明底透出氛围图",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "atmosphere",
       "tags": [
@@ -154,19 +427,58 @@
         "霓虹",
         "赛博"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/cyber-neon.preview.jpg",
       "thumbnailUrl": "/themes/cyber-neon.preview.card.jpg",
       "iconUrl": "/themes/cyber-neon.icon.svg",
       "accent": "#1f8c9b",
       "packageUrl": "/themes/packages/cyber-neon.doubao-skin.zip",
-      "sha256": "06d1d26fe4751766f2fe018b75c7968d6e3cf0a12b5cf6a9328faed3d6c238fd",
-      "packageSize": 498240
+      "sha256": "9424d9f34efa8ba37b8f31b2d3c35202d1da2e064ecc2f2c23fa8cc6327ee76f",
+      "packageSize": 496587
     },
     {
       "id": "mist-forest",
       "name": "雾林",
       "description": "晨雾针叶林光束，翠绿强调色，半透明底透出氛围图",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "atmosphere",
       "tags": [
@@ -174,19 +486,58 @@
         "绿色",
         "自然"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/mist-forest.preview.jpg",
       "thumbnailUrl": "/themes/mist-forest.preview.card.jpg",
       "iconUrl": "/themes/mist-forest.icon.svg",
       "accent": "#338657",
       "packageUrl": "/themes/packages/mist-forest.doubao-skin.zip",
-      "sha256": "a325615ecd36642cc6782faddcca01fb3ebc0d6afae412c10b928395f3a9d758",
-      "packageSize": 655976
+      "sha256": "1f89458fc13d13b77b18e0987b01ae12048ee27656a87b1ebb96064f7bba8fde",
+      "packageSize": 654330
     },
     {
       "id": "gallery-cozy-room",
       "name": "暖室暮光",
       "description": "暖灯木色，像在家里工作",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "gallery",
       "tags": [
@@ -194,19 +545,58 @@
         "暖色",
         "室内"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/gallery-cozy-room.preview.jpg",
       "thumbnailUrl": "/themes/gallery-cozy-room.preview.card.jpg",
       "iconUrl": "/themes/gallery-cozy-room.icon.svg",
       "accent": "#4b75a6",
       "packageUrl": "/themes/packages/gallery-cozy-room.doubao-skin.zip",
-      "sha256": "583b416988959c8ff319b63ba774bfa488089f5c21b99a743e54dcdfdd906e57",
-      "packageSize": 240089
+      "sha256": "9d365c08d2f0a41086eef0b02ca77d807135b7fa0bf8e3fba444e9404866e129",
+      "packageSize": 238248
     },
     {
       "id": "gallery-neon-koi",
       "name": "霓虹游鱼",
       "description": "青紫霓虹游鱼，醒目又利落",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "gallery",
       "tags": [
@@ -214,19 +604,58 @@
         "霓虹",
         "游鱼"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/gallery-neon-koi.preview.jpg",
       "thumbnailUrl": "/themes/gallery-neon-koi.preview.card.jpg",
       "iconUrl": "/themes/gallery-neon-koi.icon.svg",
       "accent": "#0e7884",
       "packageUrl": "/themes/packages/gallery-neon-koi.doubao-skin.zip",
-      "sha256": "5679ec4b9ac00d52d90299410efa863c39db2428a4f9488283cbf04fd9fe2acd",
-      "packageSize": 346152
+      "sha256": "f7bf6594d02eb19c44310a913ac76ca18b6fcff362109e48f988a9fbef6b5694",
+      "packageSize": 344128
     },
     {
       "id": "gallery-moon-pine",
       "name": "月下松岚",
       "description": "深蓝月夜松林，安静又沉稳",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "gallery",
       "tags": [
@@ -234,19 +663,58 @@
         "蓝色",
         "自然"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/gallery-moon-pine.preview.jpg",
       "thumbnailUrl": "/themes/gallery-moon-pine.preview.card.jpg",
       "iconUrl": "/themes/gallery-moon-pine.icon.svg",
       "accent": "#526f86",
       "packageUrl": "/themes/packages/gallery-moon-pine.doubao-skin.zip",
-      "sha256": "493945c71df85a928b3eeb190a16dc16ed13db104afc67e62d6126ec20d0a03a",
-      "packageSize": 382427
+      "sha256": "3233339a8bea8fb1b5b4676435ac37371ef1bc58a764940779fc758bbb7d1ae2",
+      "packageSize": 380740
     },
     {
       "id": "gallery-crimson-rain",
       "name": "雨夜花影",
       "description": "暗红雨夜花影，沉静又有张力",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "gallery",
       "tags": [
@@ -254,19 +722,58 @@
         "红色",
         "雨夜"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/gallery-crimson-rain.preview.jpg",
       "thumbnailUrl": "/themes/gallery-crimson-rain.preview.card.jpg",
       "iconUrl": "/themes/gallery-crimson-rain.icon.svg",
       "accent": "#9d5454",
       "packageUrl": "/themes/packages/gallery-crimson-rain.doubao-skin.zip",
-      "sha256": "426a68f01c72a3feb989e4e4aa9a899f8859277fb7ed0d20e25ab24c76785de9",
-      "packageSize": 263477
+      "sha256": "bfc18784708d3ad2925db2032103faad8fe6fc4938e5fec4337b877dc06a6304",
+      "packageSize": 261510
     },
     {
       "id": "codex-catppuccin",
       "name": "豆包柔紫",
       "description": "柔和的紫色，久看也舒服",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "codex",
       "tags": [
@@ -274,19 +781,58 @@
         "编辑器",
         "紫色"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/codex-catppuccin.preview.jpg",
       "thumbnailUrl": "/themes/codex-catppuccin.preview.card.jpg",
       "iconUrl": "/themes/codex-catppuccin.icon.svg",
       "accent": "#856da2",
       "packageUrl": "/themes/packages/codex-catppuccin.doubao-skin.zip",
-      "sha256": "6f4c7b954380c3f0adb0705fb4ba5057014d5dc46d6f060a0708f3f9a5746330",
-      "packageSize": 22624
+      "sha256": "9362f8d09f0b4d3b472c13bd988006b79a1602f5eb545b11aed384ace8b09d74",
+      "packageSize": 20340
     },
     {
       "id": "codex-dracula",
       "name": "豆包莓夜",
       "description": "鲜明的莓红，让重点更醒目",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "codex",
       "tags": [
@@ -294,19 +840,58 @@
         "编辑器",
         "莓红"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/codex-dracula.preview.jpg",
       "thumbnailUrl": "/themes/codex-dracula.preview.card.jpg",
       "iconUrl": "/themes/codex-dracula.icon.svg",
       "accent": "#ba5890",
       "packageUrl": "/themes/packages/codex-dracula.doubao-skin.zip",
-      "sha256": "ad89ab0ff0572896fd7f15fa145952f0280f16ff6730c7a9ad4f6ce7590968f7",
-      "packageSize": 22385
+      "sha256": "5340ff94de36457077aedc84a627bfeeed875437fa6f58c693b889ab17f6c5bd",
+      "packageSize": 20199
     },
     {
       "id": "codex-nord",
       "name": "豆包极光",
       "description": "清爽的蓝色，安静又清晰",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "codex",
       "tags": [
@@ -314,19 +899,58 @@
         "编辑器",
         "蓝色"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/codex-nord.preview.jpg",
       "thumbnailUrl": "/themes/codex-nord.preview.card.jpg",
       "iconUrl": "/themes/codex-nord.icon.svg",
       "accent": "#597e88",
       "packageUrl": "/themes/packages/codex-nord.doubao-skin.zip",
-      "sha256": "6c2bb94241e35905f6bfdda060ef2ea62810517e7369d9f5796981c19b95ceec",
-      "packageSize": 21570
+      "sha256": "df5426560238be2aca9af40404da064f08b4b5d74824f4e4682d23697ccbcd79",
+      "packageSize": 19316
     },
     {
       "id": "codex-gruvbox",
       "name": "豆包暖木",
       "description": "温暖的棕金色，更有亲切感",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "codex",
       "tags": [
@@ -334,19 +958,58 @@
         "编辑器",
         "暖色"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/codex-gruvbox.preview.jpg",
       "thumbnailUrl": "/themes/codex-gruvbox.preview.card.jpg",
       "iconUrl": "/themes/codex-gruvbox.icon.svg",
       "accent": "#9e7018",
       "packageUrl": "/themes/packages/codex-gruvbox.doubao-skin.zip",
-      "sha256": "34dca5692df0bab8efbd083dc0c9b6043497dc5a9111a07a5d0d0b59d6f6843f",
-      "packageSize": 24043
+      "sha256": "c9700ba6ad4246ef9965173cb117655754ced43cad11ad05ad3d269f2344e49e",
+      "packageSize": 21802
     },
     {
       "id": "codex-solarized",
       "name": "豆包深海",
       "description": "柔和的深蓝色，更适合专注",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "codex",
       "tags": [
@@ -354,19 +1017,58 @@
         "编辑器",
         "蓝色"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/codex-solarized.preview.jpg",
       "thumbnailUrl": "/themes/codex-solarized.preview.card.jpg",
       "iconUrl": "/themes/codex-solarized.icon.svg",
       "accent": "#227dbd",
       "packageUrl": "/themes/packages/codex-solarized.doubao-skin.zip",
-      "sha256": "9679b54f4773371adb6f08ae44928dca917d06f087cf58e8f7dea11410e4b61d",
-      "packageSize": 26524
+      "sha256": "2f643a294bedbb3e3ee4620f8512788e88ba6c7a67a0c7e2e956a67c92e1ad5b",
+      "packageSize": 24310
     },
     {
       "id": "codex-one-half",
       "name": "豆包清蓝",
       "description": "干净的蓝色，简单耐看",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "codex",
       "tags": [
@@ -374,19 +1076,58 @@
         "编辑器",
         "清爽"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/codex-one-half.preview.jpg",
       "thumbnailUrl": "/themes/codex-one-half.preview.card.jpg",
       "iconUrl": "/themes/codex-one-half.icon.svg",
       "accent": "#4680af",
       "packageUrl": "/themes/packages/codex-one-half.doubao-skin.zip",
-      "sha256": "bda779522ab7cd91687e91891cbda4d96c1311b834438462aed0fc1c69e3d2d1",
-      "packageSize": 22873
+      "sha256": "9f96470aab5a08600f0cfc763179ce6c6737bd7efdc3a115a9f8261b24d1ed7c",
+      "packageSize": 20646
     },
     {
       "id": "qq-light-blue",
       "name": "QQ轻蓝",
       "description": "浅蓝气泡与柔光，轻快又熟悉",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "brand",
       "tags": [
@@ -394,19 +1135,58 @@
         "蓝色",
         "清爽"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/qq-light-blue.preview.jpg",
       "thumbnailUrl": "/themes/qq-light-blue.preview.card.jpg",
       "iconUrl": "/themes/qq-light-blue.icon.svg",
       "accent": "#5099d6",
       "packageUrl": "/themes/packages/qq-light-blue.doubao-skin.zip",
-      "sha256": "fc5459e6db7dbc2ae45ef89e04dd8c7735d01e6aad2749cbe9fc8aa07d15352c",
-      "packageSize": 155732
+      "sha256": "57de483bcd1f739acccfeef6b0bf9e88d58b6e7f1ebadcb4dda3316029373e03",
+      "packageSize": 153989
     },
     {
       "id": "gallery-whale-maid",
       "name": "鲸鱼娘",
       "description": "浅青晴空与蓝鲸少女，明亮又俏皮",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "brand",
       "tags": [
@@ -414,19 +1194,58 @@
         "蓝色",
         "角色"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "tailored"
+        }
+      },
       "previewUrl": "/themes/gallery-whale-maid.preview.jpg",
       "thumbnailUrl": "/themes/gallery-whale-maid.preview.card.jpg",
       "iconUrl": "/themes/gallery-whale-maid.icon.png",
       "accent": "#9b7a5e",
       "packageUrl": "/themes/packages/gallery-whale-maid.doubao-skin.zip",
-      "sha256": "cfaa92c6d26d2bb6d2335e353ff719d714b17f4139b3fa72f25119d2e48898b7",
-      "packageSize": 1152997
+      "sha256": "60078a0e8973550b1c7e6ed623982b068add644a75e280c3cf397af77d585be0",
+      "packageSize": 1151401
     },
     {
       "id": "pastel-tea-party",
       "name": "奶茶茶会",
       "description": "彩色伙伴围坐喝奶茶，甜而不腻",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "brand",
       "tags": [
@@ -434,19 +1253,58 @@
         "暖色",
         "角色"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/pastel-tea-party.preview.jpg",
       "thumbnailUrl": "/themes/pastel-tea-party.preview.card.jpg",
       "iconUrl": "/themes/pastel-tea-party.icon.svg",
       "accent": "#b4786a",
       "packageUrl": "/themes/packages/pastel-tea-party.doubao-skin.zip",
-      "sha256": "40e61cc90c271d2eacb6dde483521d94df492dee085d85037f68f966cdd8730e",
-      "packageSize": 570983
+      "sha256": "90e631c1cdd8c40959b0353f1edee1b332a2bef7023b082da50c8f6af43e65b6",
+      "packageSize": 569184
     },
     {
       "id": "pastel-flower-club",
       "name": "花园同伴",
       "description": "花影与彩发伙伴，轻松又热闹",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "brand",
       "tags": [
@@ -454,19 +1312,58 @@
         "绿色",
         "角色"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/pastel-flower-club.preview.jpg",
       "thumbnailUrl": "/themes/pastel-flower-club.preview.card.jpg",
       "iconUrl": "/themes/pastel-flower-club.icon.svg",
       "accent": "#5e9788",
       "packageUrl": "/themes/packages/pastel-flower-club.doubao-skin.zip",
-      "sha256": "e205bd8529e8174c97c651e249411397da7a350c26019d618954cf3314f8ed5d",
-      "packageSize": 600346
+      "sha256": "8e7ea7c98a3870e5312ddaa84de9113246f37229f18aa483e30d50844ef918ed",
+      "packageSize": 598508
     },
     {
       "id": "pastel-starry-room",
       "name": "星光书房",
       "description": "星光书桌与蓝紫伙伴，安静又温柔",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "brand",
       "tags": [
@@ -474,19 +1371,58 @@
         "蓝紫",
         "角色"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/pastel-starry-room.preview.jpg",
       "thumbnailUrl": "/themes/pastel-starry-room.preview.card.jpg",
       "iconUrl": "/themes/pastel-starry-room.icon.svg",
       "accent": "#867ac1",
       "packageUrl": "/themes/packages/pastel-starry-room.doubao-skin.zip",
-      "sha256": "a66d248de8b8e37a7bc6803faaf37728417a2e43b92e31f2030d355202f289da",
-      "packageSize": 672673
+      "sha256": "8e2215484294b3d5af1592f1a17f398711e60f1cffdbc0d1ef5fdcca8afece6b",
+      "packageSize": 670777
     },
     {
       "id": "doubao-snack-giggle",
       "name": "馋嘴豆包",
       "description": "豆包盯着零食流口水，伙伴们笑成一团",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "brand",
       "tags": [
@@ -494,19 +1430,66 @@
         "暖色",
         "角色"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
+          },
+          "declaration": "explicit",
+          "supportLevel": "tailored"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
+          },
+          "declaration": "explicit",
+          "supportLevel": "tailored"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/doubao-snack-giggle.preview.jpg",
       "thumbnailUrl": "/themes/doubao-snack-giggle.preview.card.jpg",
       "iconUrl": "/themes/doubao-snack-giggle.icon.png",
       "accent": "#d66a45",
       "packageUrl": "/themes/packages/doubao-snack-giggle.doubao-skin.zip",
-      "sha256": "0e6ea3675e543d46ed5daf0bd805db5843126cf9477ac5267d4a973aba7e1626",
-      "packageSize": 1032073
+      "sha256": "344063da3cb8e383d39c3e3ce80b657719853b3dfc1f5f0059795da8f3b2eb4e",
+      "packageSize": 1029995
     },
     {
       "id": "doubao-dessert-giggle",
       "name": "甜点偷笑",
       "description": "豆包馋上水果蛋糕，伙伴们在旁偷笑",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "brand",
       "tags": [
@@ -514,19 +1497,58 @@
         "粉色",
         "角色"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/doubao-dessert-giggle.preview.jpg",
       "thumbnailUrl": "/themes/doubao-dessert-giggle.preview.card.jpg",
       "iconUrl": "/themes/doubao-dessert-giggle.icon.png",
       "accent": "#b06c88",
       "packageUrl": "/themes/packages/doubao-dessert-giggle.doubao-skin.zip",
-      "sha256": "af9b24813968c2c8c3be9450e58fa99c494aa26feb050e47c992f5896ad3e403",
-      "packageSize": 1061215
+      "sha256": "78ed4c6f57d65a9835e99fd7292c58594d0a3c68d5e4431b6ca9e5cbc00831d4",
+      "packageSize": 1059229
     },
     {
       "id": "huaxia-blue",
       "name": "华夏蓝",
       "description": "深蓝与中国红沉稳搭配，清晰庄重",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "pure",
       "tags": [
@@ -535,19 +1557,58 @@
         "红色",
         "方角"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/huaxia-blue.preview.jpg",
       "thumbnailUrl": "/themes/huaxia-blue.preview.card.jpg",
       "iconUrl": null,
       "accent": "#c62828",
       "packageUrl": "/themes/packages/huaxia-blue.doubao-skin.zip",
-      "sha256": "e459b519bbeb50d8d375ca27fca172b6d5dee4eb5dd000d3bb1c05c1073ff90d",
-      "packageSize": 27947
+      "sha256": "d9cec3dc8c97846b6b11f32677baeeec0ade6fd9f873a28a29a5643d53add3ff",
+      "packageSize": 26620
     },
     {
       "id": "github-repository",
       "name": "代码仓库",
       "description": "深灰层级配合蓝绿状态色，专注利落",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "brand",
       "tags": [
@@ -556,19 +1617,58 @@
         "代码",
         "小圆角"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/github-repository.preview.jpg",
       "thumbnailUrl": "/themes/github-repository.preview.card.jpg",
       "iconUrl": null,
       "accent": "#2f81f7",
       "packageUrl": "/themes/packages/github-repository.doubao-skin.zip",
-      "sha256": "f8ae76a170f311196c43ee9c0c110fc3bdbdec44c80e0efff9b1f9ceb43fd8cb",
-      "packageSize": 20197
+      "sha256": "707a18f74c1a69c8e81e0da06b5f63606e3c81e64faa4746d04b78ded169340b",
+      "packageSize": 18812
     },
     {
       "id": "claude-warm",
       "name": "Claude 暖橙",
       "description": "暖米白与陶土橙安静柔和，适合长时间阅读",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "brand",
       "tags": [
@@ -577,19 +1677,58 @@
         "阅读",
         "圆角"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/claude-warm.preview.jpg",
       "thumbnailUrl": "/themes/claude-warm.preview.card.jpg",
       "iconUrl": null,
       "accent": "#d97757",
       "packageUrl": "/themes/packages/claude-warm.doubao-skin.zip",
-      "sha256": "edfb24f714d181d7a84d8673b64303c1038fd5a130148577bc2560410c096ad1",
-      "packageSize": 24252
+      "sha256": "5370341328bb8e07edffc314131b48c230d3bb4241c8d45f34a1eb81d3146020",
+      "packageSize": 22891
     },
     {
       "id": "machine-overseer",
       "name": "机械工头",
       "description": "复古综艺舞台上的机器人催工喜剧，荒诞又热闹",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "豆皮",
       "category": "atmosphere",
       "tags": [
@@ -598,13 +1737,52 @@
         "荒诞喜剧",
         "方角"
       ],
+      "schemaVersion": 3,
+      "targets": {
+        "doubao": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "doubao-work": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        },
+        "workbuddy": {
+          "appearances": [
+            "light",
+            "dark"
+          ],
+          "css": {
+            "dark": [],
+            "light": []
+          },
+          "declaration": "explicit",
+          "supportLevel": "shared"
+        }
+      },
       "previewUrl": "/themes/machine-overseer.preview.jpg",
       "thumbnailUrl": "/themes/machine-overseer.preview.card.jpg",
       "iconUrl": null,
       "accent": "#e5484d",
       "packageUrl": "/themes/packages/machine-overseer.doubao-skin.zip",
-      "sha256": "ec4df6c89050b69995f25255fcc8c909968f3c424c563425af9a625b56361b66",
-      "packageSize": 1165029
+      "sha256": "4d7a353702e14efbdc30881bc5e3859a96a6ebbda8f10fbcebb4041e8439c91e",
+      "packageSize": 1164770
     }
   ]
 }

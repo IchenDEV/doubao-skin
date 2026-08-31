@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Theme } from "@/lib/types";
+import { supportedTargets, supportCopy } from "@/lib/theme-targets";
 import ThemeMockup from "./ThemeMockup";
 
 export default function ThemeCard({ theme }: { theme: Theme }) {
@@ -15,6 +16,13 @@ export default function ThemeCard({ theme }: { theme: Theme }) {
       <Link href={`/themes/${theme.id}`} className="theme-row-copy">
         <strong>{theme.name}</strong>
         <span>{theme.description}</span>
+        <span className="theme-row-targets" aria-label="适用应用">
+          {supportedTargets(theme).map((target) => (
+            <small key={target.id}>
+              {target.label}<i>{supportCopy(target.support)}</i>
+            </small>
+          ))}
+        </span>
       </Link>
       <span className="theme-row-type">
         {theme.hasBackground ? "有背景" : "纯色"}

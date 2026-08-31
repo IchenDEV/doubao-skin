@@ -16,6 +16,7 @@ use gpui::{
 };
 use gpui_platform::application;
 
+use skin_core::theme_package::{SupportDeclaration, SupportLevel, TargetSupport};
 use skin_core::{live, theme};
 
 const MAX_INTERNAL_LOGS: usize = 300;
@@ -101,19 +102,26 @@ fn initial_target(
     saved: Option<&str>,
     doubao_installed: bool,
     work_installed: bool,
+    workbuddy_installed: bool,
 ) -> live::TargetApp {
     if let Some(saved) = saved.and_then(live::TargetApp::from_id) {
         let installed = match saved {
             live::TargetApp::Doubao => doubao_installed,
             live::TargetApp::DoubaoWork => work_installed,
+            live::TargetApp::WorkBuddy => workbuddy_installed,
         };
         if installed {
             return saved;
         }
     }
-    match (doubao_installed, work_installed) {
-        (true, false) => live::TargetApp::Doubao,
-        _ => live::TargetApp::DoubaoWork,
+    if work_installed {
+        live::TargetApp::DoubaoWork
+    } else if doubao_installed {
+        live::TargetApp::Doubao
+    } else if workbuddy_installed {
+        live::TargetApp::WorkBuddy
+    } else {
+        live::TargetApp::DoubaoWork
     }
 }
 
@@ -121,6 +129,29 @@ fn preview_identity(target: live::TargetApp) -> (&'static str, &'static str) {
     match target {
         live::TargetApp::Doubao => ("豆包", "有什么我能帮你的？"),
         live::TargetApp::DoubaoWork => ("豆包工作", "今天有什么工作要处理？"),
+        live::TargetApp::WorkBuddy => ("WorkBuddy", "今天想一起完成什么？"),
+    }
+}
+
+fn target_shortcut(target: live::TargetApp) -> &'static str {
+    match target {
+        live::TargetApp::Doubao => "Command-1",
+        live::TargetApp::DoubaoWork => "Command-2",
+        live::TargetApp::WorkBuddy => "Command-3",
+    }
+}
+
+fn support_label(support: TargetSupport) -> &'static str {
+    if !support.is_supported() {
+        return "不支持";
+    }
+    if support.declaration == SupportDeclaration::LegacyInferred {
+        return "兼容模式";
+    }
+    match support.level {
+        SupportLevel::Tailored => "专属适配",
+        SupportLevel::Shared => "共享适配",
+        SupportLevel::Unsupported => "不支持",
     }
 }
 
@@ -424,6 +455,7 @@ struct SkinApp {
     internal_logs: VecDeque<String>,
     message: String,
     applying: bool,
+    restart_confirmation_target: Option<live::TargetApp>,
     selected_target: live::TargetApp,
     active_target: Option<live::TargetApp>,
     active_theme: Option<String>,
@@ -454,10 +486,16 @@ impl SkinApp {
             }
         })
         .detach();
+        let selected_target = initial_target(
+            read_target_preference().as_deref(),
+            live::TargetApp::Doubao.is_installed(),
+            live::TargetApp::DoubaoWork.is_installed(),
+            live::TargetApp::WorkBuddy.is_installed(),
+        );
         let themes: Vec<ThemeRow> = theme::list_installed()
             .into_iter()
             .map(|theme| ThemeRow {
-                preview: theme.preview_style(),
+                preview: theme.preview_style_for(selected_target),
                 theme,
             })
             .collect();
@@ -465,11 +503,6 @@ impl SkinApp {
             .first()
             .map(|row| row.preview.surface_opacity)
             .unwrap_or(1.0);
-        let selected_target = initial_target(
-            read_target_preference().as_deref(),
-            live::TargetApp::Doubao.is_installed(),
-            live::TargetApp::DoubaoWork.is_installed(),
-        );
         let url_buf = url_buffer.clone();
         cx.spawn(async move |this, cx| loop {
             while let Ok(msg) = rx.try_recv() {
@@ -523,6 +556,7 @@ impl SkinApp {
             internal_logs: VecDeque::new(),
             message: String::new(),
             applying: false,
+            restart_confirmation_target: None,
             selected_target,
             active_target: None,
             active_theme: None,
@@ -560,6 +594,11 @@ impl SkinApp {
         }
         if modifiers.platform && key == "2" {
             self.switch_target(live::TargetApp::DoubaoWork, cx);
+            cx.stop_propagation();
+            return;
+        }
+        if modifiers.platform && key == "3" {
+            self.switch_target(live::TargetApp::WorkBuddy, cx);
             cx.stop_propagation();
             return;
         }
@@ -621,21 +660,22 @@ impl SkinApp {
             .iter()
             .enumerate()
             .filter_map(|(index, row)| {
-                (query.is_empty()
-                    || row.theme.name.to_lowercase().contains(&query)
-                    || row.theme.id.to_lowercase().contains(&query)
-                    || row.theme.description.to_lowercase().contains(&query)
-                    || row.theme.author.to_lowercase().contains(&query)
-                    || row
-                        .theme
-                        .store_category
-                        .as_deref()
-                        .is_some_and(|category| category.to_lowercase().contains(&query))
-                    || row
-                        .theme
-                        .store_tags
-                        .iter()
-                        .any(|tag| tag.to_lowercase().contains(&query)))
+                (row.theme.supports_target(self.selected_target)
+                    && (query.is_empty()
+                        || row.theme.name.to_lowercase().contains(&query)
+                        || row.theme.id.to_lowercase().contains(&query)
+                        || row.theme.description.to_lowercase().contains(&query)
+                        || row.theme.author.to_lowercase().contains(&query)
+                        || row
+                            .theme
+                            .store_category
+                            .as_deref()
+                            .is_some_and(|category| category.to_lowercase().contains(&query))
+                        || row
+                            .theme
+                            .store_tags
+                            .iter()
+                            .any(|tag| tag.to_lowercase().contains(&query))))
                 .then_some(index)
             })
             .collect()
@@ -647,17 +687,18 @@ impl SkinApp {
             .iter()
             .enumerate()
             .filter_map(|(index, row)| {
-                (query.is_empty()
-                    || row.theme.name.to_lowercase().contains(&query)
-                    || row.theme.id.to_lowercase().contains(&query)
-                    || row.theme.description.to_lowercase().contains(&query)
-                    || row.theme.author.to_lowercase().contains(&query)
-                    || row.theme.category.to_lowercase().contains(&query)
-                    || row
-                        .theme
-                        .tags
-                        .iter()
-                        .any(|tag| tag.to_lowercase().contains(&query)))
+                (row.theme.supports_target(self.selected_target)
+                    && (query.is_empty()
+                        || row.theme.name.to_lowercase().contains(&query)
+                        || row.theme.id.to_lowercase().contains(&query)
+                        || row.theme.description.to_lowercase().contains(&query)
+                        || row.theme.author.to_lowercase().contains(&query)
+                        || row.theme.category.to_lowercase().contains(&query)
+                        || row
+                            .theme
+                            .tags
+                            .iter()
+                            .any(|tag| tag.to_lowercase().contains(&query))))
                 .then_some(index)
             })
             .collect()
@@ -671,7 +712,15 @@ impl SkinApp {
         if let Some(index) = indices.first().copied() {
             self.selected = index;
             self.surface_opacity = self.themes[index].preview.surface_opacity;
+            self.restart_confirmation_target = None;
             self.message.clear();
+        }
+    }
+
+    fn ensure_store_selected_match(&mut self) {
+        let indices = self.filtered_store_indices();
+        if !indices.contains(&self.store_selected) {
+            self.store_selected = indices.first().copied().unwrap_or(0);
         }
     }
 
@@ -691,6 +740,7 @@ impl SkinApp {
         };
         self.selected = indices[next];
         self.surface_opacity = self.themes[self.selected].preview.surface_opacity;
+        self.restart_confirmation_target = None;
         self.message.clear();
         cx.notify();
     }
@@ -703,6 +753,7 @@ impl SkinApp {
             }
             Msg::Applied(generation) if generation == self.generation => {
                 self.applying = false;
+                self.restart_confirmation_target = None;
                 self.message = "已应用".into();
             }
             Msg::Applied(_) => {}
@@ -715,6 +766,12 @@ impl SkinApp {
                     self.applying = false;
                     if restoring && ok {
                         self.message = "已恢复默认".into();
+                    } else if ok && self.active_target == Some(live::TargetApp::WorkBuddy) {
+                        self.message = "WorkBuddy 已退出，主题监听已停止".into();
+                        self.active_target = None;
+                        self.active_theme = None;
+                        self.active_surface_opacity = None;
+                        self.live_stop = None;
                     } else if !ok {
                         self.message = "应用失败，请再试一次".into();
                         self.active_target = None;
@@ -841,7 +898,7 @@ impl SkinApp {
         self.themes = theme::list_installed()
             .into_iter()
             .map(|theme| ThemeRow {
-                preview: theme.preview_style(),
+                preview: theme.preview_style_for(self.selected_target),
                 theme,
             })
             .collect();
@@ -854,6 +911,12 @@ impl SkinApp {
             .get(self.selected)
             .map(|row| row.preview.surface_opacity)
             .unwrap_or(1.0);
+    }
+
+    fn refresh_target_previews(&mut self) {
+        for row in &mut self.themes {
+            row.preview = row.theme.preview_style_for(self.selected_target);
+        }
     }
 
     fn switch_source(&mut self, source: SourceView, cx: &mut Context<Self>) {
@@ -982,6 +1045,7 @@ impl SkinApp {
             self.selected = index;
             self.surface_opacity = self.themes[index].preview.surface_opacity;
             self.search_active = false;
+            self.restart_confirmation_target = None;
             self.message.clear();
             cx.notify();
         }
@@ -1001,10 +1065,14 @@ impl SkinApp {
         }
         self.generation += 1;
         self.applying = false;
+        self.restart_confirmation_target = None;
         let old_target = self.active_target.take();
         self.active_theme = None;
         self.active_surface_opacity = None;
         self.selected_target = target;
+        self.refresh_target_previews();
+        self.ensure_selected_match();
+        self.ensure_store_selected_match();
         save_target_preference(target);
         self.message.clear();
         let previous_thread = self.live_thread.take();
@@ -1035,7 +1103,14 @@ impl SkinApp {
             return;
         };
         let target = self.selected_target;
+        if !row.theme.supports_target(target) {
+            self.restart_confirmation_target = None;
+            self.message = format!("这个主题不支持{}", target.display_name());
+            cx.notify();
+            return;
+        }
         if !target.is_installed() {
+            self.restart_confirmation_target = None;
             self.message = format!("请先安装{}", target.display_name());
             cx.notify();
             return;
@@ -1052,6 +1127,39 @@ impl SkinApp {
         if active {
             return;
         }
+        let allow_restart = self.restart_confirmation_target == Some(target);
+        match live::prepare_state(target) {
+            Ok(live::PrepareState::RestartConfirmationRequired) if !allow_restart => {
+                self.restart_confirmation_target = Some(target);
+                self.message =
+                    "WorkBuddy 正在运行。请先保存正在进行的任务，再明确重启并应用。".into();
+                cx.notify();
+                return;
+            }
+            Ok(live::PrepareState::WrongPortOwner) => {
+                self.restart_confirmation_target = None;
+                self.message = format!("端口 {} 已被其他程序占用", target.port());
+                cx.notify();
+                return;
+            }
+            Ok(live::PrepareState::NotInstalled) => {
+                self.restart_confirmation_target = None;
+                self.message = format!("请先安装{}", target.display_name());
+                cx.notify();
+                return;
+            }
+            Ok(
+                live::PrepareState::Ready
+                | live::PrepareState::LaunchRequired
+                | live::PrepareState::RestartConfirmationRequired,
+            ) => {}
+            Err(error) => {
+                self.restart_confirmation_target = None;
+                self.message = format!("无法准备{}：{error}", target.display_name());
+                cx.notify();
+                return;
+            }
+        }
         if let Some(stop) = self.live_stop.take() {
             stop.store(true, Ordering::Relaxed);
         }
@@ -1067,6 +1175,7 @@ impl SkinApp {
         self.active_theme = Some(theme.id.clone());
         self.active_surface_opacity = theme.surface_opacity;
         self.applying = true;
+        self.restart_confirmation_target = None;
         self.message = "正在应用…".into();
         let tx = self.tx.clone();
         let previous_thread = self.live_thread.take();
@@ -1076,13 +1185,20 @@ impl SkinApp {
             }
             let tx_log = tx.clone();
             let mut reported = false;
-            let result = live::run(&theme, target, false, stop, move |line| {
-                if !reported && line.trim_start().starts_with("injected:") {
-                    reported = true;
-                    let _ = tx_log.send(Msg::Applied(generation));
-                }
-                let _ = tx_log.send(Msg::Log(line));
-            });
+            let result = live::run_with_restart_permission(
+                &theme,
+                target,
+                false,
+                stop,
+                allow_restart,
+                move |line| {
+                    if !reported && line.trim_start().starts_with("injected:") {
+                        reported = true;
+                        let _ = tx_log.send(Msg::Applied(generation));
+                    }
+                    let _ = tx_log.send(Msg::Log(line));
+                },
+            );
             let _ = tx.send(Msg::Done {
                 generation: Some(generation),
                 ok: result.is_ok(),
@@ -1099,6 +1215,7 @@ impl SkinApp {
         self.generation += 1;
         let generation = self.generation;
         let target = self.selected_target;
+        self.restart_confirmation_target = None;
         self.active_target = None;
         self.active_theme = None;
         self.active_surface_opacity = None;
@@ -1129,6 +1246,7 @@ impl SkinApp {
             return;
         }
         self.surface_opacity = next;
+        self.restart_confirmation_target = None;
         self.message.clear();
         cx.notify();
     }
@@ -1148,7 +1266,7 @@ impl SkinApp {
     fn render_target_switch(&self, cx: &mut Context<Self>) -> gpui::AnyElement {
         let colors = self.colors;
         let mut segments = div()
-            .w(px(224.))
+            .w(px(336.))
             .h(px(36.))
             .p(px(2.))
             .rounded(px(8.))
@@ -1159,11 +1277,7 @@ impl SkinApp {
         for (index, target) in live::TargetApp::ALL.into_iter().enumerate() {
             let installed = target.is_installed();
             let selected = self.selected_target == target;
-            let shortcut = if target == live::TargetApp::Doubao {
-                "Command-1"
-            } else {
-                "Command-2"
-            };
+            let shortcut = target_shortcut(target);
             let label = if installed {
                 target.display_name().to_string()
             } else {
@@ -1393,7 +1507,7 @@ impl SkinApp {
 
     fn render_theme_thumbnail(&self, row: &ThemeRow, size: f32) -> gpui::AnyElement {
         let accent = row.preview.colors.accent;
-        if let Some(path) = row.theme.preview_image.as_ref() {
+        if let Some(path) = row.theme.preview_image_for(self.selected_target) {
             return img(SharedString::from(path.to_string_lossy().into_owned()))
                 .size(px(size))
                 .rounded(px(8.))
@@ -2643,10 +2757,25 @@ impl Render for SkinApp {
         let content = if let Some(row) = self.themes.get(self.selected) {
             let active = self.selected_settings_are_active(row);
             let target_installed = self.selected_target.is_installed();
+            let theme_supported = row.theme.supports_target(self.selected_target);
+            let restart_confirmation =
+                self.restart_confirmation_target == Some(self.selected_target);
             let detail_message = if !target_installed {
                 format!("请先安装{}", self.selected_target.display_name())
-            } else if self.message == "已应用" {
-                String::new()
+            } else if !theme_supported {
+                format!("这个主题不支持{}", self.selected_target.display_name())
+            } else if self.message.is_empty() || self.message == "已应用" {
+                let prefix = if self.message == "已应用" {
+                    "已应用 · "
+                } else {
+                    ""
+                };
+                format!(
+                    "{}{} · {}",
+                    prefix,
+                    support_label(row.theme.target_support(self.selected_target)),
+                    self.selected_target.display_name()
+                )
             } else {
                 self.message.clone()
             };
@@ -2780,8 +2909,12 @@ impl Render for SkinApp {
                                         .role(Role::Button)
                                         .aria_label(if !target_installed {
                                             "尚未安装目标应用"
+                                        } else if !theme_supported {
+                                            "此主题不支持当前应用"
                                         } else if active {
                                             "正在使用"
+                                        } else if restart_confirmation {
+                                            "重启 WorkBuddy 并应用"
                                         } else {
                                             "应用主题"
                                         })
@@ -2794,13 +2927,22 @@ impl Render for SkinApp {
                                         .text_sm()
                                         .font_weight(FontWeight::SEMIBOLD)
                                         .text_color(rgb(0xffffff))
-                                        .opacity(if self.applying || active || !target_installed {
-                                            0.72
-                                        } else {
-                                            1.0
-                                        })
+                                        .opacity(
+                                            if self.applying
+                                                || active
+                                                || !target_installed
+                                                || !theme_supported
+                                            {
+                                                0.72
+                                            } else {
+                                                1.0
+                                            },
+                                        )
                                         .when(
-                                            !self.applying && !active && target_installed,
+                                            !self.applying
+                                                && !active
+                                                && target_installed
+                                                && theme_supported,
                                             |button| {
                                                 button
                                                     .cursor_pointer()
@@ -2814,10 +2956,14 @@ impl Render for SkinApp {
                                         )
                                         .child(if !target_installed {
                                             "尚未安装"
+                                        } else if !theme_supported {
+                                            "主题不兼容"
                                         } else if self.applying {
                                             "正在应用…"
                                         } else if active {
                                             "正在使用"
+                                        } else if restart_confirmation {
+                                            "重启并应用"
                                         } else {
                                             "应用主题"
                                         }),
@@ -3391,28 +3537,70 @@ mod ui_regression_tests {
     fn preview_profile_uses_the_app_identity_instead_of_one_theme_name() {
         assert_eq!(preview_identity(live::TargetApp::Doubao).0, "豆包");
         assert_eq!(preview_identity(live::TargetApp::DoubaoWork).0, "豆包工作");
+        assert_eq!(preview_identity(live::TargetApp::WorkBuddy).0, "WorkBuddy");
+        assert_eq!(target_shortcut(live::TargetApp::WorkBuddy), "Command-3");
+    }
+
+    #[test]
+    fn support_badges_distinguish_explicit_shared_and_legacy_compatibility() {
+        assert_eq!(
+            support_label(TargetSupport {
+                level: SupportLevel::Tailored,
+                declaration: SupportDeclaration::Explicit,
+            }),
+            "专属适配"
+        );
+        assert_eq!(
+            support_label(TargetSupport {
+                level: SupportLevel::Shared,
+                declaration: SupportDeclaration::Explicit,
+            }),
+            "共享适配"
+        );
+        assert_eq!(
+            support_label(TargetSupport {
+                level: SupportLevel::Shared,
+                declaration: SupportDeclaration::LegacyInferred,
+            }),
+            "兼容模式"
+        );
+        assert_eq!(
+            support_label(TargetSupport {
+                level: SupportLevel::Unsupported,
+                declaration: SupportDeclaration::Explicit,
+            }),
+            "不支持"
+        );
     }
 
     #[test]
     fn target_default_respects_installation_and_saved_preference() {
         assert_eq!(
-            initial_target(Some("doubao"), true, true),
+            initial_target(Some("doubao"), true, true, true),
             live::TargetApp::Doubao
         );
         assert_eq!(
-            initial_target(Some("unknown"), true, true),
+            initial_target(Some("unknown"), true, true, true),
             live::TargetApp::DoubaoWork
         );
         assert_eq!(
-            initial_target(Some("doubao-work"), true, false),
+            initial_target(Some("doubao-work"), true, false, true),
             live::TargetApp::Doubao
         );
         assert_eq!(
-            initial_target(Some("doubao"), false, true),
+            initial_target(Some("doubao"), false, true, true),
             live::TargetApp::DoubaoWork
         );
         assert_eq!(
-            initial_target(None, false, false),
+            initial_target(Some("workbuddy"), true, true, true),
+            live::TargetApp::WorkBuddy
+        );
+        assert_eq!(
+            initial_target(None, false, false, true),
+            live::TargetApp::WorkBuddy
+        );
+        assert_eq!(
+            initial_target(None, false, false, false),
             live::TargetApp::DoubaoWork
         );
     }
@@ -3429,6 +3617,12 @@ mod ui_regression_tests {
             Some(live::TargetApp::DoubaoWork),
             Some("violet-night"),
             live::TargetApp::Doubao,
+            "violet-night"
+        ));
+        assert!(theme_is_active(
+            Some(live::TargetApp::WorkBuddy),
+            Some("violet-night"),
+            live::TargetApp::WorkBuddy,
             "violet-night"
         ));
     }

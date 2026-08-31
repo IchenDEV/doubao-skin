@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import path from "node:path";
-import type { Theme, ThemeColors } from "./types";
+import type { Theme, ThemeColors, ThemeTargetId, ThemeTargetSupport } from "./types";
 
 const DB_PATH = path.join(process.cwd(), "data", "themes.db");
 
@@ -30,6 +30,8 @@ interface ThemeRow {
   author: string;
   category: string;
   tags: string;
+  schema_version?: number;
+  targets?: string;
   has_background: number;
   veil: number | null;
   colors: string;
@@ -44,6 +46,12 @@ interface ThemeRow {
   is_default_palette: number;
   sort_order: number;
 }
+
+const LEGACY_TARGETS = {
+  doubao: { supportLevel: "tailored", declaration: "legacy-inferred", appearances: ["light", "dark"] },
+  "doubao-work": { supportLevel: "tailored", declaration: "legacy-inferred", appearances: ["light", "dark"] },
+  workbuddy: { supportLevel: "shared", declaration: "legacy-inferred", appearances: ["light", "dark"] },
+} satisfies Record<ThemeTargetId, ThemeTargetSupport>;
 
 let cached: Database.Database | null = null;
 
@@ -64,6 +72,10 @@ function toTheme(row: ThemeRow): Theme {
     author: row.author,
     category: row.category,
     tags: JSON.parse(row.tags) as string[],
+    schemaVersion: row.schema_version ?? 2,
+    targets: row.targets
+      ? JSON.parse(row.targets) as Record<ThemeTargetId, ThemeTargetSupport>
+      : LEGACY_TARGETS,
     hasBackground: row.has_background === 1,
     veil: row.veil,
     colors: JSON.parse(row.colors) as ThemeColors,

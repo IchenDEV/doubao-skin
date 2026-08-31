@@ -1,0 +1,45 @@
+{
+  "$schema": "../../../theme-v3.schema.json",
+  "schemaVersion": 3,
+  "id": "fixture-doubao-family",
+  "name": "豆包双端示例",
+  "description": "仅支持豆包和豆包工作的最小结构化主题",
+  "version": "1.0.0",
+  "author": "豆皮",
+  "preview": {
+    "image": "preview.jpg",
+    "aspectRatio": "16:9",
+    "appearance": "dark",
+    "accent": "#8d6fd3"
+  },
+  "shared": {
+    "appearance": "both",
+    "composer": {
+      "background": "#221d30",
+      "border": "1px solid #453c5c",
+      "textColor": "#f2eff8",
+      "placeholderColor": "#a7a0b5",
+      "caretColor": "#9d7bea",
+      "iconColor": "#c5bdd4",
+      "sendButtonBackground": "#9d7bea",
+      "sendButtonIconColor": "#0d0b16",
+      "radius": 18
+    },
+    "content": {
+      "chatBackground": "#16131f",
+      "userMessageBackground": "#9d7bea",
+      "userMessageText": "#0d0b16",
+      "assistantMessageBackground": "#221d30",
+      "assistantMessageText": "#f2eff8",
+      "codeBackground": "#1e1a2e",
+      "codeHeaderBackground": "#2b2540",
+      "selectionColor": "rgba(157,123,234,0.28)",
+      "scrollbarColor": "rgba(242,239,248,0.24)",
+      "scrollbarHoverColor": "rgba(242,239,248,0.42)"
+    }
+  },
+  "targets": {
+    "doubao": {},
+    "doubao-work": {}
+  }
+}

@@ -38,12 +38,13 @@ doubao-theme create themes/<theme-id> \
   --description "一句自然语言描述" \
   --accent "#3370eb" \
   --appearance both \
+  --targets doubao,doubao-work,workbuddy \
   --author "作者名称"
 ```
 
 源码用户也可以使用 `cargo run -p skin-core --bin doubao-theme --` 替代 `doubao-theme`。
 
-生成器会创建 v2 `theme.json`、基础 `theme.css` 和 1200 × 675 `preview.jpg`，不会覆盖非空目录。
+生成器会创建 v3 `theme.json` 和 1200 × 675 `preview.jpg`，不会覆盖非空目录。`targets` 是唯一适用范围声明；结构化视觉已经完整时不需要 `theme.css`。完整规范见 [主题包 v3](../design/theme-standard/theme-v3.md)。
 
 ## 3. 检查和预览
 
@@ -60,7 +61,7 @@ doubao-theme preview themes/<theme-id>
 - 背景图、字体和图标必须是原创、明确授权或允许再分发的素材。
 - 需要归属说明时，把 `LICENSE`、`LICENSE.md` 或 `LICENSE.txt` 放在主题目录。
 - 不要把私人对话、账号、工作区、附件或未公开内容放进主题与预览。
-- 打包只会收入 `theme.json`、`theme.css`、清单引用的素材、`icon.icns` 和许可证文件。
+- 打包只会收入 `theme.json`、清单引用的 CSS/素材、`icon.icns` 和许可证文件。
 
 ## 5. 同步网站目录
 

@@ -11,6 +11,15 @@ export interface ThemeColors {
   brand: string;
 }
 
+export type ThemeTargetId = "doubao" | "doubao-work" | "workbuddy";
+export type ThemeSupportLevel = "unsupported" | "shared" | "tailored";
+
+export interface ThemeTargetSupport {
+  supportLevel: ThemeSupportLevel;
+  declaration: "explicit" | "legacy-inferred";
+  appearances: ("light" | "dark")[];
+}
+
 export interface Theme {
   id: string;
   name: string;
@@ -19,6 +28,8 @@ export interface Theme {
   author: string;
   category: string;
   tags: string[];
+  schemaVersion: number;
+  targets: Record<ThemeTargetId, ThemeTargetSupport>;
   hasBackground: boolean;
   veil: number | null;
   colors: ThemeColors;

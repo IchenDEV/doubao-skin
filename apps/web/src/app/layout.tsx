@@ -9,25 +9,25 @@ import { SITE_NAME, SITE_TAGLINE, SITE_URL, SOCIAL_IMAGE } from "@/lib/site";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} · 豆包与豆包工作主题库`,
+    default: `${SITE_NAME} · 豆包、豆包工作与 WorkBuddy 主题库`,
     template: `%s · ${SITE_NAME}`,
   },
   description:
-    "同时支持 macOS 版「豆包」与「豆包工作」的第三方主题工具：浏览、预览并安装纯色、氛围背景与编辑器配色主题。",
+    "适用于 macOS 版「豆包」「豆包工作」与 WorkBuddy 的第三方主题工具：按应用浏览、预览并安装主题。",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "zh_CN",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `${SITE_NAME} · 豆包与豆包工作主题库`,
-    description: "浏览、预览并安装适用于 macOS 豆包与豆包工作的主题。",
+    title: `${SITE_NAME} · 豆包、豆包工作与 WorkBuddy 主题库`,
+    description: "按应用浏览、预览并安装适用于 macOS 豆包、豆包工作与 WorkBuddy 的主题。",
     images: [{ url: SOCIAL_IMAGE, width: 1200, height: 675 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE_NAME} · 豆包与豆包工作主题库`,
-    description: "浏览、预览并安装适用于 macOS 豆包与豆包工作的主题。",
+    title: `${SITE_NAME} · 豆包、豆包工作与 WorkBuddy 主题库`,
+    description: "按应用浏览、预览并安装适用于 macOS 豆包、豆包工作与 WorkBuddy 的主题。",
     images: [SOCIAL_IMAGE],
   },
 };

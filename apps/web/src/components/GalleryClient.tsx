@@ -9,10 +9,12 @@ export default function GalleryClient({
   themes,
   initialType,
   initialSeries,
+  initialTarget,
 }: {
   themes: Theme[];
   initialType: string;
   initialSeries: string;
+  initialTarget: string;
 }) {
   const [query, setQuery] = useState("");
 
@@ -26,10 +28,16 @@ export default function GalleryClient({
               ? initialType
               : "all",
           series: initialSeries,
+          target:
+            initialTarget === "doubao" ||
+            initialTarget === "doubao-work" ||
+            initialTarget === "workbuddy"
+              ? initialTarget
+              : "all",
         },
         query,
       ),
-    [themes, query, initialType, initialSeries],
+    [themes, query, initialType, initialSeries, initialTarget],
   );
 
   return (

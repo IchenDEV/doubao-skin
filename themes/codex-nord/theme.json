@@ -1,147 +1,156 @@
 {
-  "$schema": "../../design/theme-standard/theme-v2.schema.json",
-  "schemaVersion": 2,
+  "$schema": "../../design/theme-standard/theme-v3.schema.json",
+  "author": "豆皮",
+  "description": "清爽的蓝色，安静又清晰",
   "id": "codex-nord",
   "name": "豆包极光",
-  "description": "清爽的蓝色，安静又清晰",
-  "version": "1.0.0",
-  "author": "豆皮",
   "preview": {
-    "image": "preview.jpg",
-    "aspectRatio": "16:9",
+    "accent": "#597e88",
     "appearance": "dark",
-    "accent": "#597e88"
+    "aspectRatio": "16:9",
+    "image": "preview.jpg"
+  },
+  "provenance": {
+    "derivedFrom": "Nord",
+    "license": "MIT",
+    "sourceCommit": "1cef71605416a222e57225b544540ce0fcec18d4",
+    "sourceUrl": "https://github.com/nordtheme/nord"
+  },
+  "schemaVersion": 3,
+  "shared": {
+    "appearance": "both",
+    "composer": {
+      "background": "#4c566a",
+      "border": "1px solid rgba(136,192,208,0.28)",
+      "caretColor": "rgba(136,192,208,1)",
+      "gap": 8,
+      "iconColor": "rgba(216,222,233,0.72)",
+      "iconSize": 20,
+      "maxHeight": 260,
+      "minHeight": 52,
+      "padding": 12,
+      "placeholderColor": "rgba(216,222,233,0.52)",
+      "radius": 18,
+      "sendButtonBackground": "rgba(136,192,208,1)",
+      "sendButtonIconColor": "#242933",
+      "textColor": "#d8dee9"
+    },
+    "content": {
+      "assistantMessageBackground": "#4c566a",
+      "assistantMessageText": "#d8dee9",
+      "chatBackground": "#2e3440",
+      "codeBackground": "#2e3440",
+      "codeHeaderBackground": "#3b4252",
+      "scrollbarColor": "rgba(136,192,208,0.26)",
+      "scrollbarHoverColor": "rgba(136,192,208,0.42)",
+      "selectionColor": "rgba(136,192,208,0.24)",
+      "userMessageBackground": "rgba(136,192,208,1)",
+      "userMessageText": "#242933"
+    },
+    "effects": {
+      "blur": 10,
+      "motion": "gentle",
+      "radiusScale": 1,
+      "shadow": "0 12px 32px rgba(0,0,0,.28)",
+      "transitionMs": 150
+    },
+    "layout": {
+      "chatMargin": 28,
+      "chatMaxWidth": 880,
+      "composerMaxWidth": 740,
+      "density": "comfortable",
+      "selfMessageMaxWidth": 380,
+      "sidebarWidth": 248
+    },
+    "typography": {
+      "body": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
+      "code": "\"SFMono-Regular\", Menlo, Monaco, monospace",
+      "lineHeight": 1.56,
+      "scale": 1,
+      "ui": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif"
+    },
+    "variants": {
+      "dark": {
+        "composer": {
+          "background": "#4c566a",
+          "border": "1px solid rgba(136,192,208,0.28)",
+          "caretColor": "rgba(136,192,208,1)",
+          "gap": 8,
+          "iconColor": "rgba(216,222,233,0.72)",
+          "iconSize": 20,
+          "maxHeight": 260,
+          "minHeight": 52,
+          "padding": 12,
+          "placeholderColor": "rgba(216,222,233,0.52)",
+          "radius": 18,
+          "sendButtonBackground": "rgba(136,192,208,1)",
+          "sendButtonIconColor": "#242933",
+          "textColor": "#d8dee9"
+        },
+        "content": {
+          "assistantMessageBackground": "#4c566a",
+          "assistantMessageText": "#d8dee9",
+          "chatBackground": "#2e3440",
+          "codeBackground": "#2e3440",
+          "codeHeaderBackground": "#3b4252",
+          "scrollbarColor": "rgba(136,192,208,0.26)",
+          "scrollbarHoverColor": "rgba(136,192,208,0.42)",
+          "selectionColor": "rgba(136,192,208,0.24)",
+          "userMessageBackground": "rgba(136,192,208,1)",
+          "userMessageText": "#242933"
+        },
+        "icons": {
+          "main": "icons/main.svg"
+        }
+      },
+      "light": {
+        "composer": {
+          "background": "rgba(255,255,255,0.96)",
+          "border": "1px solid rgba(89,126,136,0.28)",
+          "caretColor": "#597e88",
+          "gap": 8,
+          "iconColor": "rgba(32,33,36,0.78)",
+          "iconSize": 20,
+          "maxHeight": 260,
+          "minHeight": 52,
+          "padding": 12,
+          "placeholderColor": "rgba(32,33,36,0.56)",
+          "radius": 18,
+          "sendButtonBackground": "#597e88",
+          "sendButtonIconColor": "#ffffff",
+          "textColor": "#202124"
+        },
+        "content": {
+          "assistantMessageBackground": "rgba(255,255,255,0.94)",
+          "assistantMessageText": "#202124",
+          "chatBackground": "rgba(248,249,251,0.88)",
+          "codeBackground": "rgba(32,33,36,0.07)",
+          "codeHeaderBackground": "rgba(32,33,36,0.11)",
+          "scrollbarColor": "rgba(89,126,136,0.24)",
+          "scrollbarHoverColor": "rgba(89,126,136,0.4)",
+          "selectionColor": "rgba(89,126,136,0.22)",
+          "userMessageBackground": "#597e88",
+          "userMessageText": "#ffffff"
+        },
+        "icons": {
+          "main": "icons/main.svg"
+        }
+      }
+    }
   },
   "store": {
     "category": "codex",
+    "sortOrder": 15,
     "tags": [
       "深色",
       "编辑器",
       "蓝色"
-    ],
-    "sortOrder": 15
+    ]
   },
-  "appearance": "both",
-  "typography": {
-    "ui": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
-    "body": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
-    "code": "\"SFMono-Regular\", Menlo, Monaco, monospace",
-    "scale": 1,
-    "lineHeight": 1.56
+  "targets": {
+    "doubao": {},
+    "doubao-work": {},
+    "workbuddy": {}
   },
-  "layout": {
-    "density": "comfortable",
-    "sidebarWidth": 248,
-    "chatMaxWidth": 880,
-    "composerMaxWidth": 740,
-    "selfMessageMaxWidth": 380,
-    "chatMargin": 28
-  },
-  "composer": {
-    "background": "#4c566a",
-    "border": "1px solid rgba(136,192,208,0.28)",
-    "textColor": "#d8dee9",
-    "placeholderColor": "rgba(216,222,233,0.52)",
-    "caretColor": "rgba(136,192,208,1)",
-    "iconColor": "rgba(216,222,233,0.72)",
-    "sendButtonBackground": "rgba(136,192,208,1)",
-    "sendButtonIconColor": "#242933",
-    "radius": 18,
-    "minHeight": 52,
-    "maxHeight": 260,
-    "padding": 12,
-    "gap": 8,
-    "iconSize": 20
-  },
-  "content": {
-    "chatBackground": "#2e3440",
-    "userMessageBackground": "rgba(136,192,208,1)",
-    "userMessageText": "#242933",
-    "assistantMessageBackground": "#4c566a",
-    "assistantMessageText": "#d8dee9",
-    "codeBackground": "#2e3440",
-    "codeHeaderBackground": "#3b4252",
-    "selectionColor": "rgba(136,192,208,0.24)",
-    "scrollbarColor": "rgba(136,192,208,0.26)",
-    "scrollbarHoverColor": "rgba(136,192,208,0.42)"
-  },
-  "effects": {
-    "radiusScale": 1,
-    "shadow": "0 12px 32px rgba(0,0,0,.28)",
-    "blur": 10,
-    "motion": "gentle",
-    "transitionMs": 150
-  },
-  "derivedFrom": "Nord",
-  "sourceUrl": "https://github.com/nordtheme/nord",
-  "sourceCommit": "1cef71605416a222e57225b544540ce0fcec18d4",
-  "license": "MIT",
-  "variants": {
-    "light": {
-      "composer": {
-        "background": "rgba(255,255,255,0.96)",
-        "border": "1px solid rgba(89,126,136,0.28)",
-        "textColor": "#202124",
-        "placeholderColor": "rgba(32,33,36,0.56)",
-        "caretColor": "#597e88",
-        "iconColor": "rgba(32,33,36,0.78)",
-        "sendButtonBackground": "#597e88",
-        "sendButtonIconColor": "#ffffff",
-        "radius": 18,
-        "minHeight": 52,
-        "maxHeight": 260,
-        "padding": 12,
-        "gap": 8,
-        "iconSize": 20
-      },
-      "content": {
-        "chatBackground": "rgba(248,249,251,0.88)",
-        "userMessageBackground": "#597e88",
-        "userMessageText": "#ffffff",
-        "assistantMessageBackground": "rgba(255,255,255,0.94)",
-        "assistantMessageText": "#202124",
-        "codeBackground": "rgba(32,33,36,0.07)",
-        "codeHeaderBackground": "rgba(32,33,36,0.11)",
-        "selectionColor": "rgba(89,126,136,0.22)",
-        "scrollbarColor": "rgba(89,126,136,0.24)",
-        "scrollbarHoverColor": "rgba(89,126,136,0.4)"
-      },
-      "icons": {
-        "main": "icons/main.svg"
-      }
-    },
-    "dark": {
-      "composer": {
-        "background": "#4c566a",
-        "border": "1px solid rgba(136,192,208,0.28)",
-        "textColor": "#d8dee9",
-        "placeholderColor": "rgba(216,222,233,0.52)",
-        "caretColor": "rgba(136,192,208,1)",
-        "iconColor": "rgba(216,222,233,0.72)",
-        "sendButtonBackground": "rgba(136,192,208,1)",
-        "sendButtonIconColor": "#242933",
-        "radius": 18,
-        "minHeight": 52,
-        "maxHeight": 260,
-        "padding": 12,
-        "gap": 8,
-        "iconSize": 20
-      },
-      "content": {
-        "chatBackground": "#2e3440",
-        "userMessageBackground": "rgba(136,192,208,1)",
-        "userMessageText": "#242933",
-        "assistantMessageBackground": "#4c566a",
-        "assistantMessageText": "#d8dee9",
-        "codeBackground": "#2e3440",
-        "codeHeaderBackground": "#3b4252",
-        "selectionColor": "rgba(136,192,208,0.24)",
-        "scrollbarColor": "rgba(136,192,208,0.26)",
-        "scrollbarHoverColor": "rgba(136,192,208,0.42)"
-      },
-      "icons": {
-        "main": "icons/main.svg"
-      }
-    }
-  }
+  "version": "2.0.0"
 }

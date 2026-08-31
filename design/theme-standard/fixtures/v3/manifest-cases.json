@@ -1,0 +1,68 @@
+{
+  "base": "valid-all-targets.json",
+  "cases": [
+    {
+      "name": "empty targets",
+      "pointer": "/targets",
+      "value": {},
+      "valid": false,
+      "category": "manifest"
+    },
+    {
+      "name": "unknown target",
+      "pointer": "/targets/doubao-pro",
+      "value": {},
+      "valid": false,
+      "category": "manifest"
+    },
+    {
+      "name": "unknown top-level field",
+      "pointer": "/supportedTargets",
+      "value": ["workbuddy"],
+      "valid": false,
+      "category": "manifest"
+    },
+    {
+      "name": "legacy visual at top level",
+      "pointer": "/appearance",
+      "value": "both",
+      "valid": false,
+      "category": "manifest"
+    },
+    {
+      "name": "path traversal",
+      "pointer": "/targets/workbuddy/css",
+      "value": ["../escape.css"],
+      "valid": false,
+      "category": "path"
+    },
+    {
+      "name": "variant cannot set appearance",
+      "pointer": "/shared/variants/light/appearance",
+      "value": "light-only",
+      "valid": false,
+      "category": "manifest"
+    },
+    {
+      "name": "shared base cannot delete",
+      "pointer": "/shared/icons",
+      "value": null,
+      "valid": false,
+      "category": "manifest"
+    },
+    {
+      "name": "future schema fails closed",
+      "pointer": "/schemaVersion",
+      "value": 4,
+      "valid": false,
+      "category": "unsupported-schema"
+    },
+    {
+      "name": "target leaf deletion is valid JSON shape",
+      "pointer": "/targets/workbuddy/icons",
+      "value": { "main": null },
+      "valid": true,
+      "category": "manifest"
+    }
+  ]
+}

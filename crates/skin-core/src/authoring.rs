@@ -6,10 +6,12 @@ use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
 
 use image::{Rgb, RgbImage};
+use serde::Serialize;
 use serde_json::{json, Value};
 use zip::write::SimpleFileOptions;
 
 use crate::theme;
+use crate::theme_package::{self, ThemeTarget, ValidationReport};
 
 const MAX_PACKAGE_ENTRIES: usize = 2_048;
 const MAX_PACKAGE_CONTENT_BYTES: u64 = 512 * 1024 * 1024;
@@ -62,6 +64,7 @@ pub struct CreateOptions {
     pub author: String,
     pub accent: String,
     pub appearance: Appearance,
+    pub targets: BTreeSet<ThemeTarget>,
 }
 
 #[derive(Debug, Clone)]
@@ -69,6 +72,300 @@ pub struct CheckReport {
     pub id: String,
     /// Package paths relative to the theme directory, sorted for deterministic output.
     pub files: Vec<PathBuf>,
+    pub validation: ValidationReport,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MigrationReport {
+    pub id: String,
+    pub from_schema_version: u64,
+    pub to_schema_version: u64,
+    pub from_version: String,
+    pub to_version: String,
+    pub targets: Vec<String>,
+    pub actions: Vec<String>,
+    pub warnings: Vec<String>,
+    pub written: bool,
+}
+
+pub fn migrate_v3(theme_dir: &Path, write: bool) -> Result<MigrationReport, String> {
+    scan_tree_safety(theme_dir)?;
+    let manifest_path = theme_dir.join("theme.json");
+    let source: Value = serde_json::from_slice(
+        &fs::read(&manifest_path).map_err(|error| format!("无法读取 theme.json：{error}"))?,
+    )
+    .map_err(|error| format!("theme.json 格式错误：{error}"))?;
+    let from_schema_version = source
+        .get("schemaVersion")
+        .and_then(Value::as_u64)
+        .unwrap_or(1);
+    if from_schema_version == 3 {
+        let package =
+            theme_package::validate_theme_package(theme_dir).map_err(|error| error.to_string())?;
+        return Ok(MigrationReport {
+            id: package.id().to_string(),
+            from_schema_version,
+            to_schema_version: 3,
+            from_version: package.version().to_string(),
+            to_version: package.version().to_string(),
+            targets: ThemeTarget::ALL
+                .into_iter()
+                .filter(|target| package.support(*target).is_supported())
+                .map(|target| target.as_str().to_string())
+                .collect(),
+            actions: Vec::new(),
+            warnings: vec!["主题已经是 v3；没有需要迁移的内容".into()],
+            written: false,
+        });
+    }
+    if from_schema_version != 2 {
+        return Err("migrate-v3 目前只支持 schemaVersion 2".into());
+    }
+    let id = source
+        .get("id")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "theme.json 缺少 id".to_string())?;
+    if theme_dir.file_name().and_then(|value| value.to_str()) != Some(id) {
+        return Err("主题 ID 必须与目录名一致".into());
+    }
+    let from_version = source
+        .get("version")
+        .and_then(Value::as_str)
+        .unwrap_or("1.0.0")
+        .to_string();
+    let to_version = next_major_version(&from_version)?;
+    let migrated = migrated_v3_manifest(&source, &to_version)?;
+    validate_migration_candidate(theme_dir, &migrated)?;
+
+    let mut actions = vec![
+        "将跨宿主视觉字段移入 shared".into(),
+        "显式声明 doubao、doubao-work、workbuddy 三个目标".into(),
+        format!("主题版本从 {from_version} 提升为 {to_version}"),
+        "将来源和许可证字段归并到 provenance".into(),
+    ];
+    let legacy_css = theme_dir.join("theme.css");
+    if legacy_css.is_file() {
+        actions.push("移除由结构化视觉和可信宿主适配器替代的旧 theme.css".into());
+    }
+    if write {
+        let next_manifest = theme_dir.join(".theme.json.v3-next");
+        let serialized = format!(
+            "{}\n",
+            serde_json::to_string_pretty(&migrated)
+                .map_err(|error| format!("无法生成 v3 theme.json：{error}"))?
+        );
+        fs::write(&next_manifest, serialized)
+            .map_err(|error| format!("无法写入迁移结果：{error}"))?;
+        fs::rename(&next_manifest, &manifest_path)
+            .map_err(|error| format!("无法替换 theme.json：{error}"))?;
+        if legacy_css.is_file() {
+            fs::remove_file(&legacy_css)
+                .map_err(|error| format!("无法移除旧 theme.css：{error}"))?;
+        }
+        check(theme_dir)?;
+    }
+    Ok(MigrationReport {
+        id: id.to_string(),
+        from_schema_version,
+        to_schema_version: 3,
+        from_version,
+        to_version,
+        targets: ThemeTarget::ALL
+            .into_iter()
+            .map(|target| target.as_str().to_string())
+            .collect(),
+        actions,
+        warnings: vec!["自动迁移只证明包契约有效；三个应用的真实窗口仍需分别验收".into()],
+        written: write,
+    })
+}
+
+fn next_major_version(version: &str) -> Result<String, String> {
+    if !valid_semver(version) {
+        return Err("主题版本不是有效 SemVer".into());
+    }
+    let major = version
+        .split('.')
+        .next()
+        .and_then(|value| value.parse::<u64>().ok())
+        .ok_or_else(|| "主题版本不是有效 SemVer".to_string())?;
+    Ok(format!("{}.0.0", major + 1))
+}
+
+fn migrated_v3_manifest(source: &Value, version: &str) -> Result<Value, String> {
+    let object = source
+        .as_object()
+        .ok_or_else(|| "theme.json 顶层必须是对象".to_string())?;
+    let mut manifest = serde_json::Map::new();
+    manifest.insert(
+        "$schema".into(),
+        Value::String("../../design/theme-standard/theme-v3.schema.json".into()),
+    );
+    manifest.insert("schemaVersion".into(), Value::from(3));
+    for key in ["id", "name", "description", "author", "preview", "store"] {
+        if let Some(value) = object.get(key) {
+            manifest.insert(key.into(), value.clone());
+        }
+    }
+    manifest.insert("version".into(), Value::String(version.into()));
+
+    let mut shared = serde_json::Map::new();
+    for key in [
+        "appearance",
+        "surfaceOpacity",
+        "typography",
+        "layout",
+        "composer",
+        "content",
+        "icons",
+        "effects",
+        "variants",
+    ] {
+        if let Some(value) = object.get(key) {
+            shared.insert(key.into(), value.clone());
+        }
+    }
+    if !shared.contains_key("composer") {
+        if let Some(value) = source.pointer("/variants/light/composer") {
+            shared.insert("composer".into(), value.clone());
+        }
+    }
+    if !shared.contains_key("content") {
+        if let Some(value) = source.pointer("/variants/light/content") {
+            shared.insert("content".into(), value.clone());
+        }
+    }
+    if let Some(composer) = shared.get_mut("composer").and_then(Value::as_object_mut) {
+        composer.entry("radius").or_insert_with(|| Value::from(18));
+    }
+    if let Some(background) = object.get("background") {
+        let mut normalized = match background {
+            Value::String(path) => json!({
+                "type": "image",
+                "src": path,
+                "fit": "cover",
+                "position": "center",
+                "opacity": 1,
+                "veil": object.get("veil").and_then(Value::as_f64).unwrap_or(0.0),
+                "blur": 0,
+                "animation": "none",
+                "durationSeconds": 20
+            }),
+            Value::Object(_) => background.clone(),
+            _ => return Err("background 必须是路径或对象".into()),
+        };
+        if normalized.get("veil").is_none() {
+            if let Some(veil) = object.get("veil") {
+                normalized["veil"] = veil.clone();
+            }
+        }
+        shared.insert("background".into(), normalized);
+        if shared.get("appearance").and_then(Value::as_str) == Some("both") {
+            let variants = shared
+                .entry("variants")
+                .or_insert_with(|| json!({"light": {}, "dark": {}}));
+            let variants = variants
+                .as_object_mut()
+                .ok_or_else(|| "variants 必须是对象".to_string())?;
+            let dark = variants.entry("dark").or_insert_with(|| json!({}));
+            let dark = dark
+                .as_object_mut()
+                .ok_or_else(|| "variants.dark 必须是对象".to_string())?;
+            let dark_background = dark.entry("background").or_insert_with(|| json!({}));
+            let dark_background = dark_background
+                .as_object_mut()
+                .ok_or_else(|| "variants.dark.background 必须是对象".to_string())?;
+            dark_background
+                .entry("veil")
+                .or_insert_with(|| Value::from(0.58));
+        }
+    }
+    manifest.insert("shared".into(), Value::Object(shared));
+    manifest.insert(
+        "targets".into(),
+        json!({"doubao": {}, "doubao-work": {}, "workbuddy": {}}),
+    );
+
+    let mut provenance = serde_json::Map::new();
+    for key in [
+        "inspiredBy",
+        "derivedFrom",
+        "sourceUrl",
+        "sourceCommit",
+        "sourceVersion",
+        "sourceAccessedAt",
+        "sourceDownloads",
+        "sourceEvidence",
+        "sourceLicense",
+        "sourceRank",
+        "sourceSnapshot",
+        "license",
+        "artwork",
+    ] {
+        if let Some(value) = object.get(key) {
+            provenance.insert(key.into(), value.clone());
+        }
+    }
+    if !provenance.is_empty() {
+        manifest.insert("provenance".into(), Value::Object(provenance));
+    }
+    Ok(Value::Object(manifest))
+}
+
+fn validate_migration_candidate(theme_dir: &Path, manifest: &Value) -> Result<(), String> {
+    let temporary = std::env::temp_dir().join(format!(
+        "doubao-theme-migrate-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    let id = manifest["id"]
+        .as_str()
+        .ok_or_else(|| "迁移结果缺少 id".to_string())?;
+    let destination = temporary.join(id);
+    fs::create_dir_all(&destination).map_err(|error| format!("无法准备迁移校验目录：{error}"))?;
+    let result = (|| {
+        copy_migration_resources(theme_dir, &destination)?;
+        fs::write(
+            destination.join("theme.json"),
+            format!(
+                "{}\n",
+                serde_json::to_string_pretty(manifest)
+                    .map_err(|error| format!("无法生成迁移结果：{error}"))?
+            ),
+        )
+        .map_err(|error| format!("无法写入迁移校验文件：{error}"))?;
+        check_v3(&destination, manifest).map(|_| ())
+    })();
+    let _ = fs::remove_dir_all(&temporary);
+    result
+}
+
+fn copy_migration_resources(source: &Path, destination: &Path) -> Result<(), String> {
+    for entry in fs::read_dir(source).map_err(|error| format!("无法读取主题文件夹：{error}"))?
+    {
+        let entry = entry.map_err(|error| format!("无法读取主题文件：{error}"))?;
+        let name = entry.file_name();
+        if matches!(name.to_str(), Some("theme.json" | "theme.css")) {
+            continue;
+        }
+        let target = destination.join(&name);
+        if entry
+            .file_type()
+            .map_err(|error| format!("无法读取主题资源：{error}"))?
+            .is_dir()
+        {
+            fs::create_dir_all(&target)
+                .map_err(|error| format!("无法准备主题资源目录：{error}"))?;
+            copy_migration_resources(&entry.path(), &target)?;
+        } else {
+            fs::copy(entry.path(), target).map_err(|error| format!("无法复制主题资源：{error}"))?;
+        }
+    }
+    Ok(())
 }
 
 pub fn create(theme_dir: &Path, options: &CreateOptions) -> Result<CheckReport, String> {
@@ -91,21 +388,56 @@ pub fn create(theme_dir: &Path, options: &CreateOptions) -> Result<CheckReport, 
     validate_text("主题描述", &options.description, 1, 80)?;
     validate_text("作者", &options.author, 1, 40)?;
     let accent = parse_hex_color(&options.accent)?;
+    if options.targets.is_empty() {
+        return Err("至少需要显式选择一个目标应用".into());
+    }
 
     let created_dir = !theme_dir.exists();
     fs::create_dir_all(theme_dir).map_err(|e| format!("无法创建主题文件夹：{e}"))?;
     let result = (|| {
+        let dark_accent = hex(mix(accent, [255, 255, 255], 0.16));
         let variants = match options.appearance {
-            Appearance::Both => Some(json!({"light": {}, "dark": {}})),
+            Appearance::Both => Some(json!({
+                "light": {},
+                "dark": {
+                    "composer": {
+                        "background": "rgba(34,37,45,0.96)",
+                        "border": format!("1px solid {}", hex(mix(accent, [255, 255, 255], 0.42))),
+                        "textColor": "#f2f4f8",
+                        "placeholderColor": "rgba(242,244,248,0.58)",
+                        "caretColor": dark_accent,
+                        "iconColor": "rgba(242,244,248,0.82)",
+                        "sendButtonBackground": dark_accent,
+                        "sendButtonIconColor": "#ffffff"
+                    },
+                    "content": {
+                        "chatBackground": "#111318",
+                        "userMessageBackground": dark_accent,
+                        "userMessageText": "#ffffff",
+                        "assistantMessageBackground": "#22252d",
+                        "assistantMessageText": "#f2f4f8",
+                        "codeBackground": "#191c22",
+                        "codeHeaderBackground": "#252934",
+                        "selectionColor": format!("{}52", dark_accent),
+                        "scrollbarColor": "rgba(242,244,248,0.24)",
+                        "scrollbarHoverColor": "rgba(242,244,248,0.42)"
+                    }
+                }
+            })),
             Appearance::Light | Appearance::Dark => None,
         };
+        let targets = options
+            .targets
+            .iter()
+            .map(|target| (target.as_str().to_string(), json!({})))
+            .collect::<serde_json::Map<_, _>>();
         let mut manifest = json!({
-            "$schema": "../../design/theme-standard/theme-v2.schema.json",
-            "schemaVersion": 2,
+            "$schema": "../../design/theme-standard/theme-v3.schema.json",
+            "schemaVersion": 3,
             "id": id,
             "name": options.name.trim(),
             "description": options.description.trim(),
-            "version": "1.0.0",
+            "version": "2.0.0",
             "author": options.author.trim(),
             "preview": {
                 "image": "preview.jpg",
@@ -118,37 +450,87 @@ pub fn create(theme_dir: &Path, options: &CreateOptions) -> Result<CheckReport, 
                 "tags": [if options.appearance == Appearance::Dark { "深色" } else { "浅色" }],
                 "sortOrder": 900,
             },
-            "appearance": options.appearance.manifest_value(),
-            "typography": {
-                "ui": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
-                "body": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
-                "code": "\"SFMono-Regular\", Menlo, monospace",
-                "scale": 1,
-                "lineHeight": 1.6,
+            "shared": {
+                "appearance": options.appearance.manifest_value(),
+                "surfaceOpacity": 1,
+                "typography": {
+                    "ui": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
+                    "body": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
+                    "code": "\"SFMono-Regular\", Menlo, monospace",
+                    "scale": 1,
+                    "lineHeight": 1.6
+                },
+                "layout": {
+                    "density": "comfortable",
+                    "sidebarWidth": 252,
+                    "chatMaxWidth": 920,
+                    "composerMaxWidth": 760,
+                    "selfMessageMaxWidth": 420,
+                    "chatMargin": 28
+                },
+                "composer": {
+                    "background": "#ffffff",
+                    "border": format!("1px solid {}", hex(mix(accent, [255, 255, 255], 0.64))),
+                    "textColor": "#2d313a",
+                    "placeholderColor": "rgba(45,49,58,0.56)",
+                    "caretColor": hex(accent),
+                    "iconColor": "rgba(45,49,58,0.78)",
+                    "sendButtonBackground": hex(accent),
+                    "sendButtonIconColor": "#ffffff",
+                    "radius": 18
+                },
+                "content": {
+                    "chatBackground": "#fafbfd",
+                    "userMessageBackground": hex(accent),
+                    "userMessageText": "#ffffff",
+                    "assistantMessageBackground": "#ffffff",
+                    "assistantMessageText": "#2d313a",
+                    "codeBackground": "#f4f6fa",
+                    "codeHeaderBackground": "#e9edf4",
+                    "selectionColor": format!("{}3d", hex(accent)),
+                    "scrollbarColor": "rgba(45,49,58,0.22)",
+                    "scrollbarHoverColor": "rgba(45,49,58,0.38)"
+                },
+                "effects": {
+                    "radiusScale": 1,
+                    "motion": "gentle",
+                    "transitionMs": 180
+                }
             },
-            "layout": {
-                "density": "comfortable",
-                "sidebarWidth": 252,
-                "chatMaxWidth": 920,
-                "composerMaxWidth": 760,
-                "selfMessageMaxWidth": 420,
-                "chatMargin": 28,
-            },
-            "effects": {
-                "radiusScale": 1,
-                "motion": "gentle",
-                "transitionMs": 180,
-            }
+            "targets": targets
         });
         if let Some(variants) = variants {
-            manifest["variants"] = variants;
+            manifest["shared"]["variants"] = variants;
+        }
+        if options.appearance == Appearance::Dark {
+            manifest["shared"]["composer"] = json!({
+                "background": "rgba(34,37,45,0.96)",
+                "border": format!("1px solid {}", hex(mix(accent, [255, 255, 255], 0.42))),
+                "textColor": "#f2f4f8",
+                "placeholderColor": "rgba(242,244,248,0.58)",
+                "caretColor": dark_accent,
+                "iconColor": "rgba(242,244,248,0.82)",
+                "sendButtonBackground": dark_accent,
+                "sendButtonIconColor": "#ffffff",
+                "radius": 18
+            });
+            manifest["shared"]["content"] = json!({
+                "chatBackground": "#111318",
+                "userMessageBackground": dark_accent,
+                "userMessageText": "#ffffff",
+                "assistantMessageBackground": "#22252d",
+                "assistantMessageText": "#f2f4f8",
+                "codeBackground": "#191c22",
+                "codeHeaderBackground": "#252934",
+                "selectionColor": format!("{}52", dark_accent),
+                "scrollbarColor": "rgba(242,244,248,0.24)",
+                "scrollbarHoverColor": "rgba(242,244,248,0.42)"
+            });
         }
         let manifest_text = serde_json::to_string_pretty(&manifest)
             .map_err(|e| format!("无法生成 theme.json：{e}"))?;
         fs::write(theme_dir.join("theme.json"), format!("{manifest_text}\n"))
             .map_err(|e| format!("无法写入 theme.json：{e}"))?;
-        fs::write(theme_dir.join("theme.css"), generated_css(id, accent))
-            .map_err(|e| format!("无法写入 theme.css：{e}"))?;
         render_preview(
             theme_dir.join("preview.jpg").as_path(),
             accent,
@@ -177,8 +559,14 @@ pub fn check(theme_dir: &Path) -> Result<CheckReport, String> {
     let object = manifest
         .as_object()
         .ok_or_else(|| "theme.json 顶层必须是对象".to_string())?;
-    if object.get("schemaVersion").and_then(Value::as_u64) != Some(2) {
-        return Err("新主题必须使用 schemaVersion 2".into());
+    if object.get("schemaVersion").and_then(Value::as_u64) == Some(3) {
+        return check_v3(theme_dir, &manifest);
+    }
+    if !matches!(
+        object.get("schemaVersion").and_then(Value::as_u64),
+        None | Some(1 | 2)
+    ) {
+        return Err("主题必须使用受支持的 schemaVersion".into());
     }
     let id = required_string(object.get("id"), "id")?;
     validate_kebab_id(id)?;
@@ -250,10 +638,67 @@ pub fn check(theme_dir: &Path) -> Result<CheckReport, String> {
 
     theme::load(theme_dir, theme_dir.to_string_lossy().as_ref())
         .map_err(|e| format!("主题无法加载：{e}"))?;
+    let validation = theme_package::validate_theme_package(theme_dir)
+        .map_err(|error| error.to_string())?
+        .report()
+        .map_err(|error| error.to_string())?;
     Ok(CheckReport {
         id: id.to_string(),
         files: files.into_iter().collect(),
+        validation,
     })
+}
+
+fn check_v3(theme_dir: &Path, manifest: &Value) -> Result<CheckReport, String> {
+    let package =
+        theme_package::validate_theme_package(theme_dir).map_err(|error| error.to_string())?;
+    let report = package.report().map_err(|error| error.to_string())?;
+    let mut files = BTreeSet::from([PathBuf::from("theme.json")]);
+    files.extend(report.resources.iter().map(PathBuf::from));
+    for optional in [
+        "icon.icns",
+        "README",
+        "README.md",
+        "LICENSE",
+        "LICENSE.md",
+        "LICENSE.txt",
+        "NOTICE",
+        "NOTICE.md",
+        "NOTICE.txt",
+    ] {
+        if theme_dir.join(optional).is_file() {
+            files.insert(validate_asset(theme_dir, optional, optional)?);
+        }
+    }
+    validate_preview_dimensions(theme_dir, manifest.pointer("/preview/image"))?;
+    if let Some(targets) = manifest.get("targets").and_then(Value::as_object) {
+        for target in targets.values() {
+            validate_preview_dimensions(theme_dir, target.pointer("/preview/image"))?;
+        }
+    }
+    theme::load(theme_dir, theme_dir.to_string_lossy().as_ref())
+        .map_err(|error| format!("主题无法加载：{error}"))?;
+    Ok(CheckReport {
+        id: package.id().to_string(),
+        files: files.into_iter().collect(),
+        validation: report,
+    })
+}
+
+fn validate_preview_dimensions(theme_dir: &Path, value: Option<&Value>) -> Result<(), String> {
+    let Some(relative) = value.and_then(Value::as_str) else {
+        return Ok(());
+    };
+    let path = theme_dir.join(validate_relative_path(relative, "预览图")?);
+    let dimensions = image::image_dimensions(&path)
+        .map_err(|error| format!("无法读取预览图 {}：{error}", path.display()))?;
+    if dimensions != (1200, 675) {
+        return Err(format!(
+            "预览图必须是 1200 × 675，当前为 {} × {}",
+            dimensions.0, dimensions.1
+        ));
+    }
+    Ok(())
 }
 
 pub fn preview(theme_dir: &Path) -> Result<PathBuf, String> {
@@ -613,16 +1058,6 @@ fn mix(color: [u8; 3], target: [u8; 3], amount: f32) -> [u8; 3] {
 
 fn hex(color: [u8; 3]) -> String {
     format!("#{:02x}{:02x}{:02x}", color[0], color[1], color[2])
-}
-
-fn generated_css(id: &str, accent: [u8; 3]) -> String {
-    let hover = hex(mix(accent, [255, 255, 255], 0.14));
-    let active = hex(mix(accent, [0, 0, 0], 0.16));
-    let disabled = hex(mix(accent, [128, 128, 128], 0.55));
-    format!(
-        "html[data-skin=\"{id}\"],\nhtml[data-skin=\"{id}\"] body {{\n  --dbx-bg-body-web: #f5f7fb;\n  --s-color-bg-body: #ffffff;\n  --semi-color-primary: {};\n  --semi-color-primary-hover: {hover};\n  --semi-color-primary-active: {active};\n  --semi-color-primary-disabled: {disabled};\n}}\n\nhtml[data-skin=\"{id}\"][data-theme=\"dark\"],\nhtml[data-skin=\"{id}\"][data-theme=\"dark\"] body {{\n  --dbx-bg-body-web: #17191f;\n  --s-color-bg-body: #111318;\n}}\n",
-        hex(accent)
-    )
 }
 
 fn render_preview(path: &Path, accent: [u8; 3], appearance: Appearance) -> Result<(), String> {

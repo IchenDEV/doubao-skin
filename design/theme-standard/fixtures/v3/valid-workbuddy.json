@@ -1,0 +1,44 @@
+{
+  "$schema": "../../../theme-v3.schema.json",
+  "schemaVersion": 3,
+  "id": "fixture-workbuddy",
+  "name": "工作伙伴示例",
+  "description": "仅支持 WorkBuddy 的最小结构化主题",
+  "version": "1.0.0",
+  "author": "豆皮",
+  "preview": {
+    "image": "preview.jpg",
+    "aspectRatio": "16:9",
+    "appearance": "light",
+    "accent": "#3370eb"
+  },
+  "shared": {
+    "appearance": "both",
+    "composer": {
+      "background": "#ffffff",
+      "border": "1px solid #d0d4dc",
+      "textColor": "#202124",
+      "placeholderColor": "#6f7480",
+      "caretColor": "#3370eb",
+      "iconColor": "#4f5663",
+      "sendButtonBackground": "#3370eb",
+      "sendButtonIconColor": "#ffffff",
+      "radius": 18
+    },
+    "content": {
+      "chatBackground": "#f7f8fa",
+      "userMessageBackground": "#3370eb",
+      "userMessageText": "#ffffff",
+      "assistantMessageBackground": "#ffffff",
+      "assistantMessageText": "#202124",
+      "codeBackground": "#f1f3f5",
+      "codeHeaderBackground": "#e8ebef",
+      "selectionColor": "rgba(51,112,235,0.24)",
+      "scrollbarColor": "rgba(32,33,36,0.24)",
+      "scrollbarHoverColor": "rgba(32,33,36,0.40)"
+    }
+  },
+  "targets": {
+    "workbuddy": {}
+  }
+}

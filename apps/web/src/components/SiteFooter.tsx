@@ -5,7 +5,7 @@ export default function SiteFooter() {
     <footer className="site-footer">
       <div className="wrap footer-inner">
         <p>
-          {SITE_NAME} · 当前支持 macOS 版「豆包」与「豆包工作」，Windows 版本稍后推出。非字节跳动官方产品，不修改两款官方安装包。
+          {SITE_NAME} · 当前适用于 macOS 版「豆包」「豆包工作」与 WorkBuddy，Windows 版本稍后推出。非官方产品，不修改原始应用安装包。
           主题与背景图遵循仓库 <a href={`${REPO_URL || "#"}`}>MIT License</a>。
         </p>
         <p className="footer-links">

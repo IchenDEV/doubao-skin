@@ -13,4 +13,6 @@ pub mod live;
 pub mod pak;
 pub mod protocol_bridge;
 pub mod theme;
+mod theme_css;
+pub mod theme_package;
 pub mod ws;
