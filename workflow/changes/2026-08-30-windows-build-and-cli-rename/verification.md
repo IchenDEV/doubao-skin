@@ -1,15 +1,15 @@
 ---
 id: "2026-08-30-windows-build-and-cli-rename"
 stage: verification
-status: pending
+status: passed
 owner: "Codex implementation agent"
 created: "2026-08-30"
 based_on: plan.md
-commit: "8d87cc1ff3aa069bf288f0a7611b388ce40a5603"
+commit: "8128a106d28222c6a5e76e1592a4032ce35156c9"
 risk: "critical"
-verification_mode: "human"
-verified_by: ""
-verified_at: ""
+verification_mode: "fresh-context"
+verified_by: "Codex fresh-context verifier"
+verified_at: "2026-08-31"
 ---
 
 # Verification: Windows native build and CLI rename
@@ -537,11 +537,12 @@ verified_at: ""
   now says the packages are built on native Windows runners and describes the
   CLI only as `doubao-skin`. A fresh tracked-source search finds no old CLI
   reference outside the accepted DOM attributes and Skill identifiers.
-- The existing record describes real-window x64 and ARM64 checks but does not
+- At that audit point, the existing record described real-window x64 and ARM64
+  checks but did not
   provide inspectable normal-and-narrow final-state evidence for the native UI
   change. The 1440x1000 and 390x844 evidence is for the Web guide, not the
-  native window. This remains an evidence gap under the repository's native UI
-  definition of done.
+  native window. This was recorded as an evidence gap under the repository's
+  native UI definition of done and is closed by the exact-build capture below.
 - The ARP fix, CHANGELOG correction, and `portability.sh` fallback were not
   present in the earlier audited run `33323010961`. They are committed in the
   follow-up and run `33326541149` now supplies replacement native Windows
@@ -600,20 +601,39 @@ verified_at: ""
 - `./scripts/check.sh rust` passes after the header fix, including all 12
   Desktop tests, 38 core tests, 13 Rust integration tests, formatting, and
   Clippy with warnings denied. A local macOS real-window pass also confirms the
-  traffic lights and `豆皮` brand retain their previous aligned spacing. A
-  native Windows CI rebuild and VM recapture of this newest executable remain
-  required before the final verdict can change.
+  traffic lights and `豆皮` brand retain their previous aligned spacing.
+- Native CI run
+  [`33369174227`](https://github.com/IchenDEV/doubao-skin/actions/runs/33369174227)
+  passed for exact HEAD `8128a106d28222c6a5e76e1592a4032ce35156c9`:
+  Development workflow, Rust, Web, and native Windows x64, x86, and ARM64 all
+  succeeded. GitHub artifact `Windows-native-arm64` (`9749454204`) is
+  12,012,870 bytes with enclosing SHA-256
+  `6b2d79920f2748c29ecf61c2ba0df540c8e4b2323a86d9a05b75579595fbd7ef`;
+  the independently downloaded file matched that exact digest.
+- That exact artifact was transferred into the existing Windows 11 ARM guest,
+  extracted, and launched after the previous Desktop process was stopped. At
+  the fixed supported window size of 1120x720, `豆皮` begins at the normal
+  content margin with no macOS traffic-light reservation. The Windows app icon
+  and native minimize/maximize/close controls remain present, all five bundled
+  theme thumbnails render, and the theme preview remains intact. The captured
+  final state is
+  [windows-arm64-header-ci-33369174227.png](evidence/windows-arm64-header-ci-33369174227.png).
+  Because the production window declares `is_resizable: false`, there is no
+  separate user-reachable narrow window size; the regression test still locks
+  both compact and normal padding branches to zero on Windows and preserves
+  both previous macOS values.
 
 ## Verdict
 
-The four reported compatibility defects passed a real-Windows x64 visual pass
-and remain protected by regression/package checks. The live-apply hang is
-traced to a Windows-incompatible WebSocket random source, repaired with native
-OS randomness, protected by regression tests, and rebuilt into all three
-single-entry Windows Desktop archives. The ARM64 VM now provides an additional
-real target-window pass for theme application and button state. Final verdict
-remains pending for the repository-mandated human or fresh-context verdict and
-inspectable normal-and-narrow evidence for the exact final native executable.
+The four reported compatibility defects passed real-Windows x64 and ARM64
+visual passes and remain protected by regression/package checks. The live-apply
+hang is traced to a Windows-incompatible WebSocket random source, repaired with
+native OS randomness, protected by regression tests, and rebuilt into all
+three single-entry Windows Desktop archives. The ARM64 VM now provides an
+additional real target-window pass for theme application and button state. The
+fresh-context final verdict is `passed`. The exact final native executable now
+has an inspectable fixed-size real-window capture; a separate narrow capture is
+not applicable because the production window is intentionally non-resizable.
 The current official ARM64 Doubao install still reports its own missing
 `mcp_helper.dll` when launched with CDP, but the target window and injection
 work after that official-client dialog is dismissed. The non-publishing
@@ -630,9 +650,7 @@ or target-specific adapters instead of leaking into portable theme and CLI
 operations. Packaging is exposed through one dispatcher with grouped internal
 scripts, and the obsolete macOS Windows-cross/GPUI-patch path is gone. All
 three native Windows CI jobs now pass and retain downloadable test artifacts.
-The file stays `pending` until a human or fresh-context verifier records the
-final verdict and closes or explicitly accepts the exact-executable size
-evidence gap. The protected Release dry run now proves
+This verification is `passed`; the protected Release dry run proves
 the signed release candidates and release path at `c757053`; a real version tag
 will rebuild the artifacts, which must still be downloaded and checked against
 the release checklist. Publication remains a separate human-controlled gate.
@@ -666,12 +684,29 @@ x86_64/ARM64 slices, strict ad-hoc hardened-runtime signature, and exact
 The audit also identified and then rechecked two corrections: exact version
 output is now a hard CI/Release assertion, and the changed critical artifacts
 were explicitly re-approved by `idevlab` on 2026-08-31. No remaining static
-implementation defect was reported; the unresolved items are the production
-signature/Release execution and native-window evidence described above.
+implementation defect was reported; at that audit point, the unresolved items
+were production-signature execution and native-window evidence.
 
 The later protected dry run `33329814684` resolves that audit's production-
-signature execution item without creating a tag or Release. Its remaining
-current-change verdict dependencies are the native-window evidence and final
-human approval. Verification of the eventual tagged artifacts remains a later
-human-controlled production Release checklist item, not a prerequisite for
-this change's pre-merge verdict.
+signature execution item without creating a tag or Release. The exact-build
+native-window evidence and independent verdict below resolve the remaining
+pre-merge dependency. Verification of the eventual tagged artifacts remains a
+later human-controlled production Release checklist item, not a prerequisite
+for this change's pre-merge verdict.
+
+### Final independent fresh-context verdict on 2026-08-31
+
+`passed` for exact product HEAD
+`8128a106d28222c6a5e76e1592a4032ce35156c9`. CI run `33369174227` completed
+successfully across Development workflow, Rust, Web, and native Windows x64,
+x86, and ARM64. The independently downloaded ARM64 artifact matched SHA-256
+`6b2d79920f2748c29ecf61c2ba0df540c8e4b2323a86d9a05b75579595fbd7ef`;
+its Desktop sidecar, AArch64 GUI executable, icon resources, and GUI subsystem
+also passed inspection. The real Windows 11 ARM capture shows the exact build
+with zero macOS traffic-light inset while retaining the Windows app icon and
+native window controls. Production is fixed at 1120x720 with resizing disabled,
+so no separate user-reachable narrow state exists; regression tests still lock
+Windows compact and normal padding to zero and preserve both previous macOS
+values. The official ARM64 client's missing proprietary `mcp_helper.dll` and
+the future tagged-artifact checks remain documented external/production risks,
+not failures of this pre-merge change verification.
