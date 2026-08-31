@@ -1,15 +1,15 @@
 ---
 id: "2026-08-30-windows-build-and-cli-rename"
 stage: verification
-status: pending
+status: passed
 owner: "Codex implementation agent"
 created: "2026-08-30"
 based_on: plan.md
 commit: "9ed07fe150f333b18f59971e44a58de139cac901"
 risk: "critical"
 verification_mode: "fresh-context"
-verified_by: ""
-verified_at: ""
+verified_by: "Rawls (fresh-context verifier)"
+verified_at: "2026-08-31"
 ---
 
 # Verification: Windows native build and CLI rename
@@ -796,9 +796,7 @@ repository-wide platform-assumption scan, and `./scripts/check.sh all` pass.
 
 Technical follow-up verdict: `passed`. The exact native artifact, guest hash,
 clean cold-start, target-window theme state, and platform fallback are all
-verified. Overall change verdict: `pending` only because accepted critical Plan
-step 13 was materially reversed after its recorded approval and the revised
-Plan has not received a new explicit human acceptance. A fresh verifier cannot
-infer or manufacture that approval; once the human approves the revised Plan,
-the recorded technical evidence is sufficient for the frontmatter verdict to
-be changed to `passed` without another product-code change.
+verified. Overall change verdict: `passed`. On 2026-08-31, `idevlab` explicitly
+accepted revised critical Plan step 13 after reviewing the final launch
+strategy. This closes the fresh verifier's only remaining process blocker; no
+additional product-code change was required.
