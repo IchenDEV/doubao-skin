@@ -197,14 +197,16 @@ fn applying_to_a_second_target_preserves_the_first_target_session() {
     let workbuddy_stop = Arc::new(AtomicBool::new(false));
     let doubao_stop = Arc::new(AtomicBool::new(false));
 
-    sessions.replace(
+    sessions.begin_applying(
         live::TargetApp::WorkBuddy,
         TargetSession::for_test("gallery-whale-maid", Some(0.68), 1, workbuddy_stop.clone()),
     );
-    sessions.replace(
+    assert!(sessions.mark_applied(live::TargetApp::WorkBuddy, 1));
+    sessions.begin_applying(
         live::TargetApp::Doubao,
         TargetSession::for_test("pure-dark", None, 2, doubao_stop),
     );
+    assert!(sessions.mark_applied(live::TargetApp::Doubao, 2));
 
     assert!(sessions.is_active(live::TargetApp::WorkBuddy, "gallery-whale-maid", Some(0.68),));
     assert!(sessions.is_active(live::TargetApp::Doubao, "pure-dark", None));
@@ -221,7 +223,7 @@ fn replacing_one_target_stops_only_its_previous_generation() {
     let current_workbuddy_stop = Arc::new(AtomicBool::new(false));
     let doubao_stop = Arc::new(AtomicBool::new(false));
 
-    sessions.replace(
+    sessions.begin_applying(
         live::TargetApp::WorkBuddy,
         TargetSession::for_test(
             "gallery-whale-maid",
@@ -230,22 +232,67 @@ fn replacing_one_target_stops_only_its_previous_generation() {
             old_workbuddy_stop.clone(),
         ),
     );
-    sessions.replace(
+    assert!(sessions.mark_applied(live::TargetApp::WorkBuddy, 1));
+    sessions.begin_applying(
         live::TargetApp::Doubao,
         TargetSession::for_test("pure-dark", None, 2, doubao_stop.clone()),
     );
-    sessions.replace(
+    assert!(sessions.mark_applied(live::TargetApp::Doubao, 2));
+    sessions.begin_applying(
         live::TargetApp::WorkBuddy,
         TargetSession::for_test("qq-light-blue", None, 3, current_workbuddy_stop.clone()),
     );
+    assert!(sessions.mark_applied(live::TargetApp::WorkBuddy, 3));
 
     assert!(old_workbuddy_stop.load(Ordering::Relaxed));
     assert!(!current_workbuddy_stop.load(Ordering::Relaxed));
     assert!(!doubao_stop.load(Ordering::Relaxed));
-    assert!(sessions
-        .take_if_generation(live::TargetApp::WorkBuddy, 1)
-        .is_none());
+    assert!(!sessions.complete_if_generation(live::TargetApp::WorkBuddy, 1));
     assert!(sessions.is_active(live::TargetApp::WorkBuddy, "qq-light-blue", None));
+    assert!(sessions.is_active(live::TargetApp::Doubao, "pure-dark", None));
+}
+
+#[test]
+fn restoring_one_target_blocks_only_that_target_until_completion() {
+    let mut sessions = ThemeSessions::default();
+    let workbuddy_stop = Arc::new(AtomicBool::new(false));
+
+    sessions.begin_applying(
+        live::TargetApp::WorkBuddy,
+        TargetSession::for_test("gallery-whale-maid", Some(0.68), 1, workbuddy_stop.clone()),
+    );
+    assert!(sessions.mark_applied(live::TargetApp::WorkBuddy, 1));
+
+    let previous = sessions.begin_restoring(live::TargetApp::WorkBuddy, 2);
+    assert!(previous.is_some());
+    assert!(workbuddy_stop.load(Ordering::Relaxed));
+    assert!(sessions.is_busy(live::TargetApp::WorkBuddy));
+    assert!(!sessions.is_busy(live::TargetApp::Doubao));
+    assert!(!sessions.is_active(live::TargetApp::WorkBuddy, "gallery-whale-maid", Some(0.68),));
+}
+
+#[test]
+fn completion_generation_is_scoped_to_its_target() {
+    let mut sessions = ThemeSessions::default();
+
+    sessions.begin_applying(
+        live::TargetApp::WorkBuddy,
+        TargetSession::for_test(
+            "gallery-whale-maid",
+            Some(0.68),
+            1,
+            Arc::new(AtomicBool::new(false)),
+        ),
+    );
+    assert!(sessions.mark_applied(live::TargetApp::WorkBuddy, 1));
+    sessions.begin_applying(
+        live::TargetApp::Doubao,
+        TargetSession::for_test("pure-dark", None, 2, Arc::new(AtomicBool::new(false))),
+    );
+    assert!(sessions.mark_applied(live::TargetApp::Doubao, 2));
+
+    assert!(sessions.complete_if_generation(live::TargetApp::WorkBuddy, 1));
+    assert!(!sessions.is_active(live::TargetApp::WorkBuddy, "gallery-whale-maid", Some(0.68),));
     assert!(sessions.is_active(live::TargetApp::Doubao, "pure-dark", None));
 }
 

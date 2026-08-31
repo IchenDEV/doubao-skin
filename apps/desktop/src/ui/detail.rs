@@ -188,6 +188,7 @@ impl SkinApp {
     ) -> gpui::AnyElement {
         let colors = self.colors;
         let l = t();
+        let busy = self.theme_sessions.is_busy(self.selected_target);
         div()
             .flex()
             .items_center()
@@ -211,10 +212,16 @@ impl SkinApp {
                     .bg(rgb(colors.control))
                     .text_sm()
                     .text_color(rgb(colors.text))
-                    .cursor_pointer()
-                    .hover(|style| style.bg(rgb(colors.hover)))
+                    .opacity(if busy { 0.72 } else { 1.0 })
                     .child(l.action_restore_default)
-                    .on_click(cx.listener(|this, _event, _window, cx| this.restore_default(cx))),
+                    .when(!busy, |button| {
+                        button
+                            .cursor_pointer()
+                            .hover(|style| style.bg(rgb(colors.hover)))
+                            .on_click(
+                                cx.listener(|this, _event, _window, cx| this.restore_default(cx)),
+                            )
+                    }),
             )
             .child(
                 div()
@@ -240,15 +247,13 @@ impl SkinApp {
                     .text_sm()
                     .font_weight(FontWeight::SEMIBOLD)
                     .text_color(rgb(0xffffff))
-                    .opacity(
-                        if self.applying || active || !target_installed || !theme_supported {
-                            0.72
-                        } else {
-                            1.0
-                        },
-                    )
+                    .opacity(if busy || active || !target_installed || !theme_supported {
+                        0.72
+                    } else {
+                        1.0
+                    })
                     .when(
-                        !self.applying && !active && target_installed && theme_supported,
+                        !busy && !active && target_installed && theme_supported,
                         |button| {
                             button
                                 .cursor_pointer()
@@ -264,7 +269,7 @@ impl SkinApp {
                         l.not_installed_target
                     } else if !theme_supported {
                         "主题不兼容"
-                    } else if self.applying {
+                    } else if busy {
                         l.action_applying
                     } else if active {
                         l.action_in_use

@@ -24,7 +24,7 @@ approved_at: "2026-08-31"
 8. WorkBuddy 专用样式必须至少覆盖应用根背景、左侧导航、主内容面板、输入区、常规按钮/选中态、弹层、文本、代码块、选择色和滚动条，同时保持产品布局、交互热区和可访问名称不变。具体选择器必须来自获批后对真实 WorkBuddy 5.3.14 CDP DOM 的只读探测。
 9. WorkBuddy 首版不得执行主题图标替换或品牌图替换，也不得给其 DOM 写入 `data-doubao-theme-icon`。背景层和输入区标记仍只能使用工具自有、可完整清理的运行时节点/属性。
 10. 「恢复默认」必须在当前 WorkBuddy 目标页调用运行时 `destroy()`，移除工具注入的 style、backdrop 和自有标记，并恢复注入前的 root/body 主题属性；不得写 WorkBuddy 的 localStorage、IndexedDB、设置文件或 app bundle。
-11. 桌面端必须将 active theme 与目标应用一起判定。切换目标时先停止旧 watcher 并尽力清理旧目标，再切换上下文；一款应用的已应用状态不得显示到另一款。
+11. 桌面端必须将 active theme、apply/restore 操作和 watcher 与目标应用一起判定。切换目标只改变桌面端上下文，不停止或清理其他目标的已应用主题；同一目标的 apply/restore 必须串行，不同目标可以各自保持 watcher。一款应用的已应用状态、完成消息或失败消息不得显示到另一款。
 12. 新增 WorkBuddy 支持不得改变协议桥边界；`protocol_bridge` 继续只使用「豆包工作」目标及其既有端口和 URL 约束。
 
 ## User experience
@@ -84,7 +84,7 @@ approved_at: "2026-08-31"
 1. WorkBuddy 5.3.14 未运行时，获批后的隔离探针能用 `127.0.0.1:9224` 启动它，`/json` 至少出现一个严格匹配主 renderer 的 page target；错误端口、只有普通 `file://` 页面或其他应用页面时必须拒绝。
 2. WorkBuddy 已运行但没有正确调试端口时，第一次应用不会退出它；只有点击「重启 WorkBuddy 并应用」后才重启。验证中记录重启前后主进程身份，并确认不以宽泛 `Electron` 匹配终止其他应用。
 3. 用户主动退出已应用主题的 WorkBuddy 后，工具不会自动重启它；界面说明需重新应用。「豆包」和「豆包工作」的既有 watcher 行为不变。
-4. 三目标安装检测、偏好回退、目标切换、active theme 隔离、`Command-1/2/3`、VoiceOver 名称及未安装状态均有回归测试，并在正常/720 px 窗口中可用。
+4. 三目标安装检测、偏好回退、目标切换、active theme 隔离、并行 watcher、同目标 apply/restore 串行、按目标 generation 完成消息、`Command-1/2/3`、VoiceOver 名称及未安装状态均有回归测试，并在正常/720 px 窗口中可用。
 5. WorkBuddy 目标只允许 v2 主题应用；v1 主题显示明确的不兼容状态。生成的注入脚本包含 `TARGET="workbuddy"` 和 WorkBuddy adapter，但不包含主题包原始 CSS、图标 data URI 或 `markIcons()` 执行路径。
 6. 至少使用一款浅色 v2 主题和一款深色 v2 主题，在 WorkBuddy 空白任务真实窗口验证左侧导航、主内容、输入区、按钮/选中态、弹层、文本、代码块、滚动条和可选背景层；正常与窄窗口均清晰可读且不改变布局/点击区域。
 7. WorkBuddy 页面刷新、打开新空白任务或内部导航后主题持续存在；普通网页、文档/webview、DevTools 和非主 renderer 不出现 `data-skin`、style 或 backdrop。
@@ -96,3 +96,5 @@ approved_at: "2026-08-31"
 ## Decision
 
 待产品负责人明确接受本 Spec 后进入 Plan；当前只记录已接受的 Intent 和待审 Spec，不修改产品代码，也不重启 WorkBuddy。
+
+2026-08-31 用户在真实使用中明确要求“修复 我无法同时给wb和豆包应用主题，切换后会失效”，该后续要求取代了原 Requirement 11 中“切换即清理旧目标”的行为；目标选择现仅切换管理上下文，恢复仍只作用于用户明确选择的目标。

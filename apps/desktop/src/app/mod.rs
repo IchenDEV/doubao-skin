@@ -43,7 +43,6 @@ pub struct SkinApp {
     pub(crate) search_active: bool,
     pub(crate) internal_logs: VecDeque<String>,
     pub(crate) message: String,
-    pub(crate) applying: bool,
     pub(crate) selected_target: live::TargetApp,
     pub(crate) restart_confirmation_target: Option<live::TargetApp>,
     pub(crate) surface_opacity: f32,
@@ -140,7 +139,6 @@ impl SkinApp {
             search_active: false,
             internal_logs: VecDeque::new(),
             message: String::new(),
-            applying: false,
             selected_target,
             restart_confirmation_target: None,
             surface_opacity,
@@ -159,10 +157,9 @@ impl SkinApp {
                 self.internal_logs.truncate(MAX_INTERNAL_LOGS);
             }
             Msg::Applied { target, generation }
-                if self.theme_sessions.generation_matches(target, generation) =>
+                if self.theme_sessions.mark_applied(target, generation) =>
             {
                 if self.selected_target == target {
-                    self.applying = false;
                     self.message = l.action_applied.into();
                 }
             }
@@ -173,12 +170,10 @@ impl SkinApp {
                 ok,
                 restoring,
             } => {
-                let current_session = self.theme_sessions.generation_matches(target, generation);
-                if current_session && (!ok || (ok && target == live::TargetApp::WorkBuddy)) {
-                    self.theme_sessions.take_if_generation(target, generation);
-                }
-                if self.selected_target == target && generation == self.generation {
-                    self.applying = false;
+                let current_operation = self
+                    .theme_sessions
+                    .complete_if_generation(target, generation);
+                if self.selected_target == target && current_operation {
                     if restoring && ok {
                         self.message = l.action_restored.into();
                     } else if ok && target == live::TargetApp::WorkBuddy {

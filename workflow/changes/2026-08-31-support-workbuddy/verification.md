@@ -53,6 +53,8 @@ verified_at: ""
 - `./scripts/check.sh rust` — 低边框正式修复最终 Gate passed；桌面 9 项、skin-core 32 项、authoring 7 项、bundled path 1 项、CLI 4 项及 examples/clippy 全部通过，仅保留既有 `block v0.1.6` future-incompatibility 提示。
 - `./scripts/check.sh workflow` — 低边框验收记录更新后 passed；15 组 artifact 与审批策略测试通过。
 - `git diff --check` — 低边框最终 passed。
+- 代码评审复现了两个多目标状态缺口：恢复线程未登记导致同目标 restore/run 可并发，以及另一个目标推进全局 generation 后 WorkBuddy 退出提示被吞。失败优先桌面测试在缺少 `begin_applying`、`begin_restoring`、`mark_applied` 和按目标 completion API 时编译失败；修复后 `cargo test -p doubao-skin-desktop ui_regression_tests --no-fail-fast` 15/15 passed。桌面现在按目标持有 `Applying / Active / Restoring` 状态，同目标操作串行、其他目标不受阻塞，WorkBuddy 完成消息只比较自己的 generation。
+- `./scripts/check.sh all` — 本次状态修复后 passed；workflow 18 组、桌面 15 项、skin-core 48 项、authoring 9 项、bundled path 3 项、CLI 4 项、v3 契约 12 项、Schema 2 项、examples/clippy、Web 16 项、TypeScript、42 页 Next build 和依赖审计均通过。既有 `block v0.1.6` future-incompatibility 提示保持不变。
 
 ## Behavioral evidence
 

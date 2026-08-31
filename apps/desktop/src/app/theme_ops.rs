@@ -24,7 +24,6 @@ impl SkinApp {
             cx.notify();
             return;
         }
-        self.applying = false;
         self.selected_target = target;
         save_target_preference(target);
         for row in &mut self.themes {
@@ -37,13 +36,13 @@ impl SkinApp {
     }
 
     pub(crate) fn apply_selected(&mut self, cx: &mut Context<Self>) {
-        if self.applying {
-            return;
-        }
         let Some(row) = self.themes.get(self.selected) else {
             return;
         };
         let target = self.selected_target;
+        if self.theme_sessions.is_busy(target) {
+            return;
+        }
         if !row.theme.supports_target(target) {
             self.restart_confirmation_target = None;
             self.message = format!("这个主题不支持{}", target.display_name());
@@ -98,11 +97,6 @@ impl SkinApp {
                 return;
             }
         }
-        let previous = self.theme_sessions.take(target);
-        if let Some(previous) = &previous {
-            previous.request_stop();
-        }
-        let previous_thread = previous.and_then(TargetSession::into_thread);
         let mut theme = row.theme.clone();
         if row.preview.has_background {
             theme.surface_opacity = Some(self.surface_opacity);
@@ -110,7 +104,7 @@ impl SkinApp {
         self.generation += 1;
         let generation = self.generation;
         let stop = Arc::new(AtomicBool::new(false));
-        self.theme_sessions.replace(
+        let previous = self.theme_sessions.begin_applying(
             target,
             TargetSession::pending(
                 theme.id.clone(),
@@ -119,7 +113,7 @@ impl SkinApp {
                 stop.clone(),
             ),
         );
-        self.applying = true;
+        let previous_thread = previous.and_then(TargetSession::into_thread);
         self.message = t().action_applying.into();
         self.restart_confirmation_target = None;
         let tx = self.tx.clone();
@@ -158,17 +152,16 @@ impl SkinApp {
     pub(crate) fn restore_default(&mut self, cx: &mut Context<Self>) {
         self.restart_confirmation_target = None;
         let target = self.selected_target;
-        let previous = self.theme_sessions.take(target);
-        if let Some(previous) = &previous {
-            previous.request_stop();
+        if self.theme_sessions.is_busy(target) {
+            return;
         }
-        let previous_thread = previous.and_then(TargetSession::into_thread);
         self.generation += 1;
         let generation = self.generation;
-        self.applying = true;
+        let previous = self.theme_sessions.begin_restoring(target, generation);
+        let previous_thread = previous.and_then(TargetSession::into_thread);
         self.message = t().action_restoring.into();
         let tx = self.tx.clone();
-        std::thread::spawn(move || {
+        let thread = std::thread::spawn(move || {
             if let Some(thread) = previous_thread {
                 let _ = thread.join();
             }
@@ -183,6 +176,8 @@ impl SkinApp {
                 restoring: true,
             });
         });
+        self.theme_sessions
+            .attach_thread(target, generation, thread);
         cx.notify();
     }
 

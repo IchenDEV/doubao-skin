@@ -80,8 +80,8 @@ ValidatedThemePackage.report() -> ValidationReport
 6. **接入桌面能力状态**
    - 把当前布尔 `supports_target` 迁移为统一 `TargetSupport`；保留一个方便调用的布尔方法，但文案和禁用原因来自结构化状态。
    - 删除“WorkBuddy 仅支持 v2 主题”等格式硬编码，改成对当前目标通用的“不支持当前应用”；详情可显示“专属适配”“支持”“兼容模式”。
-   - 切换目标时预览使用目标专用预览或通用回退；active theme 仍与 target 绑定。
-   - Gate：三目标主题筛选、可应用状态、VoiceOver 文本、Command-1/2/3、安装失败与目标切换纯函数/界面测试通过；正常和窄窗口实窗无截断。
+   - 切换目标时预览使用目标专用预览或通用回退；每个目标独立持有 apply/active/restore 状态、watcher 和 generation。切换管理上下文不停止其他目标；同一目标操作串行，恢复只清理明确选择的目标。
+   - Gate：三目标主题筛选、可应用状态、VoiceOver 文本、Command-1/2/3、安装失败、跨目标并行 watcher、同目标恢复/重应用串行与按目标完成消息测试通过；正常和窄窗口实窗无截断。
 
 7. **接入 Web 目录、筛选和权威打包**
    - Web 同步先构建/调用一次权威 `doubao-theme` CLI，对每个主题取得解析报告并用 CLI pack 生成 ZIP；删除 Node 直接 `zip -r` 整个目录和自行猜 v2 顶层字段的路径。
@@ -140,7 +140,7 @@ ValidatedThemePackage.report() -> ValidationReport
 - 180 场景使用固定无正文画面，至少包含侧栏、主内容、类型切换、输入区、常规/选中按钮、代码/弹层或相应可见替代、选区和滚动条。计算对比度与透明度探针辅助判断，但不替代肉眼截图检查。
 - 截图只保存在被 Git 忽略的 `work/verification/2026-08-31-theme-package-v3/`，文件名使用 `<theme>--<target>--<appearance>.png`；联系表可用于人工快速复核，仓库不提交官方界面资源或用户内容。
 - 视觉通过标准：正文对比度至少 4.5:1，大号文字 3:1；背景层不被白色宿主遮挡；该透明/不透明的表面层级一致；类型切换与按钮可读；侧栏不过度描边；没有主题 CSS 引起的布局移动或交互遮挡。
-- 恢复验证：每个目标在主题切换和最终退出时调用既有 `destroy()`，确认 style/backdrop/data attributes 与图标标记清零；WorkBuddy 用户退出后不被自动拉起。
+- 恢复验证：用户明确恢复某个目标或最终退出工具时，对相应目标调用既有 `destroy()`，确认 style/backdrop/data attributes 与图标标记清零；仅切换桌面端目标选择不触发恢复，WorkBuddy 用户退出后不被自动拉起。
 
 ## Risks and mitigations
 

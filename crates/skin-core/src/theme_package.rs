@@ -869,7 +869,7 @@ fn merge_value(base: &mut Value, overlay: Value) {
 }
 
 fn target_has_substantive_delta(shared: &Value, target: &Value) -> bool {
-    if target.get("preview").is_some() || !css_paths(target).unwrap_or_default().is_empty() {
+    if target.get("preview").is_some() || layer_has_css(target) {
         return true;
     }
     if target.get("appearance").and_then(Value::as_str)
@@ -893,6 +893,14 @@ fn target_has_substantive_delta(shared: &Value, target: &Value) -> bool {
         }
     }
     false
+}
+
+fn layer_has_css(layer: &Value) -> bool {
+    !css_paths(layer).unwrap_or_default().is_empty()
+        || [ThemePackageAppearance::Light, ThemePackageAppearance::Dark]
+            .into_iter()
+            .filter_map(|appearance| appearance_variant(layer, appearance))
+            .any(|variant| !css_paths(variant).unwrap_or_default().is_empty())
 }
 
 fn validate_minimum_semantics(visual: &Value) -> Result<(), ThemePackageError> {

@@ -16,7 +16,7 @@ approved_at: "2026-08-31"
 
 - `crates/skin-core/src/live.rs`：实现者负责 WorkBuddy 目标元数据、严格页面归属、准备状态、重启授权边界、watcher 端口丢失策略、恢复路径及同文件回归测试。
 - `crates/skin-core/src/theme.rs`：实现者负责 v2 主题目标能力判断、WorkBuddy adapter CSS、禁止原始豆包 CSS/图标注入及同文件回归测试。
-- `apps/desktop/src/main.rs`：实现者负责三目标偏好与选择器、`Command-3`、实验/版本提示、主题兼容状态、重启二次动作、active target 隔离及同文件 UI 状态测试。
+- `apps/desktop/src/app/`、`apps/desktop/src/ui/`：实现者负责三目标偏好与选择器、`Command-3`、实验/版本提示、主题兼容状态、重启二次动作，以及按目标持有 apply/active/restore 状态和 watcher；同一目标操作串行，不同目标互不清理，并以 UI 状态测试锁定。
 - `docs/architecture.md`、`README.md`、`README.en.md`、`CHANGELOG.md`：仅在真实探针和双主题实窗验证通过后，记录 WorkBuddy 的实验支持、已验证版本、重启影响和不支持范围；不得提前宣传已完成。
 - `workflow/changes/2026-08-31-support-workbuddy/verification.md`：实现者记录命令和证据；最终 `passed` verdict 由 fresh-context verifier 或人类验证者填写。
 - 上述实现文件相互依赖，保持顺序修改，不拆成并行工作；不得改动 `protocol_bridge.rs`、WorkBuddy app bundle、主题包内容或生成的 web catalog。
@@ -27,7 +27,7 @@ approved_at: "2026-08-31"
 2. **先锁定核心失败用例。** 在 `live.rs` 增加失败优先测试：三目标元数据/端口互异、WorkBuddy URL 规范化与拒绝普通 file/webview、错误端口所有者、`RestartConfirmationRequired`、`relaunch_after_port_loss=false`、精确进程模式和恢复边界。在 `theme.rs` 增加 v2 支持/v1 拒绝、target scope、无原始 CSS、无 icon runtime 的测试；在 `main.rs` 增加三目标默认/偏好/快捷键语义和 active target 隔离测试。**Gate：** 新增测试在缺少实现时以预期原因失败，既有测试仍通过。
 3. **实现最小 WorkBuddy 目标生命周期。** 只扩展现有 `TargetApp` 与 watcher：增加 WorkBuddy 常量和策略、严格身份函数、可测试的准备结果，并把实际退出/重启放到显式授权后的路径。端口已正确开放时直接复用；端口冲突不杀进程；用户主动关闭 WorkBuddy 后 watcher 正常结束且不拉起。豆包两目标沿用既有自动准备和端口丢失行为。**Gate：** `live.rs` 新旧测试通过，搜索确认没有宽泛 `pkill Electron` 或 WorkBuddy 协议桥引用。
 4. **实现 v2 WorkBuddy adapter。** 按目标生成注入 CSS；WorkBuddy 只从现有结构化 v2 字段映射基础颜色、字体、间距、输入区、代码、弹层、滚动条和背景层，所有规则以 `html[data-skin][data-skin-target=workbuddy]` 为根。探针发现的选择器只用于主 renderer 宿主层，避开 iframe/webview/文档画布；bootstrap 对 WorkBuddy 跳过图标标记。豆包继续使用当前原始主题 CSS 路径。**Gate：** 字符串/结构测试证明 WorkBuddy 脚本不含主题原始 CSS sentinel、图标 data URI 或执行中的 `markIcons()`，恢复脚本仍只触碰工具自有状态。
-5. **接入桌面端三目标体验。** 扩展安装检测、保存偏好、三段选择器、`Command-3` 和 WorkBuddy 预览身份；加入实验/版本提示、v1 不兼容状态和 WorkBuddy 重启二次动作。调用核心准备结果驱动 UI，不在界面复制进程/端口判断。正常与 720 px 布局都必须保留选择器、说明和主操作。**Gate：** 桌面状态测试及 Rust 小门禁通过，未安装/冲突/需重启/已就绪四类结果都有用户可执行文案。
+5. **接入桌面端三目标体验。** 扩展安装检测、保存偏好、三段选择器、`Command-3` 和 WorkBuddy 预览身份；加入实验/版本提示、v1 不兼容状态和 WorkBuddy 重启二次动作。调用核心准备结果驱动 UI，不在界面复制进程/端口判断。每个目标独立持有 `Applying / Active / Restoring` 状态和 watcher；目标选择不停止其他目标，同一目标恢复期间禁用重复 apply/restore，完成消息只匹配该目标 generation。正常与 720 px 布局都必须保留选择器、说明和主操作。**Gate：** 桌面状态测试及 Rust 小门禁通过，未安装/冲突/需重启/已就绪、跨目标并行和同目标串行均有回归测试及用户可执行文案。
 6. **真实应用闭环。** 构建并运行桌面工具，在没有敏感内容的 WorkBuddy 空白任务中依次验证一款浅色 v2 主题和一款深色 v2 主题：应用、主界面检查、打开新空白任务/内部导航、恢复默认、用户主动退出不重启、重新应用。任何再次重启前重新确认当下没有运行中任务。**Gate：** 两款主题均满足 Spec 的宿主表面覆盖，普通网页/文档/webview/非主 renderer 未注入，恢复完整；否则修复并重跑，不降低验收标准。
 7. **桌面工具视觉与回归。** 用真实桌面工具窗口检查正常和 720 px 宽度下的三段目标选择、未安装/选中/重启确认/实验提示，键盘与 VoiceOver 标签可辨；同时抽查「豆包」「豆包工作」目标选择与现有端口/恢复测试。**Gate：** 无截断、遮挡、错误激活态或既有目标回归。
 8. **文档、全量适用门禁与证据。** 只有前述 Gate 通过后更新架构、双语 README 和 CHANGELOG 的实验支持说明；运行 `cargo fmt --all -- --check`、`./scripts/check.sh rust`、`./scripts/check.sh workflow`、`git diff --check`，以及因实际文档/桌面改动需要的最小附加检查。创建并填写 `verification.md`，记录 WorkBuddy 版本、命令、结果、视觉证据路径、偏差和剩余风险。**Gate：** 所有适用检查通过，工作区无意外文件或专有/用户内容。
@@ -73,7 +73,7 @@ approved_at: "2026-08-31"
 
 ## Deviations
 
-当前无偏差。若真实探针发现主 URL、启动参数、监听地址、单实例行为或 DOM 边界与 Spec 不符，先同步 Intent/Spec/Plan 并重新取得受影响阶段的批准；不得以扩大 URL 匹配、改包、持久插件、全局 Electron kill 或读取用户内容作为临时绕过。
+用户后续明确要求 WorkBuddy 与豆包目标可以同时保持主题，取代原 Spec 中“切换目标即停止旧 watcher”的设计。实现改为按目标持有 live session，并在本次修复中进一步把 apply/restore 操作状态纳入同一目标状态机；该偏差不改变 CDP、重启授权、URL 身份或隐私边界。
 
 ## Decision
 

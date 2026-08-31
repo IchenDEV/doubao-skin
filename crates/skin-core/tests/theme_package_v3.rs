@@ -103,6 +103,29 @@ fn explicit_target_keys_are_the_only_support_source() {
 }
 
 #[test]
+fn target_variant_css_counts_as_tailored_support() {
+    let temp = TempRoot::new("target-variant-support");
+    let mut manifest = fixture("valid-all-targets.json");
+    manifest["targets"]["workbuddy"]["variants"] = serde_json::json!({
+        "dark": { "css": ["styles/workbuddy-dark.css"] }
+    });
+    let root = write_manifest_package(&temp, &manifest);
+    write_file(
+        &root,
+        "styles/workbuddy-dark.css",
+        r#"html[data-skin="fixture-all-targets"][data-skin-target="workbuddy"] {
+  color: #f7f8fa;
+}"#,
+    );
+
+    let package = validate_theme_package(&root).expect("target variant CSS should validate");
+    assert_eq!(
+        package.support(ThemeTarget::WorkBuddy).level,
+        SupportLevel::Tailored
+    );
+}
+
+#[test]
 fn workbuddy_must_explicitly_remove_inherited_theme_icons() {
     let temp = TempRoot::new("workbuddy-icons");
     let mut manifest = fixture("valid-all-targets.json");
