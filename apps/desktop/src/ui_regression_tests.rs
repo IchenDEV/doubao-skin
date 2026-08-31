@@ -8,6 +8,7 @@ use skin_core::theme_package::{SupportDeclaration, SupportLevel, TargetSupport};
 use skin_core::{live, theme};
 
 use crate::app::actions::application_menu;
+use crate::app::helpers::target_shortcut_for_platform;
 use crate::app::theme_sessions::{TargetSession, ThemeSessions};
 use crate::app::{
     initial_target, preview_identity, support_label, target_shortcut, uses_short_compact_layout,
@@ -131,7 +132,18 @@ fn preview_profile_uses_the_app_identity_instead_of_one_theme_name() {
         preview_identity(live::TargetApp::WorkBuddy).0,
         l.target_workbuddy
     );
-    assert_eq!(target_shortcut(live::TargetApp::WorkBuddy), "Command-3");
+    assert_eq!(
+        target_shortcut(live::TargetApp::WorkBuddy),
+        target_shortcut_for_platform(std::env::consts::OS, live::TargetApp::WorkBuddy)
+    );
+    assert_eq!(
+        target_shortcut_for_platform("windows", live::TargetApp::WorkBuddy),
+        "Ctrl-3"
+    );
+    assert_eq!(
+        target_shortcut_for_platform("macos", live::TargetApp::WorkBuddy),
+        "Command-3"
+    );
 }
 
 #[test]

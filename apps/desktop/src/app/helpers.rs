@@ -68,10 +68,17 @@ pub fn preview_identity(target: live::TargetApp) -> (&'static str, &'static str)
 }
 
 pub fn target_shortcut(target: live::TargetApp) -> &'static str {
-    match target {
-        live::TargetApp::Doubao => "Command-1",
-        live::TargetApp::DoubaoWork => "Command-2",
-        live::TargetApp::WorkBuddy => "Command-3",
+    target_shortcut_for_platform(std::env::consts::OS, target)
+}
+
+pub fn target_shortcut_for_platform(target_os: &str, target: live::TargetApp) -> &'static str {
+    match (target_os == "windows", target) {
+        (true, live::TargetApp::Doubao) => "Ctrl-1",
+        (true, live::TargetApp::DoubaoWork) => "Ctrl-2",
+        (true, live::TargetApp::WorkBuddy) => "Ctrl-3",
+        (false, live::TargetApp::Doubao) => "Command-1",
+        (false, live::TargetApp::DoubaoWork) => "Command-2",
+        (false, live::TargetApp::WorkBuddy) => "Command-3",
     }
 }
 

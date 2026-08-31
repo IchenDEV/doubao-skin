@@ -549,8 +549,8 @@ fn usage() -> &'static str {
   doubao-skin migrate-v3 <theme-dir> [--write]\n\
   doubao-skin pack <theme-dir> [output.doubao-skin.zip]\n\
   doubao-skin install <package>\n\
-  doubao-skin apply <theme> [--target doubao|doubao-work|workbuddy] [--watch]  # WorkBuddy 仅 macOS\n\
-  doubao-skin restore [--target doubao|doubao-work|workbuddy]                  # WorkBuddy 仅 macOS\n\
+  doubao-skin apply <theme> [--target doubao|doubao-work|workbuddy] [--watch]\n\
+  doubao-skin restore [--target doubao|doubao-work|workbuddy]\n\
   doubao-skin build <theme>                                        # 仅 macOS\n\
   doubao-skin remove-build                                         # 仅 macOS\n\
   doubao-skin --version\n\n\

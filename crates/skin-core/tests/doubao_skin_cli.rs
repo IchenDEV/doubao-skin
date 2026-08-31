@@ -54,6 +54,7 @@ fn help_and_argument_errors_use_the_stable_exit_contract() {
     ] {
         assert!(help_text.contains(command), "help is missing {command}");
     }
+    assert!(!help_text.contains("WorkBuddy 仅 macOS"));
 
     let unknown = run(&root, &["unknown", "--json"]);
     assert_eq!(unknown.status.code(), Some(2));

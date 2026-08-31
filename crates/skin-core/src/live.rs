@@ -9,7 +9,7 @@
 
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -23,19 +23,95 @@ pub const DEFAULT_PORT: u16 = 9222;
 pub const DOUBAO_PORT: u16 = 9223;
 pub const WORKBUDDY_PORT: u16 = 9224;
 
-const WORKBUDDY_RENDERER_URL: &str =
+const WORKBUDDY_MACOS_RENDERER_URL: &str =
     "file:///Applications/WorkBuddy.app/Contents/Resources/app.asar/renderer/index.html";
 
 const GENERIC_PAGE_PATTERNS: &[&str] = &["side_panel.html", "popup.html", "options.html"];
 const INITIAL_INJECTION_TIMEOUT: Duration = Duration::from_secs(30);
 
-fn ensure_live_supported(target_os: &str, target: TargetApp) -> Result<(), String> {
-    if target_os == "macos" || (target_os == "windows" && target != TargetApp::WorkBuddy) {
+fn ensure_live_supported(target_os: &str, _target: TargetApp) -> Result<(), String> {
+    if target_os == "macos" || target_os == "windows" {
         Ok(())
-    } else if target == TargetApp::WorkBuddy {
-        Err("WorkBuddy 实时主题目前仅支持 macOS".into())
     } else {
         Err("实时应用主题仅支持 macOS 和 Windows".into())
+    }
+}
+
+fn strict_percent_decode(value: &str) -> Option<String> {
+    fn hex_value(byte: u8) -> Option<u8> {
+        match byte {
+            b'0'..=b'9' => Some(byte - b'0'),
+            b'a'..=b'f' => Some(byte - b'a' + 10),
+            b'A'..=b'F' => Some(byte - b'A' + 10),
+            _ => None,
+        }
+    }
+
+    let bytes = value.as_bytes();
+    let mut decoded = Vec::with_capacity(bytes.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'%' {
+            let high = hex_value(*bytes.get(index + 1)?)?;
+            let low = hex_value(*bytes.get(index + 2)?)?;
+            decoded.push((high << 4) | low);
+            index += 3;
+        } else {
+            decoded.push(bytes[index]);
+            index += 1;
+        }
+    }
+    String::from_utf8(decoded).ok()
+}
+
+fn windows_file_url_path(url: &str) -> Option<String> {
+    let url = url.split(['?', '#']).next()?;
+    let prefix = url.get(..8)?;
+    if !prefix.eq_ignore_ascii_case("file:///") {
+        return None;
+    }
+    let path = strict_percent_decode(&url[8..])?;
+    if path.contains('\\')
+        || path
+            .split('/')
+            .any(|segment| segment == "." || segment == "..")
+    {
+        return None;
+    }
+    Some(path)
+}
+
+fn windows_workbuddy_renderer_path(binary: &Path) -> Option<String> {
+    let directory = binary.parent()?;
+    let path = directory.join("resources/app.asar/renderer/index.html");
+    Some(path.to_string_lossy().replace('\\', "/"))
+}
+
+fn matches_workbuddy_renderer_for_platform(
+    target_os: &str,
+    url: &str,
+    installed_binary: Option<&Path>,
+) -> bool {
+    match target_os {
+        "macos" => url.split(['?', '#']).next() == Some(WORKBUDDY_MACOS_RENDERER_URL),
+        "windows" => {
+            let Some(expected) = installed_binary.and_then(windows_workbuddy_renderer_path) else {
+                return false;
+            };
+            windows_file_url_path(url).is_some_and(|actual| actual.eq_ignore_ascii_case(&expected))
+        }
+        _ => false,
+    }
+}
+
+fn installed_workbuddy_binary_for_identity() -> Option<PathBuf> {
+    #[cfg(target_os = "windows")]
+    {
+        platform::installed_binary(TargetApp::WorkBuddy)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        None
     }
 }
 
@@ -131,7 +207,11 @@ impl TargetApp {
             Self::DoubaoWork => {
                 url.starts_with("doubaowork://") || url.starts_with("chrome://doubaowork-")
             }
-            Self::WorkBuddy => url.split(['?', '#']).next() == Some(WORKBUDDY_RENDERER_URL),
+            Self::WorkBuddy => matches_workbuddy_renderer_for_platform(
+                std::env::consts::OS,
+                url,
+                installed_workbuddy_binary_for_identity().as_deref(),
+            ),
         }
     }
 
@@ -862,13 +942,10 @@ mod tests {
     fn live_mode_reports_its_platform_boundary_before_using_app_paths() {
         assert!(ensure_live_supported("macos", TargetApp::WorkBuddy).is_ok());
         assert!(ensure_live_supported("windows", TargetApp::Doubao).is_ok());
+        assert!(ensure_live_supported("windows", TargetApp::WorkBuddy).is_ok());
         assert_eq!(
             ensure_live_supported("linux", TargetApp::Doubao).unwrap_err(),
             "实时应用主题仅支持 macOS 和 Windows"
-        );
-        assert_eq!(
-            ensure_live_supported("windows", TargetApp::WorkBuddy).unwrap_err(),
-            "WorkBuddy 实时主题目前仅支持 macOS"
         );
     }
 
@@ -974,6 +1051,57 @@ mod tests {
             assert!(!TargetApp::WorkBuddy.matches_identity_url(url), "{url}");
             assert!(!TargetApp::WorkBuddy.matches_page_url(url, true), "{url}");
         }
+    }
+
+    #[test]
+    fn windows_workbuddy_renderer_is_derived_from_the_installed_binary() {
+        let binary =
+            PathBuf::from("C:/Users/Wei Li/AppData/Local/Programs/WorkBuddy/WorkBuddy.exe");
+        for url in [
+            "file:///C:/Users/Wei%20Li/AppData/Local/Programs/WorkBuddy/resources/app.asar/renderer/index.html",
+            "file:///c:/users/wei%20li/appdata/local/programs/workbuddy/resources/app.asar/renderer/index.html#/home",
+            "file:///C:/Users/Wei%20Li/AppData/Local/Programs/WorkBuddy/resources/app.asar/renderer/index.html?source=launch#/home",
+        ] {
+            assert!(
+                matches_workbuddy_renderer_for_platform("windows", url, Some(&binary)),
+                "{url}"
+            );
+        }
+        for url in [
+            "file:///C:/Users/Other/AppData/Local/Programs/WorkBuddy/resources/app.asar/renderer/index.html",
+            "file:///C:/Users/Wei%20Li/AppData/Local/Programs/Other/resources/app.asar/renderer/index.html",
+            "file:///C:/Users/Wei%20Li/AppData/Local/Programs/WorkBuddy/resources/app.asar/renderer/other.html",
+            "file:///C:/Users/Wei%20Li/AppData/Local/Programs/WorkBuddy/other/../resources/app.asar/renderer/index.html",
+            "file:///C:/Users/Wei%ZZLi/AppData/Local/Programs/WorkBuddy/resources/app.asar/renderer/index.html",
+            "https://www.workbuddy.cn/space/home",
+            "devtools://devtools/bundled/inspector.html",
+            "chrome-extension://example/side_panel.html",
+        ] {
+            assert!(
+                !matches_workbuddy_renderer_for_platform("windows", url, Some(&binary)),
+                "{url}"
+            );
+        }
+        assert!(!matches_workbuddy_renderer_for_platform(
+            "windows",
+            "file:///C:/Users/Wei%20Li/AppData/Local/Programs/WorkBuddy/resources/app.asar/renderer/index.html",
+            None,
+        ));
+    }
+
+    #[test]
+    fn windows_workbuddy_renderer_decodes_utf8_paths_strictly() {
+        let binary = PathBuf::from("C:/Users/测试/AppData/Local/Programs/WorkBuddy/WorkBuddy.exe");
+        assert!(matches_workbuddy_renderer_for_platform(
+            "windows",
+            "file:///C:/Users/%E6%B5%8B%E8%AF%95/AppData/Local/Programs/WorkBuddy/resources/app.asar/renderer/index.html",
+            Some(&binary),
+        ));
+        assert!(!matches_workbuddy_renderer_for_platform(
+            "windows",
+            "file:///C:/Users/%FF/AppData/Local/Programs/WorkBuddy/resources/app.asar/renderer/index.html",
+            Some(&binary),
+        ));
     }
 
     #[test]
