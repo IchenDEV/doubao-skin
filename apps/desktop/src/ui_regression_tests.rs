@@ -13,7 +13,7 @@ use crate::i18n::t;
 use crate::preview::preview_rgba;
 use crate::ui::assets::local_image_source;
 use crate::ui::constants::*;
-use crate::ui::header_brand_padding;
+use crate::ui::{header_brand_padding, shows_auto_theme_controls};
 
 fn assert_close(actual: f32, expected: f32) {
     assert!((actual - expected).abs() < 0.0001, "{actual} != {expected}");
@@ -72,6 +72,13 @@ fn windows_header_does_not_reserve_macos_traffic_light_space() {
     assert_close(header_brand_padding("windows", false), 0.0);
     assert_close(header_brand_padding("macos", true), WINDOW_TITLE_X - 16.0);
     assert_close(header_brand_padding("macos", false), WINDOW_TITLE_X - 24.0);
+}
+
+#[test]
+fn automatic_theme_controls_are_visible_on_supported_desktop_platforms() {
+    assert!(shows_auto_theme_controls("macos"));
+    assert!(shows_auto_theme_controls("windows"));
+    assert!(!shows_auto_theme_controls("linux"));
 }
 
 #[test]

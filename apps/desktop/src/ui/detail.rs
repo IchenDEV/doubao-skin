@@ -5,6 +5,7 @@ use gpui::{div, prelude::*, px, rgb, Context, FontWeight, Role};
 use crate::app::SkinApp;
 use crate::i18n::t;
 use crate::preview::preview_rgba;
+use crate::ui::shows_auto_theme_controls;
 
 impl SkinApp {
     pub(crate) fn render_theme_detail(
@@ -55,7 +56,7 @@ impl SkinApp {
                 px(20.)
             })
             .child(self.render_preview(row, compact, short))
-            .when(cfg!(target_os = "macos"), |view| {
+            .when(shows_auto_theme_controls(std::env::consts::OS), |view| {
                 view.child(self.render_auto_theme_controls(cx))
             })
             .child(self.render_detail_actions(
