@@ -58,6 +58,12 @@ fn schema_is_valid_draft_2020_12_and_accepts_normative_examples() {
         "valid-full.json",
     ] {
         let manifest = read_json(&fixtures.join(name));
+        assert!(
+            manifest["id"]
+                .as_str()
+                .is_some_and(|id| id.starts_with("fixture-")),
+            "{name} must use a synthetic fixture id instead of shadowing a bundled theme"
+        );
         let errors = validator
             .iter_errors(&manifest)
             .map(|error| error.to_string())

@@ -37,7 +37,7 @@ The baseline digest covers current source state only. Later gates compare identi
 ### Contract and runtime slice
 
 - Added strict Draft 2020-12 schema and normative/mutation fixtures for v3. `cargo test -p skin-core --test theme_v3_schema` — 2/2 passed.
-- Added the `theme_package` deep module and CSS AST validator. `cargo test -p skin-core --test theme_package_v3` — 10/10 passed, covering explicit support, merge/null deletion, target appearance changes, effective CSS order, v1/v2 compatibility, future-schema rejection, exact-case/symlink/resource validation, and CSS scope/property/URL/at-rule/reserved-variable attacks.
+- Added the `theme_package` deep module and CSS AST validator. `cargo test -p skin-core --test theme_package_v3` — 11/11 passed, covering explicit support, merge/null deletion, target appearance changes, effective CSS order, WorkBuddy icon removal, v1/v2 compatibility, future-schema rejection, exact-case/symlink/resource validation, and CSS scope/property/URL/at-rule/reserved-variable attacks.
 - Parser dependencies compile and their redistribution notices are recorded: `lightningcss 1.0.0-alpha.72`, `parcel_selectors 0.28.3`, `jsonschema 0.52.1`, and `roxmltree 0.21.1`.
 - `cargo test -p skin-core --test authoring` — 9/9 passed. This includes v3 creation, dark-only base semantics, dry-run/write migration, deterministic contract files, preview regeneration, safety rejection, and no-overwrite behavior.
 - `cargo test -p skin-core --test doubao_skin_cli` — 4/4 passed. `create` requires explicit targets; `check`, `pack`, `install`, `apply`, `restore`, and `migrate-v3` retain stable JSON/exit contracts under the renamed `doubao-skin` CLI.
@@ -57,13 +57,17 @@ The baseline digest covers current source state only. Later gates compare identi
 - The migration removed the legacy root CSS files and retained cross-host visual/resource declarations in structured v3 fields. The main-branch PNG upgrade exposed a real compatibility gap: masking raster icons destroys their colors. The trusted runtime adapter now detects raster icon resources and renders them full-color without widening the untrusted v3 CSS whitelist or adding theme-ID branches.
 - A full Rust run exposed four expected migration-edge failures. Two old tests were updated from all-v2 to the final all-v3 invariant. The v3 backdrop test now verifies the absence of a second legacy gradient. The real icon-palette regression was fixed by keeping its target-scoped colors and moving SVG-image masking into the trusted engine adapter. v1/v2 compatibility remains locked by the synthetic legacy fixture.
 - v3 UI swatches now derive from trusted semantic CSS when a package has no declared CSS; legacy themes continue deriving swatches from their original CSS.
-- Final source shape is 34 v3 manifests and zero package CSS files. The four newly merged fan themes and the Snack/Dessert PNG upgrades retain their main-branch images and full-color icon resources.
+- A corrective migration audit found that the first v3 write had removed every legacy CSS file instead of preserving the v3-safe visual subset. Four regressions were locked before the repair: CSS preservation, synthetic fixture identity, explicit WorkBuddy icon removal, and bundled-source/package closure.
+- The repaired migrator parses legacy CSS, discards only v3-forbidden layout/interaction/URL/backdrop rules, rewrites every retained selector to explicit `doubao` and `doubao-work` scopes, and writes `styles/doubao-family.css`. Re-running it from the last complete v2 baseline produced 34/34 CSS files with no migration failure.
+- Declared custom-property comparison found 0 missing variables across all 34 themes. Legacy CSS totalled 258,699 bytes; the scoped output is 270,964 bytes because every selector has an explicit branch for both Doubao hosts. Runtime preview parsing was also fixed to recognize the quoted `data-theme="light|dark"` selectors emitted by the CSS serializer, restoring v2 preview colors instead of generic fallback colors.
+- Final source shape is 34 v3 manifests and 34 referenced `styles/doubao-family.css` files. All 34 Doubao and DoubaoWork targets reference their family CSS; no WorkBuddy target references it. All 30 icon-bearing themes explicitly set `targets.workbuddy.icons: null`, matching the runtime that does not mark WorkBuddy icons.
+- All referenced non-CSS assets remain byte-identical to the v2 baseline/main integration. The unreferenced `themes/gallery-whale-maid/icons/main.svg` was removed; the new bundled-source closure test requires every source file to be included in the validated package contract, preventing future orphan assets.
 
 ### Sample package closure
 
 - `gallery-whale-maid` is `schemaVersion: 3`, theme version `2.0.0`, preserves its ID/name/description/store order/provenance/preview/background/icon resources, declares all three targets, and removes the unreferenced root `theme.css`.
 - CLI report resolves light/dark for all three targets. Doubao and DoubaoWork are `shared / explicit`; WorkBuddy is `tailored / explicit` because it explicitly removes inherited icons.
-- The sample package contains only `theme.json`, `preview.jpg`, `bg.jpg`, and `icons/main.png`; the Rust packer, not Node `zip`, produced it.
+- The repaired sample package contains exactly `theme.json`, `preview.jpg`, `bg.jpg`, `icons/main.png`, and `styles/doubao-family.css`; the deleted orphan `icons/main.svg` is absent. The Rust packer, not Node `zip`, produced it.
 - A sample-only Web sync emitted the same target report into SQLite/catalog, produced one installable package, and passed the production Next build. Its source preview SHA-256 remained `d957dfa15e9a9d5123002748050c1a12cfcf1a2e1a0bf9cbc71b4c08da5fa6a5`; sync no longer rewrites author previews. The pre-test generated catalog was then restored; no partial v3 catalog remains checked in.
 - Full sync now succeeds for all 34 v3 themes without bypassing Rust validation. The tracked catalog output is a complete 34-theme v3 generation, not the earlier sample-only output.
 
@@ -72,15 +76,15 @@ The baseline digest covers current source state only. Later gates compare identi
 - `CODESIGN_IDENTITY=- BUNDLE_ALL_THEMES=1 ./scripts/package.sh desktop-macos --universal` and `CODESIGN_IDENTITY=- ./scripts/package.sh cli --universal-macos` completed. The App executable and standalone `doubao-skin` CLI are both universal `x86_64 arm64`; the CLI reports `doubao-skin 0.4.0`.
 - The App contains exactly 34 theme directories, 34 `schemaVersion: 3` manifests, and 34 explicit WorkBuddy target declarations. ZIP extraction and read-only DMG mounting each retained all 34 themes.
 - ZIP, DMG, and extracted/mounted App `codesign --verify --deep --strict` checks passed. ZIP and DMG integrity checks passed, and the DMG contains the expected `/Applications` link.
-- Test artifacts: `Doubao-Skin-macOS-universal.zip` (36,821,522 bytes, SHA-256 `786b1084e3289dadfe4986b1ba7ca1293ca080b59f63f40dbda852c5e3d796d5`), `Doubao-Skin-macOS-universal.dmg` (40,325,628 bytes, SHA-256 `35e01132fed4e6dd9fa4a55f57ab002649c068f7bc1b72b059fc6ae1b8792c98`), and `doubao-skin-cli-macOS-universal.tar.gz` (8,057,915 bytes, SHA-256 `5172cbf5939b5adbb0eb4db8654311c99c7d8b6a4991759e8d691898c303897a`).
+- Repaired test artifacts: `Doubao-Skin-macOS-universal.zip` (36,886,679 bytes, SHA-256 `b729ba2945a97be468fc8a8065b979c4a5235010de9698bcdb051b71db8cdbf4`), `Doubao-Skin-macOS-universal.dmg` (41,074,655 bytes, SHA-256 `a26997d17afd42452b1f5ccdfe18436a3598ad9e76657240b017c8045cb637ac`), and unchanged `doubao-skin-cli-macOS-universal.tar.gz` (8,057,915 bytes, SHA-256 `5172cbf5939b5adbb0eb4db8654311c99c7d8b6a4991759e8d691898c303897a`). ZIP integrity, DMG integrity, universal architecture, and strict App signature verification passed after rebuilding.
 - The configured long-lived certificate is present and its certificate fingerprint still matches `C37941DCA5C5E4FDAAB45685C803547EA3AFBCAD3E2534FE23FCA89F5839FC52`, but local `codesign` rejects it as an available identity. The test package therefore uses an explicit ad-hoc hardened-runtime signature (`Signature=adhoc`, no TeamIdentifier). This is acceptable only for local testing; it is not evidence for the stable-signature release gate.
 
 ## Visual evidence
 
 ### Website
 
-- Browser plugin path used at `http://127.0.0.1:3100/` with a sample-only generated catalog.
-- Desktop 1280 × 800: page identity, non-blank content, no framework overlay, no console warnings/errors, WorkBuddy filter URL (`?target=workbuddy#gallery`), selected state, card capability labels, detail capability labels, and archive support declaration passed.
+- Browser plugin path used at `http://127.0.0.1:3100/` with the complete repaired 34-theme catalog.
+- Desktop 1280 × 720: page identity, 34 cards, non-blank content, no framework overlay, no console warnings/errors, no broken images, no `fixture-full` leakage, WorkBuddy filter URL (`?target=workbuddy#gallery`), selected state, card capability labels, and whale detail capability labels passed.
 - Mobile 390 × 844: no horizontal overflow (`scrollWidth == clientWidth == 390`), theme card remains visible, filter trigger expands, WorkBuddy remains selected, and all target/type/series options remain keyboard-addressable links.
 - Browser evidence showed the intended low-interference chips: 豆包/豆包工作 “支持”, WorkBuddy “专属适配”.
 
@@ -91,8 +95,9 @@ The baseline digest covers current source state only. Later gates compare identi
 - DoubaoWork dark: passed after the composer surface fix. Computed composer values were `rgba(29, 31, 37, 0.76)`, `1px solid rgb(155, 122, 94)`, and `rgb(247, 248, 250)` text; an isolated composer screenshot contained no conversation content.
 - WorkBuddy light: passed visual inspection for background, sidebar/content hierarchy, controls, and composer.
 - WorkBuddy dark: passed after selecting the application's own `外观 -> 深色` setting. The native host reported `dark cb-dark vscode-dark`, persisted its appearance as `dark`, and retained that state while the theme was applied. The rendered window showed the whale background, solid dark sidebar, readable controls, white foreground text, and a dark composer surface; the composer ancestor resolved to `rgba(29, 31, 37, 0.87)`, a visible accent border, and `rgb(247, 248, 250)` text.
+- Corrective re-run with the rebuilt package passed on DoubaoWork light plus WorkBuddy light/dark. WorkBuddy runtime inspection reported the selected `gallery-whale-maid` target, one backdrop, zero icon markers, and no `doubao-family.css` marker in both appearances. This directly verifies that restored Doubao-family CSS does not leak into WorkBuddy and that inherited icon resources are not applied there.
 - A real defect found during this probe was fixed: a target preview marked light could make a resolved dark-only WorkBuddy payload emit `color-scheme: light`. Runtime now uses the resolved theme mode; the v3 runtime test locks both light and dark payloads.
-- Final restoration passed: DoubaoWork restored 3 responsive pages and WorkBuddy restored 1. Both subsequently reported no `data-skin`, no `data-skin-target`, no theme style, and no backdrop. WorkBuddy's appearance preference was also returned to its original light setting.
+- Final restoration passed: DoubaoWork restored 3 responsive pages and WorkBuddy restored 1. Both subsequently reported no `data-skin`, no `data-skin-target`, no theme style, no backdrop, and no icon markers. WorkBuddy's appearance preference was also returned to its original light setting.
 
 ## Security and privacy evidence
 

@@ -156,9 +156,19 @@
     ]
   },
   "targets": {
-    "doubao": {},
-    "doubao-work": {},
-    "workbuddy": {}
+    "doubao": {
+      "css": [
+        "styles/doubao-family.css"
+      ]
+    },
+    "doubao-work": {
+      "css": [
+        "styles/doubao-family.css"
+      ]
+    },
+    "workbuddy": {
+      "icons": null
+    }
   },
   "version": "2.0.0"
 }

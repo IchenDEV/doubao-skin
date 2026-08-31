@@ -23,6 +23,124 @@ pub(crate) enum CssFileScope {
     Targets(BTreeSet<ThemeTarget>),
 }
 
+/// Convert legacy v2 CSS into the visual-only, explicitly target-scoped subset
+/// accepted by v3. Structure, interaction, backdrop and icon-image rules are
+/// intentionally left to the trusted runtime adapters.
+pub(crate) fn migrate_legacy_doubao_css(source: &str, theme_id: &str) -> Result<String, String> {
+    let stylesheet = StyleSheet::parse(
+        source,
+        ParserOptions {
+            filename: "theme.css".into(),
+            error_recovery: false,
+            ..ParserOptions::default()
+        },
+    )
+    .map_err(|error| format!("旧 theme.css 语法无效：{}", error.kind))?;
+    let mut output =
+        "/* Migrated from v2 theme.css. Visual-only overrides for Doubao and DoubaoWork. */\n"
+            .to_string();
+    for rule in &stylesheet.rules.0 {
+        let CssRule::Style(style) = rule else {
+            if matches!(rule, CssRule::Ignored) {
+                continue;
+            }
+            return Err("旧 theme.css 包含不能安全自动迁移的 at-rule".into());
+        };
+        if !style.rules.0.is_empty() {
+            return Err("旧 theme.css 包含不能安全自动迁移的嵌套规则".into());
+        }
+
+        let mut declarations = Vec::new();
+        for (property, important) in style
+            .declarations
+            .declarations
+            .iter()
+            .map(|property| (property, false))
+            .chain(
+                style
+                    .declarations
+                    .important_declarations
+                    .iter()
+                    .map(|property| (property, true)),
+            )
+        {
+            let name = property.property_id().name().to_ascii_lowercase();
+            if !name.starts_with("--") && !is_allowed_visual_property(&name) {
+                continue;
+            }
+            let serialized = property
+                .to_css_string(important, PrinterOptions::default())
+                .map_err(|error| format!("无法序列化旧 CSS 属性 {name}：{error}"))?;
+            let lower = serialized.to_ascii_lowercase();
+            if lower.contains("url(") || lower.contains("--skin-bg-image") {
+                continue;
+            }
+            declarations.push(serialized);
+        }
+        if declarations.is_empty() {
+            continue;
+        }
+
+        let mut selectors = Vec::new();
+        for selector in &style.selectors.0 {
+            let serialized = selector
+                .to_css_string(PrinterOptions::default())
+                .map_err(|error| format!("无法序列化旧 CSS 选择器：{error}"))?;
+            selectors.push(scope_legacy_selector(
+                &serialized,
+                theme_id,
+                ThemeTarget::Doubao,
+            )?);
+            selectors.push(scope_legacy_selector(
+                &serialized,
+                theme_id,
+                ThemeTarget::DoubaoWork,
+            )?);
+        }
+        output.push_str(&selectors.join(",\n"));
+        output.push_str(" {\n  ");
+        output.push_str(&declarations.join(";\n  "));
+        output.push_str(";\n}\n");
+    }
+    Ok(output)
+}
+
+fn scope_legacy_selector(
+    selector: &str,
+    theme_id: &str,
+    target: ThemeTarget,
+) -> Result<String, String> {
+    if selector.contains("data-skin-target") {
+        return Err(format!(
+            "旧 theme.css 已包含宿主作用域，无法自动迁移：{selector}"
+        ));
+    }
+    let start = selector
+        .find("[data-skin]")
+        .or_else(|| selector.find("[data-skin="))
+        .ok_or_else(|| format!("旧 CSS 选择器缺少 html[data-skin] 根作用域：{selector}"))?;
+    if !selector[..start].trim_end().ends_with("html") {
+        return Err(format!(
+            "旧 CSS 选择器没有以 html[data-skin] 为根：{selector}"
+        ));
+    }
+    let end = selector[start..]
+        .find(']')
+        .map(|offset| start + offset + 1)
+        .ok_or_else(|| format!("旧 CSS 选择器的 data-skin 属性不完整：{selector}"))?;
+    let legacy_scope = &selector[start..end];
+    if legacy_scope != "[data-skin]" && !legacy_scope.contains(theme_id) {
+        return Err(format!("旧 CSS 选择器引用了其他主题 ID：{legacy_scope}"));
+    }
+    Ok(format!(
+        "{}[data-skin=\"{}\"][data-skin-target=\"{}\"]{}",
+        &selector[..start],
+        theme_id,
+        target.as_str(),
+        &selector[end..]
+    ))
+}
+
 pub(crate) fn validate_css_file(
     path: &Path,
     theme_id: &str,

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-31T07:14:47.648Z",
+  "generatedAt": "2026-08-31T08:12:52.080Z",
   "themes": [
     {
       "id": "violet-night",
@@ -22,11 +22,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -34,11 +38,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -50,7 +58,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/violet-night.preview.jpg",
@@ -58,8 +66,8 @@
       "iconUrl": "/themes/violet-night.icon.svg",
       "accent": "#8d6fd3",
       "packageUrl": "/themes/packages/violet-night.doubao-skin.zip",
-      "sha256": "e90f491fd44993af1b161d9705c66326babc576374be8b2c2ec0ef3e8542bb54",
-      "packageSize": 20602
+      "sha256": "27c32aa013b91f688c1a9d4c85fc033b4bd08948d9b775bd73d2ab81d7a85d29",
+      "packageSize": 22545
     },
     {
       "id": "ocean-cyan",
@@ -81,11 +89,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -93,11 +105,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -109,7 +125,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/ocean-cyan.preview.jpg",
@@ -117,8 +133,8 @@
       "iconUrl": "/themes/ocean-cyan.icon.svg",
       "accent": "#1f8c9b",
       "packageUrl": "/themes/packages/ocean-cyan.doubao-skin.zip",
-      "sha256": "0d273f03b47cf0f5b15aa943635532a0f4a7f26bca600c081d524eb0e7ad0743",
-      "packageSize": 21100
+      "sha256": "572963e83ad88f4204a84d0c0cecd8132e740db1b66b14eaa82c707dea9907b4",
+      "packageSize": 23024
     },
     {
       "id": "forest",
@@ -140,11 +156,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -152,11 +172,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -168,7 +192,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/forest.preview.jpg",
@@ -176,8 +200,8 @@
       "iconUrl": "/themes/forest.icon.svg",
       "accent": "#368f5e",
       "packageUrl": "/themes/packages/forest.doubao-skin.zip",
-      "sha256": "bc7ef88171b2855ad265de53278b336338d89375e5124ef1a63d48c4df2d2a03",
-      "packageSize": 19799
+      "sha256": "7e6036ba7156e69a2a5a5a33c0bac0446ed40988eb725bd58009ddedfd76b92f",
+      "packageSize": 21703
     },
     {
       "id": "pure-dark",
@@ -199,11 +223,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -211,11 +239,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -227,7 +259,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/pure-dark.preview.jpg",
@@ -235,8 +267,8 @@
       "iconUrl": "/themes/pure-dark.icon.svg",
       "accent": "#3370eb",
       "packageUrl": "/themes/packages/pure-dark.doubao-skin.zip",
-      "sha256": "fff0bf54ac641b7fd46e43736ea3c992c3973080cc9f65bf0bedfde3bf5cf996",
-      "packageSize": 22923
+      "sha256": "fd718f08aa0cbe74a2aab2b256a53829adaa6683e7c10e4711a6869a8e89500b",
+      "packageSize": 24072
     },
     {
       "id": "peach-sunset",
@@ -258,11 +290,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -270,11 +306,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -286,7 +326,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/peach-sunset.preview.jpg",
@@ -294,8 +334,8 @@
       "iconUrl": "/themes/peach-sunset.icon.svg",
       "accent": "#d85f76",
       "packageUrl": "/themes/packages/peach-sunset.doubao-skin.zip",
-      "sha256": "9daa78ef5aa11bf436b57224a8e456d453f5bddb9509c6b96f77fe976833d298",
-      "packageSize": 29490
+      "sha256": "e9da6510f4b914a18e248c615bda7b79ef7cefe7cfba5fed0b62d9f38ceb3ff2",
+      "packageSize": 30857
     },
     {
       "id": "gothic-void",
@@ -317,11 +357,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -329,11 +373,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -345,7 +393,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/gothic-void.preview.jpg",
@@ -353,8 +401,8 @@
       "iconUrl": "/themes/gothic-void.icon.svg",
       "accent": "#9060d1",
       "packageUrl": "/themes/packages/gothic-void.doubao-skin.zip",
-      "sha256": "7248535849c024806cdcde1fa9b9c4a35da8b882a2972540a073b2d374afb232",
-      "packageSize": 382470
+      "sha256": "5ec7281af5e1abea98637b7cc1addb3656180bf6e875774f61483dc67506c363",
+      "packageSize": 384459
     },
     {
       "id": "sakura-night",
@@ -376,11 +424,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -388,11 +440,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -404,7 +460,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/sakura-night.preview.jpg",
@@ -412,8 +468,8 @@
       "iconUrl": "/themes/sakura-night.icon.svg",
       "accent": "#bb6485",
       "packageUrl": "/themes/packages/sakura-night.doubao-skin.zip",
-      "sha256": "bd17b7e74fdc8cb98b1d0073eb9dae4d7941edc92435a64d049a541f65c792e2",
-      "packageSize": 1084388
+      "sha256": "b46fdc5832916bf1584ff2f65ba7599fe4041bb238cbfeaf1cd90ca1d945a03f",
+      "packageSize": 1086374
     },
     {
       "id": "cyber-neon",
@@ -435,11 +491,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -447,11 +507,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -463,7 +527,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/cyber-neon.preview.jpg",
@@ -471,8 +535,8 @@
       "iconUrl": "/themes/cyber-neon.icon.svg",
       "accent": "#1f8c9b",
       "packageUrl": "/themes/packages/cyber-neon.doubao-skin.zip",
-      "sha256": "9424d9f34efa8ba37b8f31b2d3c35202d1da2e064ecc2f2c23fa8cc6327ee76f",
-      "packageSize": 496587
+      "sha256": "71ef0c046cb76b70b8457487fe6eb3ba5c628e0a8081e68295dc63c9b5ab7353",
+      "packageSize": 498546
     },
     {
       "id": "mist-forest",
@@ -494,11 +558,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -506,11 +574,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -522,7 +594,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/mist-forest.preview.jpg",
@@ -530,8 +602,8 @@
       "iconUrl": "/themes/mist-forest.icon.svg",
       "accent": "#338657",
       "packageUrl": "/themes/packages/mist-forest.doubao-skin.zip",
-      "sha256": "1f89458fc13d13b77b18e0987b01ae12048ee27656a87b1ebb96064f7bba8fde",
-      "packageSize": 654330
+      "sha256": "c4c7e5e0e0a655a6308eb6112f6edcb29775de21aa808dcbd0dcf7f840148031",
+      "packageSize": 656303
     },
     {
       "id": "gallery-cozy-room",
@@ -553,11 +625,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -565,11 +641,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -581,7 +661,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/gallery-cozy-room.preview.jpg",
@@ -589,8 +669,8 @@
       "iconUrl": "/themes/gallery-cozy-room.icon.svg",
       "accent": "#4b75a6",
       "packageUrl": "/themes/packages/gallery-cozy-room.doubao-skin.zip",
-      "sha256": "9d365c08d2f0a41086eef0b02ca77d807135b7fa0bf8e3fba444e9404866e129",
-      "packageSize": 238248
+      "sha256": "5f68ad13d5844557829d03ea93ea75c9aa78709a91f513268679aeddaac86eb6",
+      "packageSize": 240160
     },
     {
       "id": "gallery-neon-koi",
@@ -612,11 +692,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -624,11 +708,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -640,7 +728,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/gallery-neon-koi.preview.jpg",
@@ -648,8 +736,8 @@
       "iconUrl": "/themes/gallery-neon-koi.icon.svg",
       "accent": "#0e7884",
       "packageUrl": "/themes/packages/gallery-neon-koi.doubao-skin.zip",
-      "sha256": "f7bf6594d02eb19c44310a913ac76ca18b6fcff362109e48f988a9fbef6b5694",
-      "packageSize": 344128
+      "sha256": "c3edc3469766c26ad7e59e9d9f02b1b791708703692cab27d46e7d1b296c864e",
+      "packageSize": 346059
     },
     {
       "id": "gallery-moon-pine",
@@ -671,11 +759,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -683,11 +775,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -699,7 +795,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/gallery-moon-pine.preview.jpg",
@@ -707,8 +803,8 @@
       "iconUrl": "/themes/gallery-moon-pine.icon.svg",
       "accent": "#526f86",
       "packageUrl": "/themes/packages/gallery-moon-pine.doubao-skin.zip",
-      "sha256": "3233339a8bea8fb1b5b4676435ac37371ef1bc58a764940779fc758bbb7d1ae2",
-      "packageSize": 380740
+      "sha256": "4d58a2adc27fb9051a6c5b1639e690c3d6d78ac3f0b15142ce58f0dc93821842",
+      "packageSize": 382658
     },
     {
       "id": "gallery-crimson-rain",
@@ -730,11 +826,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -742,11 +842,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -758,7 +862,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/gallery-crimson-rain.preview.jpg",
@@ -766,8 +870,8 @@
       "iconUrl": "/themes/gallery-crimson-rain.icon.svg",
       "accent": "#9d5454",
       "packageUrl": "/themes/packages/gallery-crimson-rain.doubao-skin.zip",
-      "sha256": "bfc18784708d3ad2925db2032103faad8fe6fc4938e5fec4337b877dc06a6304",
-      "packageSize": 261510
+      "sha256": "cd3020ff33f88ae848681da4bdac9f0fe5a257e371a8513cded434870ef76261",
+      "packageSize": 263453
     },
     {
       "id": "codex-catppuccin",
@@ -789,11 +893,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -801,11 +909,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -817,7 +929,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/codex-catppuccin.preview.jpg",
@@ -825,8 +937,8 @@
       "iconUrl": "/themes/codex-catppuccin.icon.svg",
       "accent": "#856da2",
       "packageUrl": "/themes/packages/codex-catppuccin.doubao-skin.zip",
-      "sha256": "9362f8d09f0b4d3b472c13bd988006b79a1602f5eb545b11aed384ace8b09d74",
-      "packageSize": 20340
+      "sha256": "fde1ccc25c4ad08179be1c8e0780c574e91fa6d47ad5965da82941d20a0117f7",
+      "packageSize": 22203
     },
     {
       "id": "codex-dracula",
@@ -848,11 +960,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -860,11 +976,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -876,7 +996,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/codex-dracula.preview.jpg",
@@ -884,8 +1004,8 @@
       "iconUrl": "/themes/codex-dracula.icon.svg",
       "accent": "#ba5890",
       "packageUrl": "/themes/packages/codex-dracula.doubao-skin.zip",
-      "sha256": "5340ff94de36457077aedc84a627bfeeed875437fa6f58c693b889ab17f6c5bd",
-      "packageSize": 20199
+      "sha256": "d59d2fc86fec49f5eb24d4dd4271a0837b2c235d9224c14c1072f091dfc7cb36",
+      "packageSize": 22046
     },
     {
       "id": "codex-nord",
@@ -907,11 +1027,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -919,11 +1043,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -935,7 +1063,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/codex-nord.preview.jpg",
@@ -943,8 +1071,8 @@
       "iconUrl": "/themes/codex-nord.icon.svg",
       "accent": "#597e88",
       "packageUrl": "/themes/packages/codex-nord.doubao-skin.zip",
-      "sha256": "df5426560238be2aca9af40404da064f08b4b5d74824f4e4682d23697ccbcd79",
-      "packageSize": 19316
+      "sha256": "b2d2e6ee46f39fc815f10a4d5f3daf5ed19a9899bfb9b64a766ed80e93893c47",
+      "packageSize": 21180
     },
     {
       "id": "codex-gruvbox",
@@ -966,11 +1094,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -978,11 +1110,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -994,7 +1130,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/codex-gruvbox.preview.jpg",
@@ -1002,8 +1138,8 @@
       "iconUrl": "/themes/codex-gruvbox.icon.svg",
       "accent": "#9e7018",
       "packageUrl": "/themes/packages/codex-gruvbox.doubao-skin.zip",
-      "sha256": "c9700ba6ad4246ef9965173cb117655754ced43cad11ad05ad3d269f2344e49e",
-      "packageSize": 21802
+      "sha256": "45cee3ae51449e2e0a00e92c6cf5bac513bee447799f7e03c8bb143bf7c31d2f",
+      "packageSize": 23655
     },
     {
       "id": "codex-solarized",
@@ -1025,11 +1161,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1037,11 +1177,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1053,7 +1197,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/codex-solarized.preview.jpg",
@@ -1061,8 +1205,8 @@
       "iconUrl": "/themes/codex-solarized.icon.svg",
       "accent": "#227dbd",
       "packageUrl": "/themes/packages/codex-solarized.doubao-skin.zip",
-      "sha256": "2f643a294bedbb3e3ee4620f8512788e88ba6c7a67a0c7e2e956a67c92e1ad5b",
-      "packageSize": 24310
+      "sha256": "0992e3fd6d73ba956629ba4cfcd6431acc23db799a61c93a1f71cafed9a58532",
+      "packageSize": 26153
     },
     {
       "id": "codex-one-half",
@@ -1084,11 +1228,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1096,11 +1244,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1112,7 +1264,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/codex-one-half.preview.jpg",
@@ -1120,8 +1272,8 @@
       "iconUrl": "/themes/codex-one-half.icon.svg",
       "accent": "#4680af",
       "packageUrl": "/themes/packages/codex-one-half.doubao-skin.zip",
-      "sha256": "9f96470aab5a08600f0cfc763179ce6c6737bd7efdc3a115a9f8261b24d1ed7c",
-      "packageSize": 20646
+      "sha256": "393108ec05b71c6971a1c0994a65bd28ec8af3185194066e178dbc9d5e265f06",
+      "packageSize": 22501
     },
     {
       "id": "qq-light-blue",
@@ -1143,11 +1295,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1155,11 +1311,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1171,7 +1331,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/qq-light-blue.preview.jpg",
@@ -1179,8 +1339,8 @@
       "iconUrl": "/themes/qq-light-blue.icon.svg",
       "accent": "#5099d6",
       "packageUrl": "/themes/packages/qq-light-blue.doubao-skin.zip",
-      "sha256": "57de483bcd1f739acccfeef6b0bf9e88d58b6e7f1ebadcb4dda3316029373e03",
-      "packageSize": 153989
+      "sha256": "49da01363bd2ab41625d5ff23f1177596dcf6a56dbfa772001d13bbab134d086",
+      "packageSize": 155941
     },
     {
       "id": "gallery-whale-maid",
@@ -1202,11 +1362,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1214,11 +1378,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1238,8 +1406,8 @@
       "iconUrl": "/themes/gallery-whale-maid.icon.png",
       "accent": "#9b7a5e",
       "packageUrl": "/themes/packages/gallery-whale-maid.doubao-skin.zip",
-      "sha256": "60078a0e8973550b1c7e6ed623982b068add644a75e280c3cf397af77d585be0",
-      "packageSize": 1151401
+      "sha256": "a236421f7fe0fb3dbe4fc0a6425d57edc70572188d3a38bdf41ac09945338723",
+      "packageSize": 1153450
     },
     {
       "id": "pastel-tea-party",
@@ -1261,11 +1429,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1273,11 +1445,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1289,7 +1465,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/pastel-tea-party.preview.jpg",
@@ -1297,8 +1473,8 @@
       "iconUrl": "/themes/pastel-tea-party.icon.svg",
       "accent": "#b4786a",
       "packageUrl": "/themes/packages/pastel-tea-party.doubao-skin.zip",
-      "sha256": "90e631c1cdd8c40959b0353f1edee1b332a2bef7023b082da50c8f6af43e65b6",
-      "packageSize": 569184
+      "sha256": "48dde3b36cce602b67ee440778e14da8465da57aad32748e6ae8f14a7c51ea5d",
+      "packageSize": 571132
     },
     {
       "id": "pastel-flower-club",
@@ -1320,11 +1496,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1332,11 +1512,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1348,7 +1532,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/pastel-flower-club.preview.jpg",
@@ -1356,8 +1540,8 @@
       "iconUrl": "/themes/pastel-flower-club.icon.svg",
       "accent": "#5e9788",
       "packageUrl": "/themes/packages/pastel-flower-club.doubao-skin.zip",
-      "sha256": "8e7ea7c98a3870e5312ddaa84de9113246f37229f18aa483e30d50844ef918ed",
-      "packageSize": 598508
+      "sha256": "386940cbe2fbbcd0d945ccb4b0a3e1c1e6ab4bb91e4f21577bb1df471dda99c9",
+      "packageSize": 600487
     },
     {
       "id": "pastel-starry-room",
@@ -1379,11 +1563,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1391,11 +1579,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1407,7 +1599,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/pastel-starry-room.preview.jpg",
@@ -1415,8 +1607,8 @@
       "iconUrl": "/themes/pastel-starry-room.icon.svg",
       "accent": "#867ac1",
       "packageUrl": "/themes/packages/pastel-starry-room.doubao-skin.zip",
-      "sha256": "8e2215484294b3d5af1592f1a17f398711e60f1cffdbc0d1ef5fdcca8afece6b",
-      "packageSize": 670777
+      "sha256": "f5c84eb22f4388c09353b60296c3e5b4c7e1351bc93c1deeef466b8c0d6b8537",
+      "packageSize": 672757
     },
     {
       "id": "doubao-snack-giggle",
@@ -1438,11 +1630,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1450,11 +1646,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1466,7 +1666,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/doubao-snack-giggle.preview.jpg",
@@ -1474,8 +1674,8 @@
       "iconUrl": "/themes/doubao-snack-giggle.icon.png",
       "accent": "#d66a45",
       "packageUrl": "/themes/packages/doubao-snack-giggle.doubao-skin.zip",
-      "sha256": "abe2cb9470b10e6f160d2f6a82322d25e738c3b326e5c7190953cf7407a72991",
-      "packageSize": 1853918
+      "sha256": "c013fe44a5f850fc43b2dc538044d1db5923c8d273482a3db8b39e7fc1bac269",
+      "packageSize": 1856204
     },
     {
       "id": "doubao-dessert-giggle",
@@ -1497,11 +1697,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1509,11 +1713,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1525,7 +1733,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/doubao-dessert-giggle.preview.jpg",
@@ -1533,8 +1741,8 @@
       "iconUrl": "/themes/doubao-dessert-giggle.icon.png",
       "accent": "#b06c88",
       "packageUrl": "/themes/packages/doubao-dessert-giggle.doubao-skin.zip",
-      "sha256": "d4c49a0e2dc936224f1acd542f251a972ef8ba9eaddc31c35707a7ee344db702",
-      "packageSize": 1958477
+      "sha256": "ce52cd2e76f558eb89becc79c7162155ff3e71eaae4cfa8835017ba24b851ac7",
+      "packageSize": 1960667
     },
     {
       "id": "huaxia-blue",
@@ -1557,11 +1765,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1569,11 +1781,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1593,8 +1809,8 @@
       "iconUrl": null,
       "accent": "#c62828",
       "packageUrl": "/themes/packages/huaxia-blue.doubao-skin.zip",
-      "sha256": "d9cec3dc8c97846b6b11f32677baeeec0ade6fd9f873a28a29a5643d53add3ff",
-      "packageSize": 26620
+      "sha256": "663a23174816d688246ca38248094a0b4e8bdb0537ee9a6c3575ad9b800e1f0d",
+      "packageSize": 27972
     },
     {
       "id": "github-repository",
@@ -1617,11 +1833,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1629,11 +1849,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1653,8 +1877,8 @@
       "iconUrl": null,
       "accent": "#2f81f7",
       "packageUrl": "/themes/packages/github-repository.doubao-skin.zip",
-      "sha256": "707a18f74c1a69c8e81e0da06b5f63606e3c81e64faa4746d04b78ded169340b",
-      "packageSize": 18812
+      "sha256": "78f9849aca9d3130545944a9e69ed9f962ce83664e14b5c74cfde535690914c3",
+      "packageSize": 20187
     },
     {
       "id": "claude-warm",
@@ -1677,11 +1901,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1689,11 +1917,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1713,8 +1945,8 @@
       "iconUrl": null,
       "accent": "#d97757",
       "packageUrl": "/themes/packages/claude-warm.doubao-skin.zip",
-      "sha256": "5370341328bb8e07edffc314131b48c230d3bb4241c8d45f34a1eb81d3146020",
-      "packageSize": 22891
+      "sha256": "af8c06ff16e8b9d9e7b811bbd9485d1d22443a11bf4a756c7359a0d8d796a8d6",
+      "packageSize": 24251
     },
     {
       "id": "machine-overseer",
@@ -1737,11 +1969,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1749,11 +1985,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1773,8 +2013,8 @@
       "iconUrl": null,
       "accent": "#e5484d",
       "packageUrl": "/themes/packages/machine-overseer.doubao-skin.zip",
-      "sha256": "4d7a353702e14efbdc30881bc5e3859a96a6ebbda8f10fbcebb4041e8439c91e",
-      "packageSize": 1164770
+      "sha256": "5de94aababe70ccd15209036264e3275743b7fc1f06a1be2cdf9d29d5d159d7c",
+      "packageSize": 1166118
     },
     {
       "id": "teyvat-dandelion-wind",
@@ -1798,11 +2038,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1810,11 +2054,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1826,7 +2074,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/teyvat-dandelion-wind.preview.jpg",
@@ -1834,8 +2082,8 @@
       "iconUrl": "/themes/teyvat-dandelion-wind.icon.png",
       "accent": "#248f88",
       "packageUrl": "/themes/packages/teyvat-dandelion-wind.doubao-skin.zip",
-      "sha256": "9a3c8bf8bcfd5ce5d7911b764510c607dfd449c642e3d18f66b532081a1c443f",
-      "packageSize": 1946079
+      "sha256": "2191e426ca24f7805680b26439d775e4d03ac4112ae2f5b246bdaf120b285053",
+      "packageSize": 1947590
     },
     {
       "id": "teyvat-liyue-lanterns",
@@ -1859,11 +2107,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1871,11 +2123,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1887,7 +2143,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/teyvat-liyue-lanterns.preview.jpg",
@@ -1895,8 +2151,8 @@
       "iconUrl": "/themes/teyvat-liyue-lanterns.icon.png",
       "accent": "#d89a32",
       "packageUrl": "/themes/packages/teyvat-liyue-lanterns.doubao-skin.zip",
-      "sha256": "1ac0ce2b2bf1d83ca594cb24de614660ddb02377145903c24686d7091e7287cb",
-      "packageSize": 1641857
+      "sha256": "b77ee4c3df8029ea5a633e7f93c7857c2f4c9f0268690c83771970cb73f4d700",
+      "packageSize": 1643381
     },
     {
       "id": "gugugaga-administrator",
@@ -1920,11 +2176,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1932,11 +2192,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -1948,7 +2212,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/gugugaga-administrator.preview.jpg",
@@ -1956,8 +2220,8 @@
       "iconUrl": "/themes/gugugaga-administrator.icon.png",
       "accent": "#f2b827",
       "packageUrl": "/themes/packages/gugugaga-administrator.doubao-skin.zip",
-      "sha256": "ede894c9183ff283e44259635f76dd8844599b7c757c55277f88cb3382853522",
-      "packageSize": 1093147
+      "sha256": "f74c4cc6067a4d601678d73f09b69fae94cd81410b006ef3e5662c64156f84f0",
+      "packageSize": 1094670
     },
     {
       "id": "gugugaga-snowfield",
@@ -1981,11 +2245,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "doubao-work": {
           "appearances": [
@@ -1993,11 +2261,15 @@
             "dark"
           ],
           "css": {
-            "dark": [],
-            "light": []
+            "dark": [
+              "styles/doubao-family.css"
+            ],
+            "light": [
+              "styles/doubao-family.css"
+            ]
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         },
         "workbuddy": {
           "appearances": [
@@ -2009,7 +2281,7 @@
             "light": []
           },
           "declaration": "explicit",
-          "supportLevel": "shared"
+          "supportLevel": "tailored"
         }
       },
       "previewUrl": "/themes/gugugaga-snowfield.preview.jpg",
@@ -2017,8 +2289,8 @@
       "iconUrl": "/themes/gugugaga-snowfield.icon.png",
       "accent": "#e97b32",
       "packageUrl": "/themes/packages/gugugaga-snowfield.doubao-skin.zip",
-      "sha256": "08a05b83968d2d50f58c7bdc6a15904267a73aa6466e0e83bb21d955d9834f78",
-      "packageSize": 1070667
+      "sha256": "413643979a152e98718f3a2e6fd0024b37d9dbb3880a4efb565edbe4a8c6413b",
+      "packageSize": 1072185
     }
   ]
 }

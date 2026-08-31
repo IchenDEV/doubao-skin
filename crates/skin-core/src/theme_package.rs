@@ -707,7 +707,21 @@ fn validate_v3_schema(manifest: &Value) -> Result<(), ThemePackageError> {
 fn validate_all_v3_resolutions(package: &ValidatedThemePackage) -> Result<(), ThemePackageError> {
     for target in ThemeTarget::ALL {
         for appearance in package.appearances(target) {
-            package.resolve(target, appearance)?;
+            let resolved = package.resolve(target, appearance)?;
+            if target == ThemeTarget::WorkBuddy
+                && resolved
+                    .visual()
+                    .get("icons")
+                    .and_then(Value::as_object)
+                    .is_some_and(|icons| !icons.is_empty())
+            {
+                return Err(ThemePackageError::new(
+                    ThemePackageErrorCategory::Manifest,
+                    "WorkBuddy does not support theme icon replacement; set targets.workbuddy.icons to null",
+                )
+                .at_pointer("/targets/workbuddy/icons")
+                .for_resolution(target, appearance));
+            }
         }
     }
     Ok(())

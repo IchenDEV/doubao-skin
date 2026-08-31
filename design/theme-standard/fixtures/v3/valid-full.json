@@ -1,9 +1,9 @@
 {
   "$schema": "../../../theme-v3.schema.json",
   "schemaVersion": 3,
-  "id": "gallery-whale-maid",
-  "name": "鲸鱼娘",
-  "description": "浅青晴空与蓝鲸少女，明亮又俏皮",
+  "id": "fixture-full",
+  "name": "完整示例",
+  "description": "覆盖共享、目标、外观、资源与 CSS 的完整合成契约样例",
   "version": "2.0.0",
   "author": "豆皮",
   "preview": {
@@ -18,11 +18,8 @@
     "sortOrder": 20
   },
   "provenance": {
-    "inspiredBy": "DreamSkin DeepSeek-鲸鱼娘",
-    "sourceUrl": "https://dreamskin.cc/themes/ver_cb557ececaa5de3f3dbe",
-    "sourceVersion": "ver_cb557ececaa5de3f3dbe",
     "license": "MIT",
-    "artwork": "Original ImageGen adaptation"
+    "artwork": "Synthetic contract fixture"
   },
   "shared": {
     "appearance": "both",

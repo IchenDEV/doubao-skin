@@ -11,6 +11,7 @@ use serde_json::{json, Value};
 use zip::write::SimpleFileOptions;
 
 use crate::theme;
+use crate::theme_css;
 use crate::theme_package::{self, ThemeTarget, ValidationReport};
 
 const MAX_PACKAGE_ENTRIES: usize = 2_048;
@@ -135,8 +136,17 @@ pub fn migrate_v3(theme_dir: &Path, write: bool) -> Result<MigrationReport, Stri
         .unwrap_or("1.0.0")
         .to_string();
     let to_version = next_major_version(&from_version)?;
-    let migrated = migrated_v3_manifest(&source, &to_version)?;
-    validate_migration_candidate(theme_dir, &migrated)?;
+    let legacy_css = theme_dir.join("theme.css");
+    let legacy_css_source = fs::read_to_string(&legacy_css)
+        .map_err(|error| format!("无法读取旧 theme.css：{error}"))?;
+    let migrated_css = theme_css::migrate_legacy_doubao_css(&legacy_css_source, id)?;
+    let has_migrated_css = migrated_css.contains(" {\n");
+    let migrated = migrated_v3_manifest(&source, &to_version, has_migrated_css)?;
+    validate_migration_candidate(
+        theme_dir,
+        &migrated,
+        has_migrated_css.then_some(migrated_css.as_str()),
+    )?;
 
     let mut actions = vec![
         "将跨宿主视觉字段移入 shared".into(),
@@ -144,11 +154,26 @@ pub fn migrate_v3(theme_dir: &Path, write: bool) -> Result<MigrationReport, Stri
         format!("主题版本从 {from_version} 提升为 {to_version}"),
         "将来源和许可证字段归并到 provenance".into(),
     ];
-    let legacy_css = theme_dir.join("theme.css");
-    if legacy_css.is_file() {
-        actions.push("移除由结构化视觉和可信宿主适配器替代的旧 theme.css".into());
+    if has_migrated_css {
+        actions.push("将旧 theme.css 的安全视觉规则拆入 styles/doubao-family.css".into());
+    } else {
+        actions.push("移除未包含可迁移视觉规则的旧 theme.css".into());
     }
     if write {
+        if has_migrated_css {
+            let styles_dir = theme_dir.join("styles");
+            let family_css = styles_dir.join("doubao-family.css");
+            if family_css.exists() {
+                return Err("迁移目标 styles/doubao-family.css 已存在，不会覆盖".into());
+            }
+            fs::create_dir_all(&styles_dir)
+                .map_err(|error| format!("无法创建迁移样式目录：{error}"))?;
+            let next_css = styles_dir.join(".doubao-family.css.v3-next");
+            fs::write(&next_css, &migrated_css)
+                .map_err(|error| format!("无法写入迁移 CSS：{error}"))?;
+            fs::rename(&next_css, &family_css)
+                .map_err(|error| format!("无法安装迁移 CSS：{error}"))?;
+        }
         let next_manifest = theme_dir.join(".theme.json.v3-next");
         let serialized = format!(
             "{}\n",
@@ -193,7 +218,11 @@ fn next_major_version(version: &str) -> Result<String, String> {
     Ok(format!("{}.0.0", major + 1))
 }
 
-fn migrated_v3_manifest(source: &Value, version: &str) -> Result<Value, String> {
+fn migrated_v3_manifest(
+    source: &Value,
+    version: &str,
+    has_migrated_css: bool,
+) -> Result<Value, String> {
     let object = source
         .as_object()
         .ok_or_else(|| "theme.json 顶层必须是对象".to_string())?;
@@ -281,10 +310,25 @@ fn migrated_v3_manifest(source: &Value, version: &str) -> Result<Value, String> 
                 .or_insert_with(|| Value::from(0.58));
         }
     }
+    let has_icons = visual_declares_icons(&Value::Object(shared.clone()));
     manifest.insert("shared".into(), Value::Object(shared));
+    let family_layer = if has_migrated_css {
+        json!({"css": ["styles/doubao-family.css"]})
+    } else {
+        json!({})
+    };
+    let workbuddy_layer = if has_icons {
+        json!({"icons": null})
+    } else {
+        json!({})
+    };
     manifest.insert(
         "targets".into(),
-        json!({"doubao": {}, "doubao-work": {}, "workbuddy": {}}),
+        json!({
+            "doubao": family_layer,
+            "doubao-work": family_layer,
+            "workbuddy": workbuddy_layer
+        }),
     );
 
     let mut provenance = serde_json::Map::new();
@@ -313,7 +357,24 @@ fn migrated_v3_manifest(source: &Value, version: &str) -> Result<Value, String> 
     Ok(Value::Object(manifest))
 }
 
-fn validate_migration_candidate(theme_dir: &Path, manifest: &Value) -> Result<(), String> {
+fn visual_declares_icons(visual: &Value) -> bool {
+    visual
+        .get("icons")
+        .and_then(Value::as_object)
+        .is_some_and(|icons| !icons.is_empty())
+        || ["light", "dark"].into_iter().any(|appearance| {
+            visual
+                .pointer(&format!("/variants/{appearance}/icons"))
+                .and_then(Value::as_object)
+                .is_some_and(|icons| !icons.is_empty())
+        })
+}
+
+fn validate_migration_candidate(
+    theme_dir: &Path,
+    manifest: &Value,
+    migrated_css: Option<&str>,
+) -> Result<(), String> {
     let temporary = std::env::temp_dir().join(format!(
         "doubao-theme-migrate-{}-{}",
         std::process::id(),
@@ -329,6 +390,12 @@ fn validate_migration_candidate(theme_dir: &Path, manifest: &Value) -> Result<()
     fs::create_dir_all(&destination).map_err(|error| format!("无法准备迁移校验目录：{error}"))?;
     let result = (|| {
         copy_migration_resources(theme_dir, &destination)?;
+        if let Some(css) = migrated_css {
+            fs::create_dir_all(destination.join("styles"))
+                .map_err(|error| format!("无法准备迁移样式目录：{error}"))?;
+            fs::write(destination.join("styles/doubao-family.css"), css)
+                .map_err(|error| format!("无法写入迁移 CSS：{error}"))?;
+        }
         fs::write(
             destination.join("theme.json"),
             format!(

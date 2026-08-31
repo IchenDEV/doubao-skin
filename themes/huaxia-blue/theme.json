@@ -148,8 +148,16 @@
     ]
   },
   "targets": {
-    "doubao": {},
-    "doubao-work": {},
+    "doubao": {
+      "css": [
+        "styles/doubao-family.css"
+      ]
+    },
+    "doubao-work": {
+      "css": [
+        "styles/doubao-family.css"
+      ]
+    },
     "workbuddy": {}
   },
   "version": "2.0.0"

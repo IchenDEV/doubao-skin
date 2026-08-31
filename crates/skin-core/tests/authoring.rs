@@ -194,7 +194,16 @@ fn migrate_v3_is_dry_run_by_default_and_writes_only_when_requested() {
         format!("{}\n", serde_json::to_string_pretty(&manifest).unwrap()),
     )
     .unwrap();
-    fs::write(theme_dir.join("theme.css"), "/* legacy generated CSS */").unwrap();
+    fs::write(
+        theme_dir.join("theme.css"),
+        r#"html[data-skin="morning-mist"],
+html[data-skin="morning-mist"] body {
+  --legacy-palette-accent: #335577;
+  color: #335577;
+  display: none;
+}"#,
+    )
+    .unwrap();
 
     let dry_run = authoring::migrate_v3(&theme_dir, false).unwrap();
     assert!(!dry_run.written);
@@ -211,6 +220,22 @@ fn migrate_v3_is_dry_run_by_default_and_writes_only_when_requested() {
     assert_eq!(migrated["version"], "2.0.0");
     assert_eq!(migrated["targets"].as_object().unwrap().len(), 3);
     assert!(!theme_dir.join("theme.css").exists());
+    assert_eq!(
+        migrated["targets"]["doubao"]["css"],
+        serde_json::json!(["styles/doubao-family.css"])
+    );
+    assert_eq!(
+        migrated["targets"]["doubao-work"]["css"],
+        serde_json::json!(["styles/doubao-family.css"])
+    );
+    assert!(migrated["targets"]["workbuddy"].get("css").is_none());
+    let family_css = fs::read_to_string(theme_dir.join("styles/doubao-family.css")).unwrap();
+    assert!(family_css.contains("--legacy-palette-accent: #357"));
+    assert!(family_css.contains("html[data-skin=\"morning-mist\"][data-skin-target=\"doubao\"]"));
+    assert!(
+        family_css.contains("html[data-skin=\"morning-mist\"][data-skin-target=\"doubao-work\"]")
+    );
+    assert!(!family_css.contains("display"));
     authoring::check(&theme_dir).unwrap();
     fs::remove_dir_all(root).unwrap();
 }

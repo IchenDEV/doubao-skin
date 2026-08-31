@@ -42,14 +42,14 @@ approved_at: "2026-08-31"
 14. 共享 CSS 的每个选择器必须位于 `html[data-skin="<theme-id>"]` 作用域内，并且不得包含 `data-skin-target`。目标 CSS 的每个选择器必须同时包含主题 ID 和 `data-skin-target`；目标值只能来自引用该文件的目标集合。未作用域化的选择器使主题包校验失败。
 15. v3 CSS 只允许视觉覆盖和自定义属性，不允许改变内容、交互或应用结构。必须禁止 `@import`、`@font-face`、`@keyframes`、所有 `url()`、远程资源、脚本协议、`content`、`display`、`visibility`、`pointer-events`、`position`、inset/坐标、`z-index`、尺寸与网格/弹性布局属性。背景、字体、图标、布局与动画必须通过结构化字段表达。允许的 CSS 范围包括颜色、背景色/渐变、边框、圆角、轮廓、阴影、透明度、滤镜、字体与文本属性、caret、fill/stroke、滚动条、accent-color、transition 以及非保留自定义属性。
 16. 引擎保留 `--doubao-skin-runtime-*` 自定义属性和所有 `data-skin*` 运行时属性；主题 CSS 不得覆盖保留属性，也不得依赖应用进程、端口或身份识别信息。
-17. `background`、字体资产、图标和预览图只能通过相应结构化字段引用包内文件。资源路径遵守与 CSS 相同的归一化和目录边界规则。共享资源可以被任意目标继承；目标层可以替换、局部覆盖或以 `null` 删除。
+17. `background`、字体资产、图标和预览图只能通过相应结构化字段引用包内文件。资源路径遵守与 CSS 相同的归一化和目录边界规则。共享资源通常可以被目标继承；目标层可以替换、局部覆盖或以 `null` 删除。当前 WorkBuddy 适配器不支持宿主图标替换，因此任何会从共享层解析出图标的 v3 主题都必须在 `targets.workbuddy.icons` 显式写 `null`，校验器必须拒绝仍解析出图标的 WorkBuddy 声明。
 18. 每个 CSS 文件必须是合法 UTF-8 且不超过 512 KiB；单个目标解析后的 CSS 文件总量不得超过 2 MiB。现有压缩包 200 MiB、解压内容 512 MiB、最多 2,048 项的上限保持不变。
 19. v3 JSON Schema 必须对规范字段使用 `additionalProperties: false`，以便发现拼写错误。来源与许可证迁移到显式 `provenance` 对象；不得依靠任意顶层字段扩展协议。未知目标 ID、未知字段、未知适配格式和缺失文件都必须拒绝安装，而不是忽略后继续声称兼容。
 20. 支持级别必须从清单解析结果派生，不由作者重复填写：目标键缺失为 `unsupported`；目标键存在且目标层没有实质差异为 `shared`；目标层存在结构化差异、CSS、外观差异或专用预览为 `tailored`。另用 `declaration: explicit | legacy-inferred` 区分 v3 显式声明与旧主题推断，避免增加第四种支持级别。
 21. v1/v2 不自动重写，兼容规则固定如下：v1 对 `doubao` 和 `doubao-work` 为 `legacy-inferred`，对 `workbuddy` 为 `unsupported`；v2 对三项目标均为 `legacy-inferred`，其中 WorkBuddy 继续只使用结构化字段和内置适配器、忽略 v2 原始 `theme.css`。v3 完全按 `targets` 精确加载。
 22. 发现 `schemaVersion` 高于当前引擎支持值时必须失败关闭并提示升级豆皮；不得按 v1、v2 或缺省格式解析。旧版客户端无法识别 v3 时允许拒绝安装，不提供伪装成 v2 的双格式 manifest。
 23. 主题商店目录必须由 `theme.json` 派生并输出 `schemaVersion`、`targets` 和各目标 `supportLevel`；目录不能手工维护第二份兼容列表。主题列表、商店筛选、CLI 校验和运行时能力判断必须使用同一解析结果。
-24. 规范文档必须提供一个完整 v3 示例、三个最小支持范围示例、CSS 作用域示例、v2→v3 迁移步骤及错误示例。JSON Schema、Rust 解析器、Web 同步器和作者 CLI 的后续实现必须共享同一组契约 fixtures。
+24. 规范文档必须提供一个完整 v3 示例、三个最小支持范围示例、CSS 作用域示例、v2→v3 迁移步骤及错误示例。JSON Schema、Rust 解析器、Web 同步器和作者 CLI 的后续实现必须共享同一组契约 fixtures。规范 fixtures 必须使用 `fixture-` 前缀的合成 ID、合成名称与合成来源信息，不得冒充或复制某个真实内置主题。
 25. v3 引擎、校验器与打包器通过契约测试后，必须迁移仓库 `themes/` 下的全部内置主题。当前评审基线为 30 个 v2 主题；合并前的确定性检查必须要求每个 `themes/*/theme.json` 都使用 `schemaVersion: 3`，因此迁移期间新增的内置主题也不能留下 v1/v2。
 26. 30 个基线主题当前都支持 `appearance: both`，并通过 v2 兼容路径用于豆包、豆包工作和 WorkBuddy。迁移不得通过删除主题、减少 light/dark、移除预览/来源/素材或省略某个目标来降低现有能力；每个内置主题最终都必须显式声明三个目标。
 27. 每个迁移主题必须把跨宿主结构化语义移入 `shared`，把原 `theme.css` 按真实职责拆为共享 CSS、豆包家族 CSS 和必要的 WorkBuddy CSS。背景伪元素、图标标记、布局与运行时安全规则中能够由引擎表达的内容必须删除，不得原样复制到三个目标文件。

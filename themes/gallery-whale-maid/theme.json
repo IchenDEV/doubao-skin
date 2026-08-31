@@ -165,8 +165,16 @@
     ]
   },
   "targets": {
-    "doubao": {},
-    "doubao-work": {},
+    "doubao": {
+      "css": [
+        "styles/doubao-family.css"
+      ]
+    },
+    "doubao-work": {
+      "css": [
+        "styles/doubao-family.css"
+      ]
+    },
     "workbuddy": {
       "icons": null
     }

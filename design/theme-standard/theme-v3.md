@@ -1,6 +1,6 @@
 # 主题包 v3：多应用适配
 
-v3 让一套主题明确声明适用于「豆包」「豆包工作」和 WorkBuddy 中的哪些应用，并允许共享视觉语义、按应用补充差异。字段的最终约束以 [theme-v3.schema.json](./theme-v3.schema.json) 为准；[valid-full.json](./fixtures/v3/valid-full.json) 是完整、可校验并由 Rust 契约测试覆盖的示例。
+v3 让一套主题明确声明适用于「豆包」「豆包工作」和 WorkBuddy 中的哪些应用，并允许共享视觉语义、按应用补充差异。字段的最终约束以 [theme-v3.schema.json](./theme-v3.schema.json) 为准；[valid-full.json](./fixtures/v3/valid-full.json) 是使用 `fixture-full` ID 的完整合成示例，仅用于文档与契约测试，不会进入主题目录或发布包。
 
 ## 支持范围
 
@@ -83,10 +83,10 @@ doubao-skin preview themes/<theme-id> --json
 doubao-skin pack themes/<theme-id> dist/<theme-id>.doubao-skin.zip --json
 ```
 
-迁移会把通用视觉字段移到 `shared`，把来源整理到 `provenance`，将主题版本提升到下一个主版本，并显式声明三个现有应用。随后必须人工复核：
+迁移会把通用视觉字段移到 `shared`，把来源整理到 `provenance`，将主题版本提升到下一个主版本，并显式声明三个现有应用。旧 `theme.css` 中符合 v3 白名单的视觉规则会重写作用域并保存在 `styles/doubao-family.css`，由豆包和豆包工作共同引用；布局、交互、远程资源和已经由结构字段承担的规则不会带入。若共享层声明了图标，迁移器还会为当前不支持图标替换的 WorkBuddy 写入 `icons: null`。随后必须人工复核：
 
-- 删除已由结构字段和宿主适配器承担的旧 CSS；
-- 只保留真正需要的共享或目标 CSS，并在 manifest 中引用；
+- 确认被过滤的旧 CSS 确实只包含已由结构字段/宿主适配器承担或 v3 明确禁止的能力；
+- 确认保留的豆包家族 CSS 在浅色和深色窗口中没有可读性回归；
 - 用 `null` 删除不适用于目标的继承资源；
 - 在三个真实应用的浅色/深色窗口分别验收后再发布。
 

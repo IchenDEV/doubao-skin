@@ -722,13 +722,13 @@ impl Theme {
     /// opposite appearance must not leak into the preview.
     fn preview_css_color(&self, var: &str) -> Option<PreviewColor> {
         let desired = match self.preview_mode {
-            ThemeMode::Light => "data-theme=light",
-            ThemeMode::Dark => "data-theme=dark",
+            ThemeMode::Light => ("data-theme=light", "data-theme=\"light\""),
+            ThemeMode::Dark => ("data-theme=dark", "data-theme=\"dark\""),
             ThemeMode::Auto => return self.css_preview_color(var),
         };
         let opposite = match self.preview_mode {
-            ThemeMode::Light => "data-theme=dark",
-            ThemeMode::Dark => "data-theme=light",
+            ThemeMode::Light => ("data-theme=dark", "data-theme=\"dark\""),
+            ThemeMode::Dark => ("data-theme=light", "data-theme=\"light\""),
             ThemeMode::Auto => unreachable!(),
         };
         let mut offset = 0;
@@ -746,9 +746,9 @@ impl Theme {
                 if let Some(open) = before.rfind('{') {
                     let selector_start = before[..open].rfind('}').map_or(0, |end| end + 1);
                     let selector = &before[selector_start..open];
-                    if selector.contains(desired) {
+                    if selector.contains(desired.0) || selector.contains(desired.1) {
                         scoped = Some(value);
-                    } else if !selector.contains(opposite) {
+                    } else if !selector.contains(opposite.0) && !selector.contains(opposite.1) {
                         unscoped = Some(value);
                     }
                 }
@@ -4335,9 +4335,9 @@ mod tests {
         assert!(!swatches.is_empty());
         assert!(swatches.contains(&0x16131f));
         let pv = violet.preview_colors();
-        assert_eq!(pv.sidebar.rgb, 0x17161e);
+        assert_eq!(pv.sidebar.rgb, 0x1f1a2c);
         assert_eq!(pv.main.rgb, 0x16131f);
-        assert_eq!(pv.accent.rgb, 0x8d6fd3);
+        assert_eq!(pv.accent.rgb, 0x9d7bea);
         let pure = themes
             .iter()
             .find(|t| t.id == "pure-dark")
@@ -4396,7 +4396,7 @@ mod tests {
         assert_eq!(snack.surface_opacity, Some(0.52));
         let snack_preview = snack.preview_style();
         assert!((snack_preview.background_veil - 0.04).abs() < 0.0001);
-        assert_eq!(snack_preview.background_base, 0xfff7eb);
+        assert_eq!(snack_preview.background_base, 0xfff8ed);
         assert!(snack_preview.icons.main.is_some());
         assert!(snack_preview.icons.daily_work.is_some());
         assert!(snack_preview.icons.read_aloud.is_some());

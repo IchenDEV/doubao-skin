@@ -103,6 +103,25 @@ fn explicit_target_keys_are_the_only_support_source() {
 }
 
 #[test]
+fn workbuddy_must_explicitly_remove_inherited_theme_icons() {
+    let temp = TempRoot::new("workbuddy-icons");
+    let mut manifest = fixture("valid-all-targets.json");
+    manifest["shared"]["icons"] = serde_json::json!({"main": "icons/main.svg"});
+    let root = write_manifest_package(&temp, &manifest);
+    write_file(
+        &root,
+        "icons/main.svg",
+        r#"<svg xmlns="http://www.w3.org/2000/svg"/>"#,
+    );
+
+    let error = validate_theme_package(&root)
+        .expect_err("WorkBuddy cannot claim inherited icons while its runtime skips icon marking");
+
+    assert_eq!(error.category, ThemePackageErrorCategory::Manifest);
+    assert_eq!(error.pointer.as_deref(), Some("/targets/workbuddy/icons"));
+}
+
+#[test]
 fn structured_merge_order_and_null_deletion_are_resolved_per_target_and_appearance() {
     let temp = TempRoot::new("merge");
     let mut manifest = fixture("valid-all-targets.json");
@@ -110,11 +129,12 @@ fn structured_merge_order_and_null_deletion_are_resolved_per_target_and_appearan
         "main": "icons/main.svg",
         "send": "icons/send.svg"
     });
+    manifest["targets"]["workbuddy"]["icons"] = Value::Null;
     manifest["shared"]["variants"] = serde_json::json!({
         "light": { "composer": { "background": "#fefefe" } },
         "dark": { "composer": { "background": "#111111" } }
     });
-    manifest["targets"]["workbuddy"] = serde_json::json!({
+    manifest["targets"]["doubao"] = serde_json::json!({
         "composer": { "border": "1px solid #abcdef" },
         "icons": { "main": null },
         "variants": {
@@ -135,11 +155,11 @@ fn structured_merge_order_and_null_deletion_are_resolved_per_target_and_appearan
 
     let package = validate_theme_package(&root).expect("merged package should validate");
     assert_eq!(
-        package.support(ThemeTarget::WorkBuddy).level,
+        package.support(ThemeTarget::Doubao).level,
         SupportLevel::Tailored
     );
     let light = package
-        .resolve(ThemeTarget::WorkBuddy, ThemePackageAppearance::Light)
+        .resolve(ThemeTarget::Doubao, ThemePackageAppearance::Light)
         .expect("light should resolve");
     assert_eq!(light.visual()["composer"]["background"], "#fefefe");
     assert_eq!(light.visual()["composer"]["border"], "1px solid #abcdef");
@@ -147,7 +167,7 @@ fn structured_merge_order_and_null_deletion_are_resolved_per_target_and_appearan
     assert_eq!(light.visual()["icons"]["send"], "icons/send.svg");
 
     let dark = package
-        .resolve(ThemeTarget::WorkBuddy, ThemePackageAppearance::Dark)
+        .resolve(ThemeTarget::Doubao, ThemePackageAppearance::Dark)
         .expect("dark should resolve");
     assert_eq!(dark.visual()["composer"]["background"], "#090909");
 }
@@ -185,7 +205,7 @@ fn write_full_css_package(temp: &TempRoot) -> PathBuf {
         &root,
         "styles/shared.css",
         r#"/* SHARED_BASE */
-html[data-skin="gallery-whale-maid"] {
+html[data-skin="fixture-full"] {
   --whale-soft: rgba(122, 78, 41, 0.24);
   color: #352970;
 }"#,
@@ -194,14 +214,14 @@ html[data-skin="gallery-whale-maid"] {
         &root,
         "styles/shared-light.css",
         r#"/* SHARED_LIGHT */
-html[data-skin="gallery-whale-maid"] { color: #413573; }"#,
+html[data-skin="fixture-full"] { color: #413573; }"#,
     );
     write_file(
         &root,
         "styles/doubao-family.css",
         r#"/* DOUBAO_FAMILY_ONLY */
-html[data-skin="gallery-whale-maid"][data-skin-target="doubao"],
-html[data-skin="gallery-whale-maid"][data-skin-target="doubao-work"] {
+html[data-skin="fixture-full"][data-skin-target="doubao"],
+html[data-skin="fixture-full"][data-skin-target="doubao-work"] {
   --whale-accent: #7a4e29;
   border-color: var(--whale-soft);
 }"#,
@@ -211,7 +231,7 @@ html[data-skin="gallery-whale-maid"][data-skin-target="doubao-work"] {
         "styles/workbuddy.css",
         r#"/* WORKBUDDY_ONLY */
 @media (hover: hover) {
-  html[data-skin="gallery-whale-maid"][data-skin-target="workbuddy"] .workbench-part {
+  html[data-skin="fixture-full"][data-skin-target="workbuddy"] .workbench-part {
     border-color: var(--whale-soft);
     box-shadow: 0 8px 24px rgba(65, 43, 50, 0.10);
   }
@@ -221,13 +241,13 @@ html[data-skin="gallery-whale-maid"][data-skin-target="doubao-work"] {
         &root,
         "styles/doubao-light.css",
         r#"/* DOUBAO_LIGHT */
-html[data-skin="gallery-whale-maid"][data-skin-target="doubao"] { color: #30286b; }"#,
+html[data-skin="fixture-full"][data-skin-target="doubao"] { color: #30286b; }"#,
     );
     write_file(
         &root,
         "styles/workbuddy-light.css",
         r#"/* WORKBUDDY_LIGHT */
-html[data-skin="gallery-whale-maid"][data-skin-target="workbuddy"] { color: #352970; }"#,
+html[data-skin="fixture-full"][data-skin-target="workbuddy"] { color: #352970; }"#,
     );
     root
 }
@@ -465,19 +485,19 @@ fn css_ast_rejects_scope_property_url_reserved_and_at_rule_bypasses() {
         ),
         (
             "wrong target",
-            "html[data-skin=\"gallery-whale-maid\"][data-skin-target=\"doubao\"] { color: red; }",
+            "html[data-skin=\"fixture-full\"][data-skin-target=\"doubao\"] { color: red; }",
         ),
         (
             "escaped layout property",
-            "html[data-skin=\"gallery-whale-maid\"][data-skin-target=\"workbuddy\"] { d\\69 splay: block; }",
+            "html[data-skin=\"fixture-full\"][data-skin-target=\"workbuddy\"] { d\\69 splay: block; }",
         ),
         (
             "escaped url function",
-            "html[data-skin=\"gallery-whale-maid\"][data-skin-target=\"workbuddy\"] { background: u\\72l(https://example.com/x.png); }",
+            "html[data-skin=\"fixture-full\"][data-skin-target=\"workbuddy\"] { background: u\\72l(https://example.com/x.png); }",
         ),
         (
             "escaped reserved variable",
-            "html[data-skin=\"gallery-whale-maid\"][data-skin-target=\"workbuddy\"] { --doubao-skin-runtime-\\63olor: red; }",
+            "html[data-skin=\"fixture-full\"][data-skin-target=\"workbuddy\"] { --doubao-skin-runtime-\\63olor: red; }",
         ),
         (
             "import",
