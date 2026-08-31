@@ -1,15 +1,15 @@
 ---
 id: "2026-08-30-windows-build-and-cli-rename"
 stage: verification
-status: passed
+status: pending
 owner: "Codex implementation agent"
 created: "2026-08-30"
 based_on: plan.md
-commit: "8128a106d28222c6a5e76e1592a4032ce35156c9"
+commit: ""
 risk: "critical"
 verification_mode: "fresh-context"
-verified_by: "Codex fresh-context verifier"
-verified_at: "2026-08-31"
+verified_by: ""
+verified_at: ""
 ---
 
 # Verification: Windows native build and CLI rename
@@ -710,3 +710,32 @@ Windows compact and normal padding to zero and preserve both previous macOS
 values. The official ARM64 client's missing proprietary `mcp_helper.dll` and
 the future tagged-artifact checks remain documented external/production risks,
 not failures of this pre-merge change verification.
+
+## Current `mcp_helper.dll` follow-up on 2026-08-31
+
+The previous conclusion that the official ARM64 installation was incomplete
+has been reopened. A single-variable probe in the same Windows 11 ARM guest
+produced this matrix:
+
+- normal outer `Application/Doubao.exe`: no dialog, CDP port closed;
+- outer executable plus `--remote-debugging-port=9223`: visible official
+  `安装文件缺失` / `mcp_helper.dll` dialog, CDP port open;
+- adding the flag through a second outer launch after normal startup: no
+  dialog, but the existing process ignores the flag and the port stays closed;
+- inner `Application/app/Doubao.exe` plus the same flag and its own working
+  directory: no dialog and the CDP port opens;
+- the matching inner `DoubaoWork.exe` path also starts without the dialog and
+  opens port 9222.
+
+This proves that the outer update/installation launcher reacts to Chromium
+debug flags; CDP and the installed runtime itself are not missing the DLL.
+Installation discovery still resolves the public entry, while Windows CDP
+startup now selects its adjacent inner runtime and falls back to the discovered
+entry when that layout does not exist. The regression was first run red (the
+runtime resolver was absent), then green. `cargo test -p skin-core --lib
+windows_`, `./scripts/check.sh rust`, `./scripts/check.sh workflow`, the
+repository-wide platform-assumption scan, and `./scripts/check.sh all` pass.
+
+Current verdict: `pending` until a native Windows ARM64 CI artifact containing
+this change is downloaded and its real theme-application path is repeated in
+the guest without the proprietary-DLL dialog.
