@@ -5,7 +5,7 @@ status: pending
 owner: "Codex implementation agent"
 created: "2026-08-30"
 based_on: plan.md
-commit: ""
+commit: "9ed07fe150f333b18f59971e44a58de139cac901"
 risk: "critical"
 verification_mode: "fresh-context"
 verified_by: ""
@@ -494,18 +494,17 @@ verified_at: ""
   The ARM64 VM now also verifies real target-window theme application. x86,
   x64, and ARM64 now all have native Windows compilation/package evidence.
 - The current official ARM64 Doubao installer was downloaded from the official
-  site and used for an overwrite repair, but starting the official client with
-  a CDP port still displays its own `安装文件缺失` dialog naming
-  `mcp_helper.dll`. A filesystem check confirms that DLL is absent after the
-  official reinstall. The target window and theme injection work after the
-  dialog is dismissed. This repository must not redistribute or synthesize the
-  proprietary DLL, so a completely clean startup remains blocked by the
-  official ARM64 installation rather than by the theme package.
+  site and used for an overwrite repair. An earlier pass saw an `安装文件缺失`
+  dialog naming `mcp_helper.dll` when the public launcher received a CDP flag.
+  The later single-variable matrix below supersedes the conclusion that the
+  installation was incomplete: the inner runtime opens the same CDP ports
+  without a dialog. This repository still must not redistribute or synthesize
+  the proprietary DLL; the product now avoids the outer launcher's diagnostic
+  path instead.
 - The Windows packages are unsigned ZIPs, not MSI/MSIX installers. The
   protected Release workflow was exercised as a non-publishing branch dry run;
   no production tag or GitHub Release was created. The native Windows package
-  gate passed, while final verification status still requires the repository-
-  mandated human or fresh-context verdict.
+  gate passed; publication remains a separate human-controlled approval.
 - Linux x64 and ARM64 CLI archives were built on native GitHub-hosted runners,
   not this macOS host. Their package evidence is the successful protected
   Release matrix, downloaded sidecars and archive inspection, and exact
@@ -631,12 +630,13 @@ hang is traced to a Windows-incompatible WebSocket random source, repaired with
 native OS randomness, protected by regression tests, and rebuilt into all
 three single-entry Windows Desktop archives. The ARM64 VM now provides an
 additional real target-window pass for theme application and button state. The
-fresh-context final verdict is `passed`. The exact final native executable now
-has an inspectable fixed-size real-window capture; a separate narrow capture is
-not applicable because the production window is intentionally non-resizable.
-The current official ARM64 Doubao install still reports its own missing
-`mcp_helper.dll` when launched with CDP, but the target window and injection
-work after that official-client dialog is dismissed. The non-publishing
+exact-build visual verdict at `8128a106` was `passed`. The exact native
+executable now has an inspectable fixed-size real-window capture; a separate
+narrow capture is not applicable because the production window is
+intentionally non-resizable.
+The follow-up at `e97393f` shows that only the public installation launcher
+reports `mcp_helper.dll` when it receives the CDP flag; the product now selects
+the adjacent inner runtime, which opens CDP cleanly. The non-publishing
 protected Release dry run has now proved the stable App/CLI certificate
 fingerprint, built all Linux
 and Windows CLI assets, and verified the candidate `v0.4.0` filename/URL mapping;
@@ -650,7 +650,10 @@ or target-specific adapters instead of leaking into portable theme and CLI
 operations. Packaging is exposed through one dispatcher with grouped internal
 scripts, and the obsolete macOS Windows-cross/GPUI-patch path is gone. All
 three native Windows CI jobs now pass and retain downloadable test artifacts.
-This verification is `passed`; the protected Release dry run proves
+The implementation and evidence checks pass, but the current change verdict is
+`pending` because the critical Plan's launch strategy was materially revised
+after its recorded acceptance and has not received a new explicit human
+approval. The protected Release dry run proves
 the signed release candidates and release path at `c757053`; a real version tag
 will rebuild the artifacts, which must still be downloaded and checked against
 the release checklist. Publication remains a separate human-controlled gate.
@@ -707,9 +710,9 @@ with zero macOS traffic-light inset while retaining the Windows app icon and
 native window controls. Production is fixed at 1120x720 with resizing disabled,
 so no separate user-reachable narrow state exists; regression tests still lock
 Windows compact and normal padding to zero and preserve both previous macOS
-values. The official ARM64 client's missing proprietary `mcp_helper.dll` and
-the future tagged-artifact checks remain documented external/production risks,
-not failures of this pre-merge change verification.
+values. The future tagged-artifact checks remain a documented production risk,
+not a failure of that earlier pre-merge verification. The later CDP-launch
+follow-up is evaluated separately below.
 
 ## Current `mcp_helper.dll` follow-up on 2026-08-31
 
@@ -736,6 +739,66 @@ runtime resolver was absent), then green. `cargo test -p skin-core --lib
 windows_`, `./scripts/check.sh rust`, `./scripts/check.sh workflow`, the
 repository-wide platform-assumption scan, and `./scripts/check.sh all` pass.
 
-Current verdict: `pending` until a native Windows ARM64 CI artifact containing
-this change is downloaded and its real theme-application path is repeated in
-the guest without the proprietary-DLL dialog.
+- Native CI run
+  [`33397526465`](https://github.com/IchenDEV/doubao-skin/actions/runs/33397526465)
+  is for exact product HEAD `9ed07fe150f333b18f59971e44a58de139cac901`
+  and completed successfully across Development workflow, Rust, Web, and native
+  Windows x64, x86, and ARM64. The x64 native job ran both the installed-layout
+  resolver regression and the new portable-layout boundary regression. The
+  latter was first red because a portable path with an adjacent `app` directory
+  was incorrectly rewritten; it now proves only a parent directory named
+  `Application` may select the inner runtime.
+- GitHub artifact `Windows-native-arm64` (`9760036447`) is 12,012,811 bytes and
+  has enclosing SHA-256
+  `b51a062a5bdd80ab787bcf34ff39d9bf27d4b38f20b1afd8248dbaf3aaf7232e`.
+  A fresh download matched that digest, and both Desktop and CLI sidecars
+  passed. The Desktop ZIP SHA-256 is
+  `88d4fc6d46207a7b48398c721a2bdf3e56616d4d22670583d142b6c6e48e2f0c`.
+  Its packaged executable is a PE32+ GUI AArch64 binary with SHA-256
+  `0d456810b9e4c8f7e910ddf408961e67d73bbb8bdef42d397206d23946760310`.
+- The immediately preceding native CI run
+  [`33389553882`](https://github.com/IchenDEV/doubao-skin/actions/runs/33389553882)
+  is for `e97393f578d9342062fac4f97a203c84bebc6ece`, where the installed-layout
+  behavior first became green across Development workflow, Rust, Web, and
+  native Windows x64, x86, and ARM64. Its ARM64 artifact is the exact package
+  used for the guest-side cold-start and theme-application pass below. The only
+  subsequent product change narrows resolver eligibility for portable paths;
+  it leaves the verified official `Application/app` path unchanged and is
+  covered by the red/green regression plus exact-HEAD native CI above.
+- GitHub artifact `Windows-native-arm64` (`9757031649`) is 12,014,884 bytes and
+  has enclosing SHA-256
+  `c0303a2878f5068884e08e10b5544c044eb1132d4f1115c13a3c254069de2861`.
+  A fresh download matched that digest, and both Desktop and CLI sidecars
+  passed. The Desktop ZIP SHA-256 is
+  `a3c032f22b55d769d84a7f6ba78df569b0ddcf4a59351876fdfae9420ec5ee6a`.
+  Its packaged executable is a PE32+ GUI AArch64 binary with SHA-256
+  `91eb83918abae70c1fde1e1b679e0fa5f78610b4d6ab4af1bc84a30cb9c97fa8`;
+  the repository verifier independently confirmed its ICON, GROUP_ICON, and
+  Windows GUI subsystem resources.
+- The same Desktop ZIP was downloaded into the Windows 11 ARM guest and its
+  guest-side SHA-256 matched
+  `a3c032f22b55d769d84a7f6ba78df569b0ddcf4a59351876fdfae9420ec5ee6a`.
+  Starting with both 9222 and 9223 closed, that exact package cold-started
+  Doubao Work, opened CDP through the inner runtime, and applied the illustrated
+  theme without an `mcp_helper.dll` dialog. The Desktop button reached
+  `正在使用`, and the real target window remained visibly themed. The captured
+  state is
+  [windows-arm64-mcp-helper-ci-33389553882.jpeg](evidence/windows-arm64-mcp-helper-ci-33389553882.jpeg).
+- The resolver and its only production call site are both compiled solely for
+  Windows. The macOS `open -b ... --args` launch path and the unsupported-
+  platform error path are unchanged. When no adjacent `app/<same-name>.exe`
+  exists, including the covered portable layout, Windows returns the discovered
+  executable unchanged. A fresh local pass ran `cargo test -p skin-core --lib
+  windows_ --locked` (6 passed), `cargo check -p skin-core --lib --locked`,
+  `cargo fmt --all -- --check`, `./scripts/check.sh workflow`, the portability
+  scan with an `rg`-free PATH, and both working-tree/range `git diff --check`;
+  all passed.
+
+Technical follow-up verdict: `passed`. The exact native artifact, guest hash,
+clean cold-start, target-window theme state, and platform fallback are all
+verified. Overall change verdict: `pending` only because accepted critical Plan
+step 13 was materially reversed after its recorded approval and the revised
+Plan has not received a new explicit human acceptance. A fresh verifier cannot
+infer or manufacture that approval; once the human approves the revised Plan,
+the recorded technical evidence is sufficient for the frontmatter verdict to
+be changed to `passed` without another product-code change.
