@@ -146,6 +146,12 @@ fn windows_cdp_binary(installed_binary: &Path) -> PathBuf {
     let Some(directory) = installed_binary.parent() else {
         return installed_binary.to_path_buf();
     };
+    if !directory
+        .file_name()
+        .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case("Application"))
+    {
+        return installed_binary.to_path_buf();
+    }
     // The public launcher performs installer diagnostics when Chromium flags
     // are present. Start its adjacent runtime directly for CDP, while keeping
     // discovery and non-standard/portable layouts on the installed entry.
@@ -600,6 +606,9 @@ mod tests {
         let portable = root.join("Portable/Doubao.exe");
         std::fs::create_dir_all(portable.parent().unwrap()).unwrap();
         std::fs::write(&portable, []).unwrap();
+        let portable_child = root.join("Portable/app/Doubao.exe");
+        std::fs::create_dir_all(portable_child.parent().unwrap()).unwrap();
+        std::fs::write(&portable_child, []).unwrap();
         assert_eq!(windows_cdp_binary(&portable), portable);
 
         std::fs::remove_dir_all(root).unwrap();
