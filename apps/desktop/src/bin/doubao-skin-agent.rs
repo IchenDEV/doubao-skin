@@ -292,7 +292,9 @@ mod agent {
             }
         }
 
-        pub struct InstanceGuard(OwnedHandle);
+        pub struct InstanceGuard {
+            _handle: OwnedHandle,
+        }
 
         pub fn acquire_single_instance() -> Result<Option<InstanceGuard>, String> {
             let name: Vec<u16> = INSTANCE_MUTEX_NAME.encode_utf16().chain(Some(0)).collect();
@@ -308,7 +310,7 @@ mod agent {
             if already_exists {
                 Ok(None)
             } else {
-                Ok(Some(InstanceGuard(handle)))
+                Ok(Some(InstanceGuard { _handle: handle }))
             }
         }
 

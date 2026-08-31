@@ -22,7 +22,7 @@ verified_at: ""
 - `./scripts/check.sh rust`: passed after the final implementation; desktop 25, core 53, authoring 7, bundled paths 3 and CLI 4 passed, followed by warning-as-error checks and desktop build.
 - `./scripts/check.sh all`: passed after the final read-confirmation compensation patch, including workflow, Rust, Web tests, TypeScript, Next.js static build and audit; `git diff --check` also passed.
 - `cargo check -p doubao-skin-desktop --bin doubao-skin-agent --target x86_64-pc-windows-msvc` on macOS stopped in the pre-existing `ring` C build because the host has no Windows MSVC SDK header `assert.h`; it did not reach product code and is not Windows evidence.
-- Native Windows x64/x86/ARM64 CI and final ZIP PE checks: pending Draft PR run.
+- Draft PR CI run `33440186944` proved the Windows product builds and helper package layout on x86 and ARM64, plus the x64 product code compiled before tests. The x64 job then exposed one platform-specific test-fixture defect: a POSIX `/Test/...` path was not absolute under Windows. The fixture now constructs native absolute paths and the Win32 instance guard warning is removed; rerun is pending.
 
 ## Behavioral evidence
 
@@ -46,10 +46,10 @@ verified_at: ""
 
 ## Deviations and residual risk
 
-- The planned local Windows VM path is temporarily unavailable for trustworthy input/visual capture; native CI is used next for compilation/PE/package proof, but cannot replace login/visual acceptance.
+- The planned local Windows VM path is temporarily unavailable for trustworthy input/visual capture; native CI supplies compilation/PE/package proof, but cannot replace login/visual acceptance.
 - Public HKCU Run registration cannot observe Windows Settings' undocumented external disable database. UI therefore reports registration, never silently recreates a deleted value, as approved in Spec.
 - A portable package move leaves an old absolute Run path until the user explicitly closes/reopens the parent switch. This is intentional to avoid overriding an external disable choice.
-- Windows-specific code has not yet compiled on a native Windows runner in this verification revision. Do not mark complete until native CI passes and VM evidence is obtained or explicitly waived by a human verifier.
+- Windows-specific product code compiled on native Windows x64/x86/ARM64 runners in run `33440186944`; the first x64 test run failed only on the non-native absolute-path fixture described above. Do not mark complete until the corrected native CI rerun passes and VM evidence is obtained or explicitly waived by a human verifier.
 
 ## Verdict
 

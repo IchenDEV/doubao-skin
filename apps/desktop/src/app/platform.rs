@@ -492,6 +492,28 @@ mod tests {
         (root, helper)
     }
 
+    fn absolute_test_path(suffix: &str) -> PathBuf {
+        #[cfg(target_os = "windows")]
+        {
+            PathBuf::from(format!("C:\\{suffix}"))
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            PathBuf::from(format!("/{suffix}"))
+        }
+    }
+
+    fn absolute_test_path_with_utf16_len(len: usize) -> PathBuf {
+        #[cfg(target_os = "windows")]
+        let prefix = "C:\\";
+        #[cfg(not(target_os = "windows"))]
+        let prefix = "/";
+
+        let prefix_len = prefix.encode_utf16().count();
+        assert!(len >= prefix_len);
+        PathBuf::from(format!("{prefix}{}", "a".repeat(len - prefix_len)))
+    }
+
     #[derive(Default)]
     struct FakeStartupBackend {
         value: RefCell<Option<String>>,
@@ -578,13 +600,14 @@ mod tests {
 
     #[test]
     fn quotes_unicode_paths_and_enforces_the_documented_run_limit() {
+        let unicode = absolute_test_path("Test/豆皮 便携包/helpers/agent.exe");
         assert_eq!(
-            windows_run_command(Path::new("/Test/豆皮 便携包/helpers/agent.exe")).unwrap(),
-            "\"/Test/豆皮 便携包/helpers/agent.exe\""
+            windows_run_command(&unicode).unwrap(),
+            format!("\"{}\"", unicode.to_string_lossy())
         );
-        assert!(windows_run_command(Path::new("/Test/bad\"name/agent.exe")).is_err());
+        assert!(windows_run_command(&absolute_test_path("Test/bad\"name/agent.exe")).is_err());
 
-        let largest = PathBuf::from(format!("/{}", "a".repeat(256)));
+        let largest = absolute_test_path_with_utf16_len(257);
         assert_eq!(
             windows_run_command(&largest)
                 .unwrap()
@@ -593,7 +616,7 @@ mod tests {
                 + 1,
             260
         );
-        let too_long = PathBuf::from(format!("/{}", "a".repeat(257)));
+        let too_long = absolute_test_path_with_utf16_len(258);
         assert!(windows_run_command(&too_long).is_err());
     }
 
