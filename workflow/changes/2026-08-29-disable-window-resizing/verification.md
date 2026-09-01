@@ -42,6 +42,29 @@ verified_at: ""
 - No product-scope deviation.
 - The full `./scripts/check.sh rust` gate is currently blocked before the scoped checks by unrelated concurrent formatting changes in `crates/skin-core/src/authoring.rs`, `crates/skin-core/src/lib.rs`, and `crates/skin-core/tests/doubao_theme_cli.rs`. Running the workspace tests independently is also blocked by the unrelated compile-time `CARGO_BIN_EXE_doubao-theme` lookup in `doubao_theme_cli.rs`. The two task-scoped packages and Clippy pass.
 
+## Follow-up: full-titlebar dragging
+
+### Regression proof
+
+- Red test: `cargo test -p doubao-skin-desktop ui_regression_tests::custom_titlebar_owns_window_dragging --locked` failed before implementation because `WindowOptions.app_owns_titlebar_drag` was `false`.
+- Green test: the same command passed after the window declared application-owned titlebar dragging.
+- The full `./scripts/check.sh all` gate passed on 2026-09-01, including workflow validation, 32 desktop tests, 70 core tests, integration tests, checks, supply-chain policy, Web tests, TypeScript, and the production Next.js build.
+- `git diff --check` passed.
+
+### Implementation evidence
+
+- The shared compact and regular header roots start the native window move operation on a primary mouse-down event.
+- The target segmented control stops that mouse-down from bubbling to the header, preserving direct target selection.
+- The change remains inside the accepted movable-but-non-resizable window behavior; themes, target injection, package formats, and official client windows are unchanged.
+
+### Real-window evidence
+
+- `./scripts/package.sh desktop-macos` built the current arm64 package and strict deep code-sign verification passed.
+- Computer Use launched this exact `dist/豆皮.app` and exercised titlebar drags from the left blank area, right blank area, and the blank area beside the target selector.
+- Clicking `WorkBuddy` changed its accessibility state to selected, proving the segmented control was not converted into a drag surface; `豆包工作` was then selected again to restore the original state.
+- The window remains fixed at the accepted `1120 × 720` content size, so a narrow-window drag check is not applicable to this product configuration.
+- Screenshot: `/Users/chenli/.codex/visualizations/2026/09/01/01a05cfa-0f83-7c92-a00e-a39344abbfb2/doubao-skin-full-titlebar-drag.png` (`1120 × 721` captured outer frame, SHA-256 `b045a68863fac3df09f9535cb571d5f8561013cbced846dffdda650f388a484c`).
+
 ## Verdict
 
 Implementation self-check passed. Status remains pending until a fresh-context verifier reviews the code, commands, and screenshot.

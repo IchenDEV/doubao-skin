@@ -10,8 +10,8 @@ mod sidebar;
 mod widgets;
 
 use gpui::{
-    div, prelude::*, px, rgb, svg, Context, ExternalPaths, FontWeight, IntoElement, Render, Role,
-    Window,
+    div, prelude::*, px, rgb, svg, Context, ExternalPaths, FontWeight, IntoElement, MouseButton,
+    Render, Role, Window,
 };
 
 use crate::app::types::SourceView;
@@ -79,6 +79,9 @@ impl SkinApp {
                 .border_color(rgb(colors.border))
                 .flex()
                 .items_center()
+                .on_mouse_down(MouseButton::Left, |_event, window, _cx| {
+                    window.start_window_move()
+                })
                 .child(
                     div()
                         .flex_1()
@@ -96,6 +99,9 @@ impl SkinApp {
                 .border_color(rgb(colors.border))
                 .flex()
                 .items_center()
+                .on_mouse_down(MouseButton::Left, |_event, window, _cx| {
+                    window.start_window_move()
+                })
                 .child(
                     div()
                         .flex_1()
