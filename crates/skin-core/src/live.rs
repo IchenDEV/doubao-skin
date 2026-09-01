@@ -29,8 +29,31 @@ const WORKBUDDY_MACOS_RENDERER_URL: &str =
 const GENERIC_PAGE_PATTERNS: &[&str] = &["side_panel.html", "popup.html", "options.html"];
 const INITIAL_INJECTION_TIMEOUT: Duration = Duration::from_secs(30);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PortLossPolicy {
+    Relaunch,
+    Stop,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum MissingPortAction {
+    Wait,
+    Relaunch,
+    Stop,
+}
+
+fn missing_port_action(once: bool, policy: PortLossPolicy, down_ticks: u32) -> MissingPortAction {
+    if once || policy == PortLossPolicy::Stop {
+        MissingPortAction::Stop
+    } else if down_ticks >= 5 {
+        MissingPortAction::Relaunch
+    } else {
+        MissingPortAction::Wait
+    }
+}
+
 fn ensure_live_supported(target_os: &str, _target: TargetApp) -> Result<(), String> {
-    if target_os == "macos" || target_os == "windows" {
+    if matches!(target_os, "macos" | "windows") {
         Ok(())
     } else {
         Err("实时应用主题仅支持 macOS 和 Windows".into())
@@ -188,6 +211,10 @@ impl TargetApp {
         self.installed_binary().is_some()
     }
 
+    pub fn is_running(self) -> bool {
+        platform::app_is_running(self)
+    }
+
     fn installed_binary(self) -> Option<PathBuf> {
         platform::installed_binary(self)
     }
@@ -231,6 +258,15 @@ impl TargetApp {
     pub const fn relaunch_after_port_loss(self) -> bool {
         !matches!(self, Self::WorkBuddy)
     }
+}
+
+/// Returns whether the exact executable path is currently running.
+///
+/// This is used by the bundled login item to yield ownership while the main
+/// desktop app is open. Platform process commands stay behind the live
+/// adapter rather than leaking into the helper binary.
+pub fn executable_is_running(path: &std::path::Path) -> bool {
+    platform::executable_is_running(path)
 }
 
 pub fn theme_js(theme: &Theme, target: TargetApp) -> String {
@@ -488,6 +524,42 @@ pub fn run_with_restart_permission<F: FnMut(String)>(
     once: bool,
     stop: Arc<AtomicBool>,
     allow_restart: bool,
+    log: F,
+) -> Result<(), String> {
+    let port_loss_policy = if once || !target.relaunch_after_port_loss() {
+        PortLossPolicy::Stop
+    } else {
+        PortLossPolicy::Relaunch
+    };
+    run_with_options(
+        theme,
+        target,
+        once,
+        port_loss_policy,
+        stop,
+        allow_restart,
+        log,
+    )
+}
+
+pub fn run_with_policy<F: FnMut(String)>(
+    theme: &Theme,
+    target: TargetApp,
+    once: bool,
+    port_loss_policy: PortLossPolicy,
+    stop: Arc<AtomicBool>,
+    log: F,
+) -> Result<(), String> {
+    run_with_options(theme, target, once, port_loss_policy, stop, true, log)
+}
+
+fn run_with_options<F: FnMut(String)>(
+    theme: &Theme,
+    target: TargetApp,
+    once: bool,
+    port_loss_policy: PortLossPolicy,
+    stop: Arc<AtomicBool>,
+    allow_restart: bool,
     mut log: F,
 ) -> Result<(), String> {
     ensure_live_supported(std::env::consts::OS, target)?;
@@ -532,32 +604,28 @@ pub fn run_with_restart_permission<F: FnMut(String)>(
         let list = match targets(port) {
             Ok(l) => l,
             Err(_) => {
-                if once {
-                    log("debug port went away (app quit?) — exiting".into());
-                    return Ok(());
-                }
-                if !target.relaunch_after_port_loss() {
-                    log(format!(
-                        "{} closed — ending the watcher without relaunch",
-                        target.display_name()
-                    ));
-                    return Ok(());
-                }
-                // app quit: keep watching; if it doesn't come back on its own,
-                // relaunch it with the debug flag
+                // Keep the old CLI watcher behavior, but let user-facing
+                // automatic theming stop when the target is deliberately quit.
                 if !port_was_down {
                     log("debug port went away — waiting for the app to come back…".into());
                     port_was_down = true;
                 }
-                down_ticks += 1;
-                if down_ticks >= 5 && !port_up(port) {
-                    log("relaunching app with the debug port…".into());
-                    if platform::launch_app(target, &mut log).is_err() {
-                        log("relaunch failed, will keep waiting".into());
-                    } else {
-                        launched_by_us_at = Some(std::time::Instant::now());
+                down_ticks = down_ticks.saturating_add(1);
+                match missing_port_action(once, port_loss_policy, down_ticks) {
+                    MissingPortAction::Stop => {
+                        log("target app closed — automatic theme watcher stopped".into());
+                        return Ok(());
                     }
-                    down_ticks = 0;
+                    MissingPortAction::Relaunch if !port_up(port) => {
+                        log("relaunching app with the debug port…".into());
+                        if platform::launch_app(target, &mut log).is_err() {
+                            log("relaunch failed, will keep waiting".into());
+                        } else {
+                            launched_by_us_at = Some(std::time::Instant::now());
+                        }
+                        down_ticks = 0;
+                    }
+                    MissingPortAction::Relaunch | MissingPortAction::Wait => {}
                 }
                 std::thread::sleep(Duration::from_secs(2));
                 continue;
@@ -964,6 +1032,26 @@ mod tests {
                 Some("platform random source unavailable")
             ),
             Some("platform random source unavailable".to_string())
+        );
+    }
+
+    #[test]
+    fn stop_on_target_exit_never_relaunches() {
+        assert_eq!(
+            missing_port_action(false, PortLossPolicy::Stop, 1),
+            MissingPortAction::Stop
+        );
+        assert_eq!(
+            missing_port_action(false, PortLossPolicy::Relaunch, 4),
+            MissingPortAction::Wait
+        );
+        assert_eq!(
+            missing_port_action(false, PortLossPolicy::Relaunch, 5),
+            MissingPortAction::Relaunch
+        );
+        assert_eq!(
+            missing_port_action(true, PortLossPolicy::Relaunch, 5),
+            MissingPortAction::Stop
         );
     }
 

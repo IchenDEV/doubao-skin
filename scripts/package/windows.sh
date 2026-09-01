@@ -5,6 +5,7 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 DIST_DIR="$REPO_DIR/dist"
 EXECUTABLE_NAME="doubao-skin-app"
+AGENT_EXECUTABLE_NAME="doubao-skin-agent"
 PACKAGED_EXECUTABLE_NAME="doubao-skin"
 PACKAGE_NAME="doubao-skin-desktop"
 DEFAULT_BUNDLED_THEMES="doubao-snack-giggle doubao-dessert-giggle gallery-whale-maid qq-light-blue pure-dark"
@@ -52,14 +53,18 @@ cargo build \
   --target "$TARGET"
 
 "$SCRIPT_DIR/verify-windows-exe.sh" \
-  "$REPO_DIR/target/$TARGET/release/$EXECUTABLE_NAME.exe"
+  "$REPO_DIR/target/$TARGET/release/$EXECUTABLE_NAME.exe" "$LABEL" main
+"$SCRIPT_DIR/verify-windows-exe.sh" \
+  "$REPO_DIR/target/$TARGET/release/$AGENT_EXECUTABLE_NAME.exe" "$LABEL" helper
 
 STAGING="$DIST_DIR/Doubao-Skin-Windows-$LABEL"
 rm -rf "$STAGING"
-mkdir -p "$STAGING/themes" "$STAGING/licenses"
+mkdir -p "$STAGING/helpers" "$STAGING/themes" "$STAGING/licenses"
 
 cp "$REPO_DIR/target/$TARGET/release/$EXECUTABLE_NAME.exe" "$STAGING/$PACKAGED_EXECUTABLE_NAME.exe"
-"$SCRIPT_DIR/verify-windows-exe.sh" "$STAGING/$PACKAGED_EXECUTABLE_NAME.exe"
+cp "$REPO_DIR/target/$TARGET/release/$AGENT_EXECUTABLE_NAME.exe" "$STAGING/helpers/$AGENT_EXECUTABLE_NAME.exe"
+"$SCRIPT_DIR/verify-windows-exe.sh" "$STAGING/$PACKAGED_EXECUTABLE_NAME.exe" "$LABEL" main
+"$SCRIPT_DIR/verify-windows-exe.sh" "$STAGING/helpers/$AGENT_EXECUTABLE_NAME.exe" "$LABEL" helper
 
 if [ "${BUNDLE_ALL_THEMES:-0}" = "1" ]; then
   cp -R "$REPO_DIR/themes/." "$STAGING/themes"
@@ -83,6 +88,12 @@ cp "$REPO_DIR/THIRD_PARTY_NOTICES.md" "$STAGING/licenses/THIRD_PARTY_NOTICES.md"
 top_level_executables=$(find "$STAGING" -maxdepth 1 -type f -name '*.exe' | wc -l | tr -d ' ')
 if [ "$top_level_executables" != "1" ]; then
   echo "Windows package must contain exactly one top-level executable" >&2
+  exit 1
+fi
+
+helper_executables=$(find "$STAGING/helpers" -maxdepth 1 -type f -name '*.exe' | wc -l | tr -d ' ')
+if [ "$helper_executables" != "1" ] || [ ! -f "$STAGING/helpers/$AGENT_EXECUTABLE_NAME.exe" ]; then
+  echo "Windows package must contain exactly one packaged auto-theme helper" >&2
   exit 1
 fi
 

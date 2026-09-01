@@ -86,6 +86,10 @@ impl TargetSession {
                     .is_some_and(|active| (active - selected).abs() < 0.001)
             })
     }
+
+    fn settings(&self) -> (String, Option<f32>) {
+        (self.theme_id.clone(), self.surface_opacity)
+    }
 }
 
 #[derive(Default)]
@@ -107,6 +111,18 @@ impl ThemeSessions {
             self.by_target[Self::index(target)],
             Some(TargetState::Applying(_) | TargetState::Restoring(_))
         )
+    }
+
+    pub(crate) fn has_session(&self, target: TargetApp) -> bool {
+        self.by_target[Self::index(target)].is_some()
+    }
+
+    pub(crate) fn request_stop(&self, target: TargetApp) {
+        if let Some(TargetState::Applying(session) | TargetState::Active(session)) =
+            self.by_target[Self::index(target)].as_ref()
+        {
+            session.request_stop();
+        }
     }
 
     pub(crate) fn begin_applying(
@@ -144,6 +160,19 @@ impl ThemeSessions {
                 self.by_target[index] = Some(state);
                 false
             }
+        }
+    }
+
+    pub(crate) fn active_settings(
+        &self,
+        target: TargetApp,
+        generation: u64,
+    ) -> Option<(String, Option<f32>)> {
+        match self.by_target[Self::index(target)].as_ref()? {
+            TargetState::Active(session) if session.generation == generation => {
+                Some(session.settings())
+            }
+            TargetState::Applying(_) | TargetState::Active(_) | TargetState::Restoring(_) => None,
         }
     }
 

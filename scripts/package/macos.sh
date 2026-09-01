@@ -8,6 +8,7 @@ APP_NAME="豆皮"
 BUNDLE="$DIST_DIR/$APP_NAME.app"
 LEGACY_BUNDLE="$DIST_DIR/Doubao Skin.app"
 EXECUTABLE_NAME="doubao-skin-app"
+AGENT_EXECUTABLE_NAME="doubao-skin-agent"
 PACKAGE_NAME="doubao-skin-desktop"
 APP_VERSION=${APP_VERSION:-$(awk -F '"' '/^version =/ { print $2; exit }' "$REPO_DIR/Cargo.toml")}
 CODESIGN_IDENTITY=${CODESIGN_IDENTITY:--}
@@ -47,6 +48,8 @@ esac
 mkdir -p "$DIST_DIR"
 rm -rf "$BUNDLE" "$LEGACY_BUNDLE"
 mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Resources/licenses"
+AGENT_BUNDLE="$BUNDLE/Contents/Library/LoginItems/豆皮后台服务.app"
+mkdir -p "$AGENT_BUNDLE/Contents/MacOS"
 
 for build_target in $TARGETS; do
   rustup target add "$build_target"
@@ -71,11 +74,18 @@ if [ "$BUILD_MODE" = "--universal" ]; then
     "$REPO_DIR/target/aarch64-apple-darwin/release/$EXECUTABLE_NAME" \
     "$REPO_DIR/target/x86_64-apple-darwin/release/$EXECUTABLE_NAME" \
     -output "$BUNDLE/Contents/MacOS/$APP_NAME"
+  lipo -create \
+    "$REPO_DIR/target/aarch64-apple-darwin/release/$AGENT_EXECUTABLE_NAME" \
+    "$REPO_DIR/target/x86_64-apple-darwin/release/$AGENT_EXECUTABLE_NAME" \
+    -output "$AGENT_BUNDLE/Contents/MacOS/豆皮后台服务"
 else
   cp "$REPO_DIR/target/release/$EXECUTABLE_NAME" "$BUNDLE/Contents/MacOS/$APP_NAME"
+  cp "$REPO_DIR/target/release/$AGENT_EXECUTABLE_NAME" \
+    "$AGENT_BUNDLE/Contents/MacOS/豆皮后台服务"
 fi
 
 cp "$REPO_DIR/apps/desktop/Info.plist" "$BUNDLE/Contents/Info.plist"
+cp "$REPO_DIR/apps/desktop/Agent-Info.plist" "$AGENT_BUNDLE/Contents/Info.plist"
 
 ICON_DEVELOPER_DIR=${ICON_DEVELOPER_DIR:-}
 if [ -n "$ICON_DEVELOPER_DIR" ] && [ ! -x "$ICON_DEVELOPER_DIR/usr/bin/actool" ]; then
@@ -144,12 +154,40 @@ cp "$REPO_DIR/LICENSES/GPL-3.0-or-later.txt" "$BUNDLE/Contents/Resources/license
 cp "$REPO_DIR/THIRD_PARTY_NOTICES.md" "$BUNDLE/Contents/Resources/licenses/THIRD_PARTY_NOTICES.md"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $APP_VERSION" "$BUNDLE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${GITHUB_RUN_NUMBER:-1}" "$BUNDLE/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $APP_VERSION" "$AGENT_BUNDLE/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${GITHUB_RUN_NUMBER:-1}" "$AGENT_BUNDLE/Contents/Info.plist"
+
+plutil -lint "$BUNDLE/Contents/Info.plist" "$AGENT_BUNDLE/Contents/Info.plist"
+agent_bundle_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$AGENT_BUNDLE/Contents/Info.plist")
+agent_ui_element=$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$AGENT_BUNDLE/Contents/Info.plist")
+main_version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$BUNDLE/Contents/Info.plist")
+agent_version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$AGENT_BUNDLE/Contents/Info.plist")
+main_minimum=$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$BUNDLE/Contents/Info.plist")
+agent_minimum=$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$AGENT_BUNDLE/Contents/Info.plist")
+if [ "$agent_bundle_id" != "dev.ichen.doubao-skin.agent" ] || [ "$agent_ui_element" != "true" ]; then
+  echo "invalid bundled login item metadata" >&2
+  exit 1
+fi
+if [ "$main_version" != "$agent_version" ] || [ "$main_minimum" != "$agent_minimum" ]; then
+  echo "main app and login item versions must match" >&2
+  exit 1
+fi
+if [ "$BUILD_MODE" = "--universal" ]; then
+  agent_archs=$(lipo -archs "$AGENT_BUNDLE/Contents/MacOS/豆皮后台服务")
+  case "$agent_archs" in
+    *arm64*x86_64*|*x86_64*arm64*) ;;
+    *) echo "universal login item is missing an architecture: $agent_archs" >&2; exit 1 ;;
+  esac
+fi
 
 if [ -n "$CODESIGN_KEYCHAIN" ]; then
-  codesign --force --deep --options runtime --timestamp=none --keychain "$CODESIGN_KEYCHAIN" --sign "$CODESIGN_IDENTITY" "$BUNDLE"
+  codesign --force --options runtime --timestamp=none --keychain "$CODESIGN_KEYCHAIN" --sign "$CODESIGN_IDENTITY" "$AGENT_BUNDLE"
+  codesign --force --options runtime --timestamp=none --keychain "$CODESIGN_KEYCHAIN" --sign "$CODESIGN_IDENTITY" "$BUNDLE"
 else
-  codesign --force --deep --options runtime --timestamp=none --sign "$CODESIGN_IDENTITY" "$BUNDLE"
+  codesign --force --options runtime --timestamp=none --sign "$CODESIGN_IDENTITY" "$AGENT_BUNDLE"
+  codesign --force --options runtime --timestamp=none --sign "$CODESIGN_IDENTITY" "$BUNDLE"
 fi
+codesign --verify --strict "$AGENT_BUNDLE"
 codesign --verify --deep --strict "$BUNDLE"
 
 NOTARY_VALUES="${APPLE_ID:-}${APPLE_TEAM_ID:-}${APPLE_APP_PASSWORD:-}"

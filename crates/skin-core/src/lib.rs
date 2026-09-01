@@ -8,6 +8,7 @@
 //!   `~/Applications/DoubaoWork-Skin.app`
 
 pub mod authoring;
+pub mod auto_theme;
 pub mod build;
 pub mod live;
 pub mod pak;

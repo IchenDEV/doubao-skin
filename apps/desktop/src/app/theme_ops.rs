@@ -114,6 +114,7 @@ impl SkinApp {
             ),
         );
         let previous_thread = previous.and_then(TargetSession::into_thread);
+        self.auto_theme_attempted_for_current_run = true;
         self.message = t().action_applying.into();
         self.restart_confirmation_target = None;
         let tx = self.tx.clone();

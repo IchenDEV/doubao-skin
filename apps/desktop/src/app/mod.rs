@@ -1,6 +1,7 @@
 //! Application state and background message handling.
 
 pub(crate) mod actions;
+pub(crate) mod auto_theme;
 pub(crate) mod helpers;
 mod input;
 mod install;
@@ -11,11 +12,11 @@ pub(crate) mod types;
 
 use std::collections::VecDeque;
 use std::sync::{mpsc, Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use gpui::{Context, FocusHandle, Window};
 
-use skin_core::{live, theme};
+use skin_core::{auto_theme as core_auto_theme, live, theme};
 
 pub use self::helpers::{
     initial_target, preview_identity, read_target_preference, save_target_preference,
@@ -48,6 +49,11 @@ pub struct SkinApp {
     pub(crate) surface_opacity: f32,
     pub(crate) opacity_drag_start: Option<(gpui::Pixels, f32)>,
     pub(crate) theme_sessions: ThemeSessions,
+    pub(crate) auto_theme_settings: core_auto_theme::AutoThemeSettings,
+    pub(crate) auto_theme_service_status: platform::AutoThemeServiceStatus,
+    pub(crate) auto_theme_busy: bool,
+    pub(crate) auto_theme_attempted_for_current_run: bool,
+    pub(crate) auto_theme_last_check: Instant,
     pub(crate) generation: u64,
     pub(crate) focus_handle: FocusHandle,
     pub(crate) url_buffer: Arc<Mutex<Vec<String>>>,
@@ -62,6 +68,11 @@ impl SkinApp {
         cx: &mut Context<Self>,
     ) -> Self {
         let colors = UiPalette::for_appearance(window.appearance());
+        let (auto_theme_settings, auto_theme_error) = match core_auto_theme::load() {
+            Ok(settings) => (settings, None),
+            Err(error) => (core_auto_theme::AutoThemeSettings::default(), Some(error)),
+        };
+        let auto_theme_service_status = platform::auto_theme_service_status();
         cx.observe_window_appearance(window, |this, window, cx| {
             let colors = UiPalette::for_appearance(window.appearance());
             if this.colors != colors {
@@ -116,6 +127,12 @@ impl SkinApp {
                     return;
                 }
             }
+            if this
+                .update(cx, |this, cx| this.maintain_auto_theme(cx))
+                .is_err()
+            {
+                return;
+            }
             cx.background_executor()
                 .timer(Duration::from_millis(120))
                 .await;
@@ -138,12 +155,17 @@ impl SkinApp {
             query: String::new(),
             search_active: false,
             internal_logs: VecDeque::new(),
-            message: String::new(),
+            message: auto_theme_error.unwrap_or_default(),
             selected_target,
             restart_confirmation_target: None,
             surface_opacity,
             opacity_drag_start: None,
             theme_sessions: ThemeSessions::default(),
+            auto_theme_settings,
+            auto_theme_service_status,
+            auto_theme_busy: false,
+            auto_theme_attempted_for_current_run: false,
+            auto_theme_last_check: Instant::now() - Duration::from_secs(1),
             generation: 0,
             focus_handle,
             url_buffer,
@@ -162,6 +184,7 @@ impl SkinApp {
                 if self.selected_target == target {
                     self.message = l.action_applied.into();
                 }
+                self.record_successful_apply(target, generation);
             }
             Msg::Applied { .. } => {}
             Msg::Done {
@@ -173,10 +196,13 @@ impl SkinApp {
                 let current_operation = self
                     .theme_sessions
                     .complete_if_generation(target, generation);
-                if self.selected_target == target && current_operation {
-                    if restoring && ok {
+                if current_operation && restoring && ok {
+                    if self.selected_target == target {
                         self.message = l.action_restored.into();
-                    } else if ok && target == live::TargetApp::WorkBuddy {
+                    }
+                    self.finish_successful_restore();
+                } else if self.selected_target == target && current_operation {
+                    if ok && target == live::TargetApp::WorkBuddy {
                         self.message = "WorkBuddy 已退出，主题监听已停止".into();
                     } else if !ok {
                         self.message = l.action_apply_failed.into();
@@ -226,6 +252,34 @@ impl SkinApp {
             Msg::OpenUrl(url) => {
                 if let Ok(mut buf) = self.url_buffer.lock() {
                     buf.push(url);
+                }
+            }
+            Msg::AutoThemeServiceChanged {
+                status,
+                error,
+                rollback_settings,
+            } => {
+                self.auto_theme_busy = false;
+                self.auto_theme_service_status = status;
+                let rollback_failed = error.is_some()
+                    && rollback_settings.is_some_and(|previous| {
+                        if core_auto_theme::save(&previous).is_err() {
+                            true
+                        } else {
+                            self.auto_theme_settings = previous;
+                            false
+                        }
+                    });
+                if rollback_failed {
+                    self.message = l.auto_theme_rollback_failed.into();
+                } else if let Some(error) = error {
+                    self.message = error;
+                } else if status == platform::AutoThemeServiceStatus::RequiresApproval {
+                    self.message = l.auto_theme_approval_required.into();
+                } else if status == platform::AutoThemeServiceStatus::Enabled {
+                    self.message = l.auto_theme_enabled.into();
+                } else if !self.auto_theme_settings.keep_requested() {
+                    self.message = l.auto_theme_disabled.into();
                 }
             }
         }

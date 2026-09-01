@@ -2,8 +2,11 @@
 
 use std::path::PathBuf;
 
+use skin_core::auto_theme::AutoThemeSettings;
 use skin_core::live::TargetApp;
 use skin_core::theme;
+
+use crate::app::platform::AutoThemeServiceStatus;
 
 pub enum Msg {
     Log(String),
@@ -25,6 +28,11 @@ pub enum Msg {
         open_library: bool,
     },
     OpenUrl(String),
+    AutoThemeServiceChanged {
+        status: AutoThemeServiceStatus,
+        error: Option<String>,
+        rollback_settings: Option<AutoThemeSettings>,
+    },
 }
 
 pub struct ThemeRow {

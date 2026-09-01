@@ -226,6 +226,7 @@ jobs:
           sha256sum -c "Doubao-Skin-Windows-${{ matrix.label }}.zip.sha256"
           test "$(unzip -Z1 "Doubao-Skin-Windows-${{ matrix.label }}.zip" | awk -F/ 'NF == 2 && tolower($0) ~ /\.exe$/ { count++ } END { print count + 0 }')" -eq 1
           unzip -Z1 "Doubao-Skin-Windows-${{ matrix.label }}.zip" | grep -q '/doubao-skin\.exe$'
+          test "$(unzip -Z1 "Doubao-Skin-Windows-${{ matrix.label }}.zip" | awk -F/ 'NF == 3 && tolower($0) ~ /\/helpers\/doubao-skin-agent\.exe$/ { count++ } END { print count + 0 }')" -eq 1
       - uses: actions/upload-artifact@v7
         with:
           name: Doubao-Skin-Windows-${{ matrix.label }}
