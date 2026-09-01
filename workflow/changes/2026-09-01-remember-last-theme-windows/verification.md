@@ -1,14 +1,14 @@
 ---
 id: "2026-09-01-remember-last-theme-windows"
 stage: verification
-status: pending
+status: passed
 owner: "codex"
 created: "2026-09-01"
 based_on: plan.md
-commit: "f4cbb216932e4c4066f27713bb00ca2f88d1dd95"
-verification_mode: "fresh-context"
-verified_by: ""
-verified_at: ""
+commit: "7ab5eff04d2c86b5fa20fb32f31d517d6cd53502"
+verification_mode: "human"
+verified_by: "idevlab"
+verified_at: "2026-09-01"
 ---
 
 # Verification: remember last theme windows
@@ -50,15 +50,15 @@ verified_at: ""
 - Registry code is confined to `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\DoubaoSkinAutoTheme`; it never enumerates or deletes sibling values and does not read/write undocumented `StartupApproved` data.
 - The Run command contains one quoted absolute helper path, rejects embedded quote/NUL and overlong UTF-16 commands, and never invokes a shell.
 - Helper uses a session-local mutex and token `AuthenticationId`; Win32 token/mutex handles use owned guards. It has no listener, tray, window or administrator path.
-- No official Doubao, DoubaoWork or WorkBuddy files were modified. The VM's current-user `DoubaoSkinAutoTheme` Run value intentionally remains registered to the checked rebased package so the requested parent-on/child-off state can be inspected; cleanup is still required before final verification is closed.
+- No official Doubao, DoubaoWork or WorkBuddy files were modified. The VM's current-user `DoubaoSkinAutoTheme` Run value intentionally remains registered to the checked rebased package so the requested parent-on/child-off state is preserved. After observation, Windows was shut down normally, the three temporary VMware VNC settings were removed, port 5909 had no listener, and the VNC client socket was closed. The retained guest startup value is accepted as residual test-state risk rather than claimed cleanup evidence.
 
 ## Deviations and residual risk
 
 - The Windows VM is visually controllable through VNC, but sustained text input is not reliable enough for command-output evidence. Native CI supplies compilation/PE/package proof, while the VNC run supplies the popup and visible state evidence recorded above.
 - Public HKCU Run registration cannot observe Windows Settings' undocumented external disable database. UI therefore reports registration, never silently recreates a deleted value, as approved in Spec.
 - A portable package move leaves an old absolute Run path until the user explicitly closes/reopens the parent switch. This is intentional to avoid overriding an external disable choice.
-- The rebased branch compiled and packaged on native Windows x64/x86/ARM64 runners and its ARM64 artifact passed the targeted VNC popup check. Do not mark the whole change complete until full process-exit/helper handoff, fresh-login behavior, signed-in target styling, precise startup-value cleanup and a fresh-context or human verdict are recorded.
+- The rebased branch compiled and packaged on native Windows x64/x86/ARM64 runners and its ARM64 artifact passed the targeted VNC popup check. Full process-exit/helper handoff, fresh-login behavior, signed-in target styling and precise guest startup-value cleanup remain unverified. On 2026-09-01, human reviewer `idevlab` explicitly accepted the recorded VNC evidence and these residual risks as sufficient to close PR #16; they remain follow-up coverage gaps and are not represented as completed behavior.
 
 ## Verdict
 
-Pending. The reported recurring Windows Terminal is reproduced on the old package and absent from the rebased native ARM64 artifact across 69.5 seconds of passive observation. Local/full CI gates pass and the parent-on/child-off tray-reopen path retains an active theme session. Full helper handoff/login coverage, cleanup and the required fresh-context or human verdict remain open.
+Passed with human-accepted residual risk. The reported recurring Windows Terminal was reproduced on the old package and was absent from the rebased native ARM64 artifact across 69.5 seconds of passive observation. Local/full CI gates passed, the parent-on/child-off tray-reopen path retained an active theme session, and `idevlab` approved the evidence and recorded limitations on 2026-09-01. Full helper handoff/login coverage, signed-in styling and precise guest startup-value cleanup remain explicitly unverified.
