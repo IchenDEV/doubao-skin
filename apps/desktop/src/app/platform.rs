@@ -71,6 +71,7 @@ trait WindowsStartupBackend {
     fn write_value(&self, value: &str) -> Result<(), String>;
     fn remove_value(&self) -> Result<(), String>;
     fn spawn_helper(&self, helper: &Path) -> Result<(), String>;
+    fn confirm_helper_started(&self) -> Result<(), String>;
 }
 
 #[cfg(any(test, target_os = "windows"))]
@@ -87,6 +88,12 @@ fn register_windows_startup(
         return Err(registration_failure(
             backend,
             "无法启动豆皮后台服务，启动项已回滚",
+        ));
+    }
+    if let Err(error) = backend.confirm_helper_started() {
+        return Err(registration_failure(
+            backend,
+            &format!("{error}，启动项已回滚"),
         ));
     }
     let registered_value = backend
@@ -266,9 +273,12 @@ mod service_management {
 
 #[cfg(target_os = "windows")]
 mod windows_startup {
+    use std::cell::RefCell;
+    use std::io::Read;
     use std::os::windows::process::CommandExt;
     use std::path::{Path, PathBuf};
-    use std::process::Command;
+    use std::process::{Child, Command, Stdio};
+    use std::time::Duration;
 
     use windows_registry::CURRENT_USER;
     use windows_sys::Win32::System::Threading::CREATE_NO_WINDOW;
@@ -282,7 +292,10 @@ mod windows_startup {
     const RUN_VALUE_NAME: &str = "DoubaoSkinAutoTheme";
     const FILE_NOT_FOUND_HRESULT: i32 = 0x8007_0002_u32 as i32;
 
-    struct RegistryStartupBackend;
+    #[derive(Default)]
+    struct RegistryStartupBackend {
+        child: RefCell<Option<Child>>,
+    }
 
     impl WindowsStartupBackend for RegistryStartupBackend {
         fn read_value(&self) -> Result<Option<String>, String> {
@@ -320,11 +333,49 @@ mod windows_startup {
         }
 
         fn spawn_helper(&self, helper: &Path) -> Result<(), String> {
-            Command::new(helper)
+            let child = Command::new(helper)
                 .creation_flags(CREATE_NO_WINDOW)
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::piped())
                 .spawn()
-                .map(|_| ())
-                .map_err(|_| "无法启动豆皮后台服务".to_string())
+                .map_err(|_| "无法启动豆皮后台服务".to_string())?;
+            self.child.replace(Some(child));
+            Ok(())
+        }
+
+        fn confirm_helper_started(&self) -> Result<(), String> {
+            std::thread::sleep(Duration::from_millis(750));
+            let mut child = self
+                .child
+                .borrow_mut()
+                .take()
+                .ok_or_else(|| "无法确认豆皮后台服务状态".to_string())?;
+            match child
+                .try_wait()
+                .map_err(|_| "无法确认豆皮后台服务状态".to_string())?
+            {
+                None => {
+                    if let Some(mut stderr) = child.stderr.take() {
+                        std::thread::spawn(move || {
+                            let _ = std::io::copy(&mut stderr, &mut std::io::sink());
+                        });
+                    }
+                    Ok(())
+                }
+                Some(_) => {
+                    let mut detail = String::new();
+                    if let Some(mut stderr) = child.stderr.take() {
+                        let _ = stderr.read_to_string(&mut detail);
+                    }
+                    let detail = detail.trim();
+                    if detail.is_empty() {
+                        Err("豆皮后台服务启动后立即退出".into())
+                    } else {
+                        Err(detail.to_string())
+                    }
+                }
+            }
         }
     }
 
@@ -339,7 +390,7 @@ mod windows_startup {
         let Ok(helper) = helper_path() else {
             return AutoThemeServiceStatus::NotFound;
         };
-        let backend = RegistryStartupBackend;
+        let backend = RegistryStartupBackend::default();
         match backend.read_value() {
             Ok(value) => windows_service_status(&helper, value.as_deref()),
             Err(_) => AutoThemeServiceStatus::NotFound,
@@ -347,11 +398,11 @@ mod windows_startup {
     }
 
     pub fn register() -> Result<AutoThemeServiceStatus, String> {
-        register_windows_startup(&RegistryStartupBackend, &helper_path()?)
+        register_windows_startup(&RegistryStartupBackend::default(), &helper_path()?)
     }
 
     pub fn unregister() -> Result<AutoThemeServiceStatus, String> {
-        unregister_windows_startup(&RegistryStartupBackend)
+        unregister_windows_startup(&RegistryStartupBackend::default())
     }
 
     pub fn open_settings() -> Result<(), String> {
@@ -520,6 +571,7 @@ mod tests {
         read_fails: Cell<bool>,
         write_fails: Cell<bool>,
         spawn_fails: Cell<bool>,
+        helper_exits_early: Cell<bool>,
         remove_fails: Cell<bool>,
         spawn_count: Cell<usize>,
     }
@@ -552,6 +604,14 @@ mod tests {
             self.spawn_count.set(self.spawn_count.get() + 1);
             if self.spawn_fails.get() {
                 Err("spawn failed".into())
+            } else {
+                Ok(())
+            }
+        }
+
+        fn confirm_helper_started(&self) -> Result<(), String> {
+            if self.helper_exits_early.get() {
+                Err("helper exited during startup".into())
             } else {
                 Ok(())
             }
@@ -677,6 +737,17 @@ mod tests {
         let error = register_windows_startup(&backend, &helper).unwrap_err();
         assert!(error.contains("未能回滚"));
         assert!(backend.value.borrow().is_some());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn registration_rolls_back_a_helper_that_exits_during_startup() {
+        let (root, helper) = test_helper();
+        let backend = FakeStartupBackend::default();
+        backend.helper_exits_early.set(true);
+
+        assert!(register_windows_startup(&backend, &helper).is_err());
+        assert_eq!(*backend.value.borrow(), None);
         fs::remove_dir_all(root).unwrap();
     }
 
