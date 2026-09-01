@@ -9,6 +9,16 @@ use std::time::Duration;
 
 use super::{mark_launched, TargetApp};
 
+#[cfg(target_os = "windows")]
+fn windows_background_command(program: &str) -> Command {
+    use std::os::windows::process::CommandExt;
+    use windows_sys::Win32::System::Threading::CREATE_NO_WINDOW;
+
+    let mut command = Command::new(program);
+    command.creation_flags(CREATE_NO_WINDOW);
+    command
+}
+
 fn path_override_name(target: TargetApp) -> &'static str {
     match target {
         TargetApp::Doubao => "DOUBAO_SKIN_DOUBAO_PATH",
@@ -115,7 +125,7 @@ pub(super) fn app_is_running(target: TargetApp) -> bool {
     let process_name = installed_binary(target)
         .and_then(|path| path.file_name().map(|name| name.to_owned()))
         .unwrap_or_else(|| windows_executable_names(target)[0].into());
-    Command::new("tasklist")
+    windows_background_command("tasklist")
         .args([
             "/FI",
             &format!("IMAGENAME eq {}", process_name.to_string_lossy()),
@@ -135,7 +145,7 @@ pub(super) fn executable_is_running(binary: &Path) -> bool {
     let Some(process_name) = binary.file_name() else {
         return false;
     };
-    Command::new("tasklist")
+    windows_background_command("tasklist")
         .args([
             "/FI",
             &format!("IMAGENAME eq {}", process_name.to_string_lossy()),
@@ -551,7 +561,7 @@ pub(super) fn tell_app(target: TargetApp, action: &str, _spawn: bool) {
         return;
     }
     let process_name = windows_process_name(target);
-    let _ = Command::new("taskkill")
+    let _ = windows_background_command("taskkill")
         .arg("/IM")
         .arg(process_name)
         .arg("/T")
@@ -637,14 +647,14 @@ pub(super) fn kill_app(target: TargetApp) {
 #[cfg(target_os = "windows")]
 pub(super) fn kill_app(target: TargetApp) {
     let process_name = windows_process_name(target);
-    let _ = Command::new("taskkill")
+    let _ = windows_background_command("taskkill")
         .arg("/F")
         .arg("/IM")
         .arg(&process_name)
         .arg("/T")
         .output();
     for _ in 0..20 {
-        let running = Command::new("tasklist")
+        let running = windows_background_command("tasklist")
             .args(["/FI", &format!("IMAGENAME eq {process_name}"), "/NH"])
             .output()
             .map(|output| {
@@ -678,7 +688,7 @@ pub(super) fn process_running(target: TargetApp) -> bool {
 #[cfg(target_os = "windows")]
 pub(super) fn process_running(target: TargetApp) -> bool {
     let process_name = windows_process_name(target);
-    Command::new("tasklist")
+    windows_background_command("tasklist")
         .args(["/FI", &format!("IMAGENAME eq {process_name}"), "/NH"])
         .output()
         .is_ok_and(|output| {

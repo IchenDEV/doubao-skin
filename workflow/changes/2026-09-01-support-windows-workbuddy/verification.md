@@ -35,11 +35,16 @@ verified_at: ""
 - 修复测试平台假设后的当前 head `8fb93c4845294e27bfc8c700cef189cc859cd392` 对应 CI run `33453567841` passed：Windows x64 核心回归、Windows x86/x64/ARM64 原生包、Rust workspace、Web application 和 Development workflow 全部成功。
 - 从同一 run 下载 `Windows-native-arm64` artifact；`shasum -a 256 -c` 对 GUI 与 CLI ZIP 均 passed。解包后 GUI/CLI 分别为 Windows AArch64 GUI/console PE；GUI 包包含 5 个主题、5 个非空 `theme.json` 和 5 个非空 CSS，鲸鱼娘的背景、主图及预览资产均在包内。
 - 修正 Windows VM 证据记录后再次运行 `./scripts/check.sh all` passed：workflow 19 组、desktop 16 项、core 56 项、Rust integration/schema 30 项、Clippy、Web 16 项、TypeScript、Next.js production build 和高危依赖审计全部通过。
+- 合并最新 `origin/main`（`3ec1606`）后保留三目标独立 `ThemeSessions`，并把上游自动保持/登录 helper 接到目标级 apply/done 消息；合并后的 core live 12 项与 desktop 30 项测试 passed。
+- 终端闪烁失败优先门 `./scripts/checks/portability.sh` 按预期失败并列出 6 处直接 `tasklist`/`taskkill` 启动。全部改经 `CREATE_NO_WINDOW` adapter 后该门与 `cargo test -p skin-core windows_ --no-fail-fast`（12 项）passed。
+- 终端修复后的 `./scripts/check.sh all` passed：workflow 21 组、desktop 30 项、core 70 项、Rust integration/schema 31 项、Clippy、Web 16 项、TypeScript、Next.js production build和依赖审计全部通过。
+- 本机 ARM64 Windows `cargo check` 仍在既有 `ring` 构建脚本处因缺少 MSVC `assert.h` 失败；需要 Windows 原生 CI 生成最终 PE，不把 macOS 交叉结果冒充原生编译。
 
 ## Behavioral evidence
 
 - 上一轮 Windows 11 ARM64 实窗探针已确认 WorkBuddy 5.4.5 位于当前用户默认目录、可启动，并在 guest `127.0.0.1:9224` 返回 Windows renderer；本轮实现前没有启动虚拟机或中断应用。
 - 本轮通过 VMX 已启用的 localhost VNC 进入同一 Windows 11 ARM64 来宾，确认系统桌面、Edge、Explorer 和 WorkBuddy 窗口均可访问；来宾账户无需输入 Windows 密码。检查来宾现存的 2026-08-31 ARM64 解压包后，界面只有“豆包 / 豆包工作”两个目标，没有 WorkBuddy，证明该包不是当前 head，未把它作为本变更的通过证据。
+- 在旧 helper 仍运行时连续 30 秒、每秒一次抓取来宾中心区域，`/tmp/vm-term-17.png` 捕获到标题为 `C:\WINDOWS\system32\taskli…` 的黑色 Windows Terminal；任务管理器同时显示 `doubao-skin-agent`。源码调用链确认 helper 每秒经 `TargetApp::is_running()` 和 `executable_is_running()` 直接启动 console-subsystem `tasklist.exe`，与闪烁频率和窗口标题一致。
 
 ## Visual evidence
 
@@ -53,7 +58,7 @@ Pending：当前 head 的 Windows ARM64 包已经生成并在宿主机校验；�
 
 ## Deviations and residual risk
 
-无产品范围偏差。macOS 本机交叉检查受 MSVC SDK 缺失阻塞，已经由 PR 的 Windows 原生 runner 覆盖；真实 Windows VM Gate 仍未完成。VMX 已有的 localhost VNC 正常监听并可操作来宾，无需重启 VM；但 VMware guest operation 仍要求未知的虚拟机操作密码，宿主 Mac 又处于锁屏状态，无法用共享文件夹、来宾命令或宿主 GUI 把当前 CI 包传入。VNC 标准剪贴板转发被来宾忽略，VNC 键盘映射会丢失输入，尝试通过 guest Edge 从宿主临时 HTTP 服务下载时没有形成可靠请求。未读取、索取或保存任何密码，也未中断 WorkBuddy。剩余 Gate 是把当前 head 包传入来宾后验证 WorkBuddy 目标、深色/鲸鱼娘、恢复、普通重开和双目标并存。
+无产品范围偏差。macOS 本机交叉检查受 MSVC SDK 缺失阻塞，最终 PE 仍需 PR 的 Windows 原生 runner。真实 Windows VM 已给出修复前终端闪烁的可复现证据，但修复后包尚未生成和换入；剩余 Gate 是从当前 head 的原生 ARM64 artifact 启动 helper，重复同一 30 秒抓帧确认无黑色终端，再验证 WorkBuddy 目标、深色/鲸鱼娘、恢复、普通重开和双目标并存。未读取、索取或保存任何密码。
 
 ## Verdict
 
