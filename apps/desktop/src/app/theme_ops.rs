@@ -93,6 +93,7 @@ impl SkinApp {
         self.active_theme = Some(theme.id.clone());
         self.active_surface_opacity = theme.surface_opacity;
         self.applying = true;
+        self.auto_theme_attempted_for_current_run = true;
         self.message = t().action_applying.into();
         let tx = self.tx.clone();
         let previous_thread = self.live_thread.take();
@@ -102,13 +103,20 @@ impl SkinApp {
             }
             let tx_log = tx.clone();
             let mut reported = false;
-            let result = live::run(&theme, target, false, stop, move |line| {
-                if !reported && line.trim_start().starts_with("injected:") {
-                    reported = true;
-                    let _ = tx_log.send(Msg::Applied(generation));
-                }
-                let _ = tx_log.send(Msg::Log(line));
-            });
+            let result = live::run_with_policy(
+                &theme,
+                target,
+                false,
+                live::PortLossPolicy::Stop,
+                stop,
+                move |line| {
+                    if !reported && line.trim_start().starts_with("injected:") {
+                        reported = true;
+                        let _ = tx_log.send(Msg::Applied(generation));
+                    }
+                    let _ = tx_log.send(Msg::Log(line));
+                },
+            );
             let _ = tx.send(Msg::Done {
                 generation: Some(generation),
                 ok: result.is_ok(),

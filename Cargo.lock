@@ -1390,6 +1390,8 @@ dependencies = [
  "log",
  "objc",
  "skin-core",
+ "windows-registry",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

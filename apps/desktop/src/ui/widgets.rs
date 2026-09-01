@@ -2,19 +2,196 @@
 
 use gpui::{
     div, img, prelude::*, px, rgb, Context, FontWeight, MouseButton, MouseDownEvent,
-    MouseMoveEvent, ObjectFit,
+    MouseMoveEvent, ObjectFit, Role, Toggled,
 };
 
 use skin_core::live;
 
 use crate::app::types::ThemeRow;
 use crate::app::SkinApp;
+use crate::app::{auto_theme::control_state, platform::AutoThemeServiceStatus};
 use crate::i18n::t;
 use crate::preview::preview_rgba;
 use crate::ui::assets::local_image_source;
 use crate::ui::constants::{MIN_SURFACE_OPACITY, OPACITY_TRACK_WIDTH, SURFACE_OPACITY_RANGE};
 
 impl SkinApp {
+    pub(crate) fn render_auto_theme_controls(&self, cx: &mut Context<Self>) -> gpui::AnyElement {
+        let colors = self.colors;
+        let l = t();
+        let state = control_state(
+            &self.auto_theme_settings,
+            self.auto_theme_service_status,
+            self.auto_theme_busy,
+        );
+        let saved_target = self
+            .auto_theme_settings
+            .last_applied()
+            .map(|saved| saved.target())
+            .unwrap_or(self.selected_target);
+        let status = if self.auto_theme_busy {
+            self.message.clone()
+        } else if self.auto_theme_service_status == AutoThemeServiceStatus::Unsupported {
+            l.auto_theme_unsupported.into()
+        } else if self.auto_theme_settings.last_applied().is_none() {
+            l.auto_theme_apply_first.into()
+        } else if !self.auto_theme_settings.keep_requested()
+            && self.auto_theme_service_status == AutoThemeServiceStatus::Enabled
+        {
+            l.auto_theme_cleanup_pending.into()
+        } else if self.auto_theme_settings.keep_requested() {
+            match self.auto_theme_service_status {
+                AutoThemeServiceStatus::Enabled => l.auto_theme_enabled.into(),
+                AutoThemeServiceStatus::RequiresApproval => l.auto_theme_approval_required.into(),
+                AutoThemeServiceStatus::NotFound => l.auto_theme_missing_service.into(),
+                _ => l.auto_theme_not_ready.into(),
+            }
+        } else {
+            l.auto_theme_disabled.into()
+        };
+
+        div()
+            .w_full()
+            .px_3()
+            .py_2()
+            .rounded(px(9.))
+            .border_1()
+            .border_color(rgb(colors.border))
+            .bg(rgb(colors.control).opacity(0.54))
+            .flex()
+            .flex_col()
+            .gap_1()
+            .child(self.render_auto_theme_row(
+                "auto-theme-keep",
+                l.auto_theme_keep_title,
+                l.auto_theme_keep_description,
+                state.keep_requested,
+                state.keep_enabled,
+                true,
+                cx,
+            ))
+            .child(self.render_auto_theme_row(
+                "auto-theme-login",
+                l.auto_theme_login_title,
+                &l.format_auto_theme_login_description(saved_target.display_name()),
+                state.login_requested,
+                state.login_enabled,
+                false,
+                cx,
+            ))
+            .child(
+                div()
+                    .h(px(16.))
+                    .flex()
+                    .items_center()
+                    .gap_2()
+                    .text_xs()
+                    .text_color(rgb(colors.muted))
+                    .child(status)
+                    .when(
+                        self.auto_theme_service_status == AutoThemeServiceStatus::RequiresApproval,
+                        |view| {
+                            view.child(
+                                div()
+                                    .id("auto-theme-open-settings")
+                                    .role(Role::Button)
+                                    .aria_label(l.auto_theme_open_settings)
+                                    .focusable()
+                                    .tab_stop(true)
+                                    .text_color(rgb(colors.link))
+                                    .cursor_pointer()
+                                    .hover(|style| style.opacity(0.72))
+                                    .child(l.auto_theme_open_settings)
+                                    .on_click(cx.listener(|this, _event, _window, cx| {
+                                        this.open_auto_theme_settings(cx)
+                                    })),
+                            )
+                        },
+                    ),
+            )
+            .into_any_element()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn render_auto_theme_row(
+        &self,
+        id: &'static str,
+        title: &'static str,
+        description: &str,
+        toggled: bool,
+        enabled: bool,
+        keep_switch: bool,
+        cx: &mut Context<Self>,
+    ) -> gpui::AnyElement {
+        let colors = self.colors;
+        let l = t();
+        div()
+            .id(id)
+            .role(Role::Switch)
+            .aria_label(l.format_switch_aria(title, enabled))
+            .aria_toggled(if toggled {
+                Toggled::True
+            } else {
+                Toggled::False
+            })
+            .h(px(34.))
+            .flex()
+            .items_center()
+            .justify_between()
+            .gap_3()
+            .opacity(if enabled { 1.0 } else { 0.48 })
+            .when(enabled, |row| {
+                row.focusable()
+                    .tab_stop(true)
+                    .cursor_pointer()
+                    .on_click(cx.listener(move |this, _event, _window, cx| {
+                        if keep_switch {
+                            this.toggle_auto_theme_keep(cx);
+                        } else {
+                            this.toggle_open_at_login(cx);
+                        }
+                    }))
+            })
+            .child(
+                div()
+                    .min_w(px(0.))
+                    .flex_1()
+                    .flex()
+                    .flex_col()
+                    .child(
+                        div()
+                            .text_size(px(12.))
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .text_color(rgb(colors.text))
+                            .child(title),
+                    )
+                    .child(
+                        div()
+                            .overflow_hidden()
+                            .whitespace_nowrap()
+                            .text_size(px(10.))
+                            .text_color(rgb(colors.muted))
+                            .child(description.to_string()),
+                    ),
+            )
+            .child(
+                div()
+                    .w(px(34.))
+                    .h(px(20.))
+                    .p(px(2.))
+                    .rounded_full()
+                    .bg(rgb(if toggled {
+                        colors.slider_accent
+                    } else {
+                        colors.border
+                    }))
+                    .flex()
+                    .when(toggled, |track| track.justify_end())
+                    .child(div().size(px(16.)).rounded_full().bg(rgb(colors.control))),
+            )
+            .into_any_element()
+    }
+
     pub(crate) fn render_target_switch(&self, cx: &mut Context<Self>) -> gpui::AnyElement {
         let colors = self.colors;
         let l = t();

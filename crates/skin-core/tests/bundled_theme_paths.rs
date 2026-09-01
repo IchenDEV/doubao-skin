@@ -39,3 +39,18 @@ fn finds_bundled_themes_beside_windows_gui_executable() {
     );
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn finds_bundled_themes_from_windows_helper_directory() {
+    let root = temporary_test_dir();
+    let package = root.join("Doubao-Skin-Windows-arm64");
+    let themes = package.join("themes");
+    fs::create_dir_all(package.join("helpers")).unwrap();
+    fs::create_dir_all(&themes).unwrap();
+
+    assert_eq!(
+        bundled_themes_dir_for_executable(&package.join("helpers/doubao-skin-agent.exe")),
+        Some(themes)
+    );
+    fs::remove_dir_all(root).unwrap();
+}

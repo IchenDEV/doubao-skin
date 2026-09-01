@@ -5,12 +5,15 @@ use gpui::{point, px, size, ImageSource, Resource, WindowBounds};
 use skin_core::{live, theme};
 
 use crate::app::actions::application_menu;
-use crate::app::{initial_target, preview_identity, theme_is_active, uses_short_compact_layout};
+use crate::app::{
+    auto_theme::control_state, initial_target, platform::AutoThemeServiceStatus, preview_identity,
+    theme_is_active, uses_short_compact_layout,
+};
 use crate::i18n::t;
 use crate::preview::preview_rgba;
 use crate::ui::assets::local_image_source;
 use crate::ui::constants::*;
-use crate::ui::header_brand_padding;
+use crate::ui::{header_brand_padding, shows_auto_theme_controls};
 
 fn assert_close(actual: f32, expected: f32) {
     assert!((actual - expected).abs() < 0.0001, "{actual} != {expected}");
@@ -69,6 +72,13 @@ fn windows_header_does_not_reserve_macos_traffic_light_space() {
     assert_close(header_brand_padding("windows", false), 0.0);
     assert_close(header_brand_padding("macos", true), WINDOW_TITLE_X - 16.0);
     assert_close(header_brand_padding("macos", false), WINDOW_TITLE_X - 24.0);
+}
+
+#[test]
+fn automatic_theme_controls_are_visible_on_supported_desktop_platforms() {
+    assert!(shows_auto_theme_controls("macos"));
+    assert!(shows_auto_theme_controls("windows"));
+    assert!(!shows_auto_theme_controls("linux"));
 }
 
 #[test]
@@ -177,4 +187,25 @@ fn minimum_window_uses_the_short_compact_layout() {
     assert!(uses_short_compact_layout(true, px(560.)));
     assert!(!uses_short_compact_layout(true, px(720.)));
     assert!(!uses_short_compact_layout(false, px(560.)));
+}
+
+#[test]
+fn automatic_theme_controls_have_exactly_one_dependent_switch() {
+    let mut settings = skin_core::auto_theme::AutoThemeSettings::default();
+    settings.set_last_applied(
+        skin_core::auto_theme::LastApplied::new(live::TargetApp::DoubaoWork, "pure-dark", None)
+            .unwrap(),
+    );
+    settings.set_keep_requested(true);
+    let state = control_state(&settings, AutoThemeServiceStatus::Enabled, false);
+    assert!(state.keep_enabled);
+    assert!(state.login_enabled);
+    assert!(state.keep_requested);
+    assert!(!state.login_requested);
+
+    settings.set_keep_requested(false);
+    settings.set_open_at_login(true);
+    let state = control_state(&settings, AutoThemeServiceStatus::Enabled, false);
+    assert!(!state.login_enabled);
+    assert!(!state.login_requested);
 }

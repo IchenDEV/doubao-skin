@@ -77,6 +77,87 @@ pub(super) fn installed_binary(target: TargetApp) -> Option<PathBuf> {
     })
 }
 
+#[cfg(target_os = "macos")]
+pub(super) fn app_is_running(target: TargetApp) -> bool {
+    let Some(binary) = installed_binary(target) else {
+        return false;
+    };
+    executable_is_running(&binary)
+}
+
+#[cfg(target_os = "macos")]
+pub(super) fn executable_is_running(binary: &Path) -> bool {
+    let candidates = match Command::new("pgrep")
+        .args(["-f", binary.to_string_lossy().as_ref()])
+        .output()
+    {
+        Ok(output) if output.status.success() => output.stdout,
+        _ => return false,
+    };
+    let expected = std::fs::canonicalize(binary).unwrap_or_else(|_| binary.to_path_buf());
+    String::from_utf8_lossy(&candidates).lines().any(|pid| {
+        let Ok(output) = Command::new("ps").args(["-p", pid, "-o", "comm="]).output() else {
+            return false;
+        };
+        if !output.status.success() {
+            return false;
+        }
+        let command = PathBuf::from(String::from_utf8_lossy(&output.stdout).trim());
+        let command = std::fs::canonicalize(&command).unwrap_or(command);
+        command == expected
+    })
+}
+
+#[cfg(target_os = "windows")]
+pub(super) fn app_is_running(target: TargetApp) -> bool {
+    let process_name = installed_binary(target)
+        .and_then(|path| path.file_name().map(|name| name.to_owned()))
+        .unwrap_or_else(|| windows_executable_names(target)[0].into());
+    Command::new("tasklist")
+        .args([
+            "/FI",
+            &format!("IMAGENAME eq {}", process_name.to_string_lossy()),
+            "/NH",
+        ])
+        .output()
+        .map(|output| {
+            String::from_utf8_lossy(&output.stdout)
+                .to_ascii_lowercase()
+                .contains(&process_name.to_string_lossy().to_ascii_lowercase())
+        })
+        .unwrap_or(false)
+}
+
+#[cfg(target_os = "windows")]
+pub(super) fn executable_is_running(binary: &Path) -> bool {
+    let Some(process_name) = binary.file_name() else {
+        return false;
+    };
+    Command::new("tasklist")
+        .args([
+            "/FI",
+            &format!("IMAGENAME eq {}", process_name.to_string_lossy()),
+            "/NH",
+        ])
+        .output()
+        .map(|output| {
+            String::from_utf8_lossy(&output.stdout)
+                .to_ascii_lowercase()
+                .contains(&process_name.to_string_lossy().to_ascii_lowercase())
+        })
+        .unwrap_or(false)
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+pub(super) fn app_is_running(_target: TargetApp) -> bool {
+    false
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+pub(super) fn executable_is_running(_binary: &Path) -> bool {
+    false
+}
+
 #[cfg(target_os = "windows")]
 pub(super) fn installed_binary(target: TargetApp) -> Option<PathBuf> {
     windows_installed_binary(target)

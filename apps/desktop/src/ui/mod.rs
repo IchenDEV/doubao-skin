@@ -27,6 +27,10 @@ pub(crate) fn header_brand_padding(target_os: &str, compact: bool) -> f32 {
     }
 }
 
+pub(crate) fn shows_auto_theme_controls(target_os: &str) -> bool {
+    matches!(target_os, "macos" | "windows")
+}
+
 impl Render for SkinApp {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = self.colors;
