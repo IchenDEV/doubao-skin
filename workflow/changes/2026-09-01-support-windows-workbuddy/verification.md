@@ -31,6 +31,7 @@ verified_at: ""
 - `cargo fmt --all -- --check`、`./scripts/check.sh workflow`（19 组）和 `git diff --check` passed。
 - 本分支合并最新 `origin/main`（`407e6d2`）后，保留上游 Windows `Application/app` CDP runtime 选择和便携版回退，同时保留本变更的 WorkBuddy 默认路径、三目标缓存、精确进程与 loopback 参数；合并后 Windows 窄测试 12 项、WorkBuddy 窄测试 12 项和馋嘴豆包登录遮罩回归均 passed。
 - 合并后 `pnpm --dir apps/web sync` 成功生成 34 个 v3 主题和安装包；`./scripts/check.sh all` passed：workflow 19 组、desktop 16 项、core 56 项、Rust integration/schema 30 项、Clippy、Web 16 项、TypeScript、Next.js production build 和高危依赖审计全部通过。
+- 首次原生 Windows x64 run `33453100922` 在 core 回归中判红：旧 macOS renderer 用例通过当前平台入口运行，在无本地 WorkBuddy 安装的 Windows runner 上按设计返回 false。该失败证明测试仍含平台假设；将其改为直接验证纯 macOS renderer helper，Windows renderer 继续由带合成已安装二进制的独立表格覆盖。失败 run 的 ARM64/x86 构建已取消，不作为测试包使用。
 
 ## Behavioral evidence
 

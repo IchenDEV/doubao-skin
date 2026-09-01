@@ -1028,7 +1028,7 @@ mod tests {
     }
 
     #[test]
-    fn workbuddy_only_matches_the_verified_main_renderer() {
+    fn macos_workbuddy_only_matches_the_verified_main_renderer() {
         let root =
             "file:///Applications/WorkBuddy.app/Contents/Resources/app.asar/renderer/index.html";
         for url in [
@@ -1037,8 +1037,10 @@ mod tests {
             format!("{root}?source=launch"),
             format!("{root}?source=launch#/home"),
         ] {
-            assert!(TargetApp::WorkBuddy.matches_identity_url(&url), "{url}");
-            assert!(TargetApp::WorkBuddy.matches_page_url(&url, true), "{url}");
+            assert!(
+                matches_workbuddy_renderer_for_platform("macos", &url, None),
+                "{url}"
+            );
         }
         for url in [
             "file:///Applications/WorkBuddy.app/Contents/Resources/app.asar/renderer/other.html",
@@ -1048,8 +1050,10 @@ mod tests {
             "devtools://devtools/bundled/inspector.html",
             "chrome-extension://example/side_panel.html",
         ] {
-            assert!(!TargetApp::WorkBuddy.matches_identity_url(url), "{url}");
-            assert!(!TargetApp::WorkBuddy.matches_page_url(url, true), "{url}");
+            assert!(
+                !matches_workbuddy_renderer_for_platform("macos", url, None),
+                "{url}"
+            );
         }
     }
 
