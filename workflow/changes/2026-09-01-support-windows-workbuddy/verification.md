@@ -39,16 +39,21 @@ verified_at: ""
 - 终端闪烁失败优先门 `./scripts/checks/portability.sh` 按预期失败并列出 6 处直接 `tasklist`/`taskkill` 启动。全部改经 `CREATE_NO_WINDOW` adapter 后该门与 `cargo test -p skin-core windows_ --no-fail-fast`（12 项）passed。
 - 终端修复后的 `./scripts/check.sh all` passed：workflow 21 组、desktop 30 项、core 70 项、Rust integration/schema 31 项、Clippy、Web 16 项、TypeScript、Next.js production build和依赖审计全部通过。
 - 本机 ARM64 Windows `cargo check` 仍在既有 `ring` 构建脚本处因缺少 MSVC `assert.h` 失败；需要 Windows 原生 CI 生成最终 PE，不把 macOS 交叉结果冒充原生编译。
+- 当前修复 commit `b0cc90f7f0b018fe371a1035ad4d0eefc233a552` 的 CI run `33477978196` 已完成：Rust workspace、Web application、Windows x86、Windows x64、Windows ARM64 和 Vercel 均 passed；Development workflow 只因 PR 当时不是 Draft、而本 verification verdict 仍为 Pending 按策略判红。
+- 从该 run 下载 `Windows-native-arm64` artifact，GUI/CLI checksum 校验和 `scripts/package/verify-windows-exe.sh` 均 passed；GUI 与 helper 均为 AArch64 GUI-subsystem PE。GUI ZIP SHA256 为 `10973d6a0965db6a9527c6c879d22f2609b83178e6f5a197c6190200332bc9f5`。
 
 ## Behavioral evidence
 
 - 上一轮 Windows 11 ARM64 实窗探针已确认 WorkBuddy 5.4.5 位于当前用户默认目录、可启动，并在 guest `127.0.0.1:9224` 返回 Windows renderer；本轮实现前没有启动虚拟机或中断应用。
 - 本轮通过 VMX 已启用的 localhost VNC 进入同一 Windows 11 ARM64 来宾，确认系统桌面、Edge、Explorer 和 WorkBuddy 窗口均可访问；来宾账户无需输入 Windows 密码。检查来宾现存的 2026-08-31 ARM64 解压包后，界面只有“豆包 / 豆包工作”两个目标，没有 WorkBuddy，证明该包不是当前 head，未把它作为本变更的通过证据。
 - 在旧 helper 仍运行时连续 30 秒、每秒一次抓取来宾中心区域，`/tmp/vm-term-17.png` 捕获到标题为 `C:\WINDOWS\system32\taskli…` 的黑色 Windows Terminal；任务管理器同时显示 `doubao-skin-agent`。源码调用链确认 helper 每秒经 `TargetApp::is_running()` 和 `executable_is_running()` 直接启动 console-subsystem `tasklist.exe`，与闪烁频率和窗口标题一致。
+- 将当前 CI artifact 下载到同一 Windows 11 ARM64 来宾后，来宾 `Get-FileHash p.zip` 返回 `10973D6A0965DB6A9527C6C879D22F2609B83178E6F5A197C6190200332BC9F5`，与 CI/宿主机完全一致；不是沿用旧包。
+- 新包实窗显示“豆包 / 豆包工作 / WorkBuddy”三个目标；选择 WorkBuddy 后“纯暗”主题成功进入“已应用 / 正在使用”状态，并启动本机 WorkBuddy 5.4.5 登录窗口。开启“自动保持上次主题”后界面明确显示“后台服务已注册”。
+- 关闭新版主程序后，来宾 `Get-Process doubao-skin-agent` 确认 helper 正在运行（本次进程 ID 2748）。关闭人工 PowerShell、将 WorkBuddy 最大化后连续 30 秒逐秒抓取 30 个全屏帧；30 个 PNG 的 SHA256 完全相同，接触表 `/tmp/vm-fixed3-montage.png` 无任何黑色终端、`tasklist` 标题或抢焦点窗口。修复前的同一探针可稳定捕获终端，修复后同机同频率未复现。
 
 ## Visual evidence
 
-Pending：当前 head 的 Windows ARM64 包已经生成并在宿主机校验；真实 WorkBuddy 窗口中的目标选择、深色/鲸鱼娘、恢复和普通重开截图仍需执行。VNC 截图确认来宾可操作，但来宾现存旧包没有 WorkBuddy 目标，因此不纳入当前实现的视觉验收。
+当前 head 的 Windows ARM64 包已在真实 Windows 11 ARM64 虚拟机中显示三个独立目标，WorkBuddy 可选择、可应用“纯暗”、可注册后台保持服务；30 秒 helper 实窗探针无终端弹窗。由于来宾 WorkBuddy 未登录，本轮没有把登录后的深色/鲸鱼娘完整界面、恢复默认和普通重开冒充已完成视觉验收。
 
 ## Security and privacy evidence
 
@@ -58,7 +63,7 @@ Pending：当前 head 的 Windows ARM64 包已经生成并在宿主机校验；�
 
 ## Deviations and residual risk
 
-无产品范围偏差。macOS 本机交叉检查受 MSVC SDK 缺失阻塞，最终 PE 仍需 PR 的 Windows 原生 runner。真实 Windows VM 已给出修复前终端闪烁的可复现证据，但修复后包尚未生成和换入；剩余 Gate 是从当前 head 的原生 ARM64 artifact 启动 helper，重复同一 30 秒抓帧确认无黑色终端，再验证 WorkBuddy 目标、深色/鲸鱼娘、恢复、普通重开和双目标并存。未读取、索取或保存任何密码。
+无产品范围偏差。macOS 本机交叉检查受 MSVC SDK 缺失阻塞，但当前 head 的 x86/x64/ARM64 PE 均已由 Windows 原生 runner 成功生成，其中 ARM64 artifact 已换入真实 VM 并完成 helper 30 秒无终端回归。剩余 Gate 仅是需要登录后才能完成的 WorkBuddy 深色/鲸鱼娘完整界面、恢复默认、普通重开和豆包/WorkBuddy 双目标并存视觉矩阵；未读取、索取或保存任何密码。
 
 ## Verdict
 
