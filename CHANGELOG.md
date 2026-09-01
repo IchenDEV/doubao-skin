@@ -2,7 +2,7 @@
 
 All notable changes are recorded here. This project follows Semantic Versioning once the first stable release is published.
 
-## 0.4.0 - 2026-08-31
+## 0.5.0 - 2026-09-01
 
 ### Added
 
@@ -16,10 +16,17 @@ All notable changes are recorded here. This project follows Semantic Versioning 
 - CLI-only release assets for macOS universal, Linux x64/ARM64, and Windows x64/x86/ARM64, kept separate from every desktop package.
 - Scoop manifest for architecture-aware Windows CLI installation and a platform-detecting macOS/Linux installer.
 - Browser-local desktop download recommendation with manual architecture selection.
+- Background theme persistence with separate controls for remembering the last theme and opening the target app at login.
 
 ### Changed
 
 - macOS universal CLI archives are signed after `lipo` with the same stable community identity as the desktop app.
+
+### Fixed
+
+- Windows background process checks no longer open recurring Terminal windows.
+- Windows login-start registration can be removed reliably, and helper startup is verified before the UI reports success.
+- Reopening WorkBuddy from the system tray keeps the active theme watcher available without forcing WorkBuddy to launch at login.
 
 ## 0.1.0 - 2026-08-29
 
