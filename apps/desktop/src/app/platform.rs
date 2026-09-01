@@ -292,6 +292,10 @@ mod windows_startup {
     const RUN_VALUE_NAME: &str = "DoubaoSkinAutoTheme";
     const FILE_NOT_FOUND_HRESULT: i32 = 0x8007_0002_u32 as i32;
 
+    fn open_key_for_removal(path: &str) -> windows_registry::Result<windows_registry::Key> {
+        CURRENT_USER.open(path)
+    }
+
     #[derive(Default)]
     struct RegistryStartupBackend {
         child: RefCell<Option<Child>>,
@@ -320,7 +324,7 @@ mod windows_startup {
         }
 
         fn remove_value(&self) -> Result<(), String> {
-            let key = match CURRENT_USER.open(RUN_KEY_PATH) {
+            let key = match open_key_for_removal(RUN_KEY_PATH) {
                 Ok(key) => key,
                 Err(error) if error.code().0 == FILE_NOT_FOUND_HRESULT => return Ok(()),
                 Err(_) => return Err("无法打开 Windows 后台启动项".into()),
@@ -411,6 +415,36 @@ mod windows_startup {
             .spawn()
             .map(|_| ())
             .map_err(|_| "无法打开 Windows 启动应用设置".to_string())
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::{open_key_for_removal, CURRENT_USER};
+
+        struct TestKey(String);
+
+        impl Drop for TestKey {
+            fn drop(&mut self) {
+                let _ = CURRENT_USER.remove_tree(&self.0);
+            }
+        }
+
+        #[test]
+        fn removal_handle_can_delete_an_isolated_registry_value() {
+            let path = format!(
+                "Software\\DoubaoSkinTests\\remove-value-{}",
+                std::process::id()
+            );
+            let _cleanup = TestKey(path.clone());
+            let key = CURRENT_USER.create(&path).unwrap();
+            key.set_string("豆皮测试值", "neighbor-safe").unwrap();
+
+            let removal_key = open_key_for_removal(&path).unwrap();
+            removal_key
+                .remove_value("豆皮测试值")
+                .expect("the removal handle must have registry write access");
+            assert!(key.get_string("豆皮测试值").is_err());
+        }
     }
 }
 
