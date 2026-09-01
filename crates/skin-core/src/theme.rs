@@ -4546,6 +4546,23 @@ mod tests {
     }
 
     #[test]
+    fn snack_theme_does_not_hide_host_body_pseudo_elements() {
+        let theme =
+            load(&default_themes_dir(), "doubao-snack-giggle").expect("doubao-snack-giggle");
+        let compact = theme.css.split_whitespace().collect::<String>();
+
+        for appearance in ["light", "dark"] {
+            let unsafe_rule = format!(
+                "html[data-skin][data-theme={appearance}]body::before,html[data-skin][data-theme={appearance}]body::after{{display:none!important;}}"
+            );
+            assert!(
+                !compact.contains(&unsafe_rule),
+                "the theme must not hide host-owned body pseudo-elements in {appearance} mode"
+            );
+        }
+    }
+
+    #[test]
     fn bundled_theme_css_does_not_claim_runtime_surface_priority() {
         let controlled = [
             "--s-color-bg-body:",

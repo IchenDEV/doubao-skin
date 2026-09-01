@@ -57,11 +57,13 @@ approved_at: "2026-08-31"
 10. Windows 桌面包收敛为唯一 `doubao-skin.exe`，macOS 只在应用包内保留 GUI
 11. 按用户澄清恢复独立 CLI 发布链，加入 Scoop、macOS/Linux 安装脚本和 Web 桌面平台识别
 12. 根据 ARM64 实机应用主题一直停在“正在应用”的复现，修复 Windows WebSocket 随机源，并让首次注入连续失败在 30 秒后结束而不是无限等待
-13. 根据覆盖安装后的 ARM64 实机复现，优先选择 `Application/` 下的官方外层启动器，并把 Windows 目标应用的启动工作目录固定为该 EXE 所在目录，避免直接运行 `Application/app/` 内部二进制后触发 `mcp_helper.dll` 缺失
+13. 根据 ARM64 实机复现，安装发现仍保留 `Application/` 下的外层入口；仅在 Windows CDP 启动时优先使用相邻的 `Application/app/` 运行时及其工作目录，避免外层更新/安装启动器因 Chromium 调试参数触发 `mcp_helper.dll` 完整性弹窗；不存在内层运行时时回退到已发现入口
 14. 全仓库兼容性审计：用户数据目录改用跨平台目录 API；live/offline 能力在进入路径和系统命令前明确分流；移除示例中的外部 `curl` 依赖；Windows 不注册 macOS 菜单和快捷键
 15. 将脚本整理为 `package/` 与 `checks/` 两组并保留单一 `scripts/package.sh` 入口；将 CI 与 release 的 Windows 构建迁移到 `windows-2025` 原生 runner
 16. 将发布候选统一为 `0.4.0`；在 `lipo` 合并后重签 macOS universal CLI，普通 CI 用 ad-hoc 签名检查结构，Release 与 App 共用长期身份和固定证书指纹
 17. 修复 Draft PR 的 CI 门禁：为 `devflow check-pr` 加入受 GitHub PR 事件驱动的 Draft 状态，回归覆盖 pending/failed/passed 组合；推送后等待并检查完整远端 CI，Ready PR 仍严格要求 verification passed
+18. 用最终 ARM64 原生包回到 Windows 虚拟机复验标题栏、图标、预置资源、安装发现与真实主题应用；若实窗暴露主题兼容性回归，先补能判红的主题边界测试，再同步 Web 包并重跑 Windows 原生 CI
+19. 根据最终 Windows 截图移除内容标题对 macOS 交通灯区域的错误复用；Windows 标题从标准页边距开始，macOS 继续保留原交通灯避让值，并用双平台数值回归锁定边界
 
 ## Test-first proof
 
@@ -98,11 +100,13 @@ approved_at: "2026-08-31"
 - 第二轮 Windows 实机截图确认原生窗口控件、图标、主题图片和应用检测已恢复；按用户反馈移除标题栏里与内容区重复的“豆皮”文字，保留系统图标与窗口控件。
 - 用户随后澄清要求不是取消 CLI，而是桌面与 CLI 使用互不嵌套的两条安装链。桌面包继续保持单入口且不内嵌 CLI/Skills；独立 CLI 恢复为多平台 Release 资产，Windows 由 Scoop 发现安装，macOS/Linux 使用独立安装脚本。Windows 的内部 Cargo GUI 产物仍名为 `doubao-skin-app` 以避开源码 CLI 冲突，但发布时复制为唯一桌面入口 `doubao-skin.exe`。
 - ARM64 实机复现确认 `/json` 能发现三个正确的豆包页面，但 native Windows 不存在 `/dev/urandom`；原 WebSocket 握手因此在写出请求前失败。实现改用 `getrandom` 的系统随机源，并保留最后一次首次注入错误，在 30 秒内仍无任何页面成功时返回失败，防止桌面端永久显示“正在应用”。
-- ARM64 覆盖安装验证确认官方豆包直接启动正常，但主题工具为打开 CDP 端口而重启后立即报 `mcp_helper.dll` 缺失。安装目录同时存在 `Application/Doubao.exe` 外层入口和 `Application/app/Doubao.exe` 内部二进制；Windows 分支原先优先选中内部二进制并继承主题工具工作目录。现改为优先外层入口、从入口所在目录启动，并加入入口优先级与工作目录回归测试。
+- ARM64 覆盖安装后的早期判断把 `mcp_helper.dll` 弹窗归因于内层运行时，因此曾改为用外层入口启动。后续在同一虚拟机进行单变量复验：正常外层启动无弹窗；外层入口加 CDP 会弹窗且端口可用；内层运行时加同一 CDP 参数时豆包与豆包工作都无弹窗且端口可用。实现据此纠正为“外层用于安装发现、内层仅用于 CDP 启动”，并保留无内层运行时的回退。
 - 用户要求进一步减少系统强相关实现并全项目扫描。审计后把用户数据与缓存路径交给跨平台目录库，将无法跨平台的实时应用和 macOS 离线克隆明确隔离在能力边界内，并清除外部 `curl` 与非 macOS 平台上的 macOS 菜单注册。
 - 用户要求整理多语言脚本。对外入口收敛到 `scripts/package.sh`，实现按 `package/` 和 `checks/` 分组；远端 Windows CI 直接调用同一入口，避免 CI 与本地脚本分叉。
 - 用户准备发布 `v0.4.0`，要求 CLI 暂时沿用 App 的签名办法。实现将 universal CLI 留在同一 macOS Release 作业中，在一次证书导入后分别签名 App 与合并完成的 CLI，并对两者执行同一固定指纹校验；普通 CI 只做 ad-hoc 结构验证，不接触生产签名材料。
+- 最终 ARM64 原生包在虚拟机中验证真实主题应用时，`馋嘴豆包`使未登录弹窗变成空白；同窗恢复默认后内容立即恢复。该问题属于本变更要求的 Windows 主题可用性实窗验收，保留在同一变更内：主题不再强制隐藏宿主页面的 `body::before`/`body::after`，版本提升至 `1.1.1`，增加先红后绿的边界回归并同步 Web 主题包。
+- 后续 Windows 截图确认内容区标题仍无条件复用了 macOS 交通灯占位，导致“豆皮”左侧出现多余空白。修复只把该占位限制到 macOS：Windows 与其他平台返回零额外品牌缩进，macOS compact/normal 数值保持原样；回归同时断言两条平台路径，避免 Windows 修复改变 macOS 布局。
 
 ## Decision
 
-用户在 2026-08-30 明确要求按上述修复与分组方案继续，并立即产出 Windows 测试包；同日进一步确认桌面发布包只保留简洁入口，同时 CLI 必须保留为完全独立、可由 Agent 自动发现安装的跨平台链路。2026-08-31 用户明确准备发布 `v0.4.0`，要求先确认版本正确，并让 macOS CLI 临时复用 App 已有的稳定签名方案。
+用户在 2026-08-30 明确要求按上述修复与分组方案继续，并立即产出 Windows 测试包；同日进一步确认桌面发布包只保留简洁入口，同时 CLI 必须保留为完全独立、可由 Agent 自动发现安装的跨平台链路。2026-08-31 用户明确准备发布 `v0.4.0`，要求先确认版本正确，并让 macOS CLI 临时复用 App 已有的稳定签名方案。同日，`idevlab` 明确重新接受修订后的第 13 步：安装发现保留外层入口，Windows CDP 启动使用 `Application/app` 内层运行时，不存在内层时回退。
