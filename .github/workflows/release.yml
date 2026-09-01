@@ -299,7 +299,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           pattern: doubao-skin-cli-Windows-*
           path: dist
@@ -324,7 +324,7 @@ jobs:
     needs: [validate-tag, macos, windows, cli, scoop]
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
       - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
