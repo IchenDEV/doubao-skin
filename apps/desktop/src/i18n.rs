@@ -12,6 +12,8 @@ pub struct Locale {
     pub target_doubao_greeting: &'static str,
     pub target_doubao_work: &'static str,
     pub target_doubao_work_greeting: &'static str,
+    pub target_workbuddy: &'static str,
+    pub target_workbuddy_greeting: &'static str,
 
     // Source views
     pub source_library: &'static str,
@@ -191,6 +193,8 @@ pub static ZH_CN: Locale = Locale {
     target_doubao_greeting: "有什么我能帮你的？",
     target_doubao_work: "豆包工作",
     target_doubao_work_greeting: "今天有什么工作要处理？",
+    target_workbuddy: "WorkBuddy",
+    target_workbuddy_greeting: "今天想一起完成什么？",
 
     source_library: "我的主题",
     source_store: "主题商店",

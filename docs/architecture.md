@@ -50,13 +50,15 @@ themes/ ───────────────▶ crates/skin-core ──
 
 ### 2. Live 注入
 
-核心以不同的回环端口启动用户选中的「豆包」或「豆包工作」，通过 CDP 向该目标的匹配页面注入主题 CSS。它不修改官方安装包；应用退出后效果消失。调试端口运行期间可读取或控制页面，只应在可信本机使用。
+核心以不同的回环端口连接用户选中的「豆包」「豆包工作」或实验性 WorkBuddy，通过 CDP 只向该目标的匹配主页面注入主题。它不修改官方安装包；应用退出后效果消失。调试端口运行期间可读取或控制页面，只应在可信本机使用。
+
+WorkBuddy 使用独立的 `127.0.0.1:9224`，页面身份严格限定为已验证的 `app.asar/renderer/index.html` 主 renderer；网页 iframe、DevTools 和其他本地页面均不匹配。v2 主题走结构化兼容路径；v3 只在 `targets.workbuddy` 存在时加载共享层与 WorkBuddy 目标层，并生成带 `data-skin-target=workbuddy` 作用域的 adapter CSS，不复用豆包目标 CSS。运行中的普通 WorkBuddy 必须经过桌面端第二次明确操作才能重启；用户主动退出后 watcher 直接结束，不自动拉起。
 
 ### 3. 克隆构建
 
 核心克隆官方应用，修改克隆内的 HTML 与 `resources.pak`，再对克隆进行 ad-hoc 或开发者签名。原始 `/Applications/DoubaoWork.app` 不被覆盖。官方应用升级后需要重新生成克隆。
 
-实验性协议桥与 Live 路径共用 CDP 生命周期，但使用独立的回环适配器。它不会转发官方 Cookie、认证头、工作区字段或未支持的内容块，也不应被描述为官方 provider 接口。
+实验性协议桥与豆包工作的 Live 路径共用 CDP 生命周期，但使用独立的回环适配器；WorkBuddy 不进入协议桥。协议桥不会转发官方 Cookie、认证头、工作区字段或未支持的内容块，也不应被描述为官方 provider 接口。
 
 ## 主题数据流
 

@@ -9,10 +9,21 @@ use std::time::Duration;
 
 use super::{mark_launched, TargetApp};
 
+#[cfg(target_os = "windows")]
+fn windows_background_command(program: &str) -> Command {
+    use std::os::windows::process::CommandExt;
+    use windows_sys::Win32::System::Threading::CREATE_NO_WINDOW;
+
+    let mut command = Command::new(program);
+    command.creation_flags(CREATE_NO_WINDOW);
+    command
+}
+
 fn path_override_name(target: TargetApp) -> &'static str {
     match target {
         TargetApp::Doubao => "DOUBAO_SKIN_DOUBAO_PATH",
         TargetApp::DoubaoWork => "DOUBAO_SKIN_DOUBAO_WORK_PATH",
+        TargetApp::WorkBuddy => "DOUBAO_SKIN_WORKBUDDY_PATH",
     }
 }
 
@@ -27,6 +38,7 @@ fn macos_binary_relative_path(target: TargetApp) -> &'static str {
     match target {
         TargetApp::Doubao => "Contents/MacOS/Doubao",
         TargetApp::DoubaoWork => "Contents/MacOS/DoubaoWork",
+        TargetApp::WorkBuddy => "Contents/MacOS/Electron",
     }
 }
 
@@ -113,7 +125,7 @@ pub(super) fn app_is_running(target: TargetApp) -> bool {
     let process_name = installed_binary(target)
         .and_then(|path| path.file_name().map(|name| name.to_owned()))
         .unwrap_or_else(|| windows_executable_names(target)[0].into());
-    Command::new("tasklist")
+    windows_background_command("tasklist")
         .args([
             "/FI",
             &format!("IMAGENAME eq {}", process_name.to_string_lossy()),
@@ -133,7 +145,7 @@ pub(super) fn executable_is_running(binary: &Path) -> bool {
     let Some(process_name) = binary.file_name() else {
         return false;
     };
-    Command::new("tasklist")
+    windows_background_command("tasklist")
         .args([
             "/FI",
             &format!("IMAGENAME eq {}", process_name.to_string_lossy()),
@@ -199,6 +211,7 @@ fn windows_relative_binary_paths(target: TargetApp) -> &'static [&'static str] {
             "DoubaoWork/Application/app/DoubaoWork.exe",
             "DoubaoWork/DoubaoWork.exe",
         ],
+        TargetApp::WorkBuddy => &["Programs/WorkBuddy/WorkBuddy.exe"],
     }
 }
 
@@ -207,7 +220,43 @@ fn windows_executable_names(target: TargetApp) -> &'static [&'static str] {
     match target {
         TargetApp::Doubao => &["Doubao.exe"],
         TargetApp::DoubaoWork => &["DoubaoWork.exe"],
+        TargetApp::WorkBuddy => &["WorkBuddy.exe"],
     }
+}
+
+#[cfg(any(test, target_os = "windows"))]
+fn windows_binary_name_matches(target: TargetApp, binary: &Path) -> bool {
+    binary.file_name().is_some_and(|file_name| {
+        windows_executable_names(target)
+            .iter()
+            .any(|name| file_name.to_string_lossy().eq_ignore_ascii_case(name))
+    })
+}
+
+#[cfg(any(test, target_os = "windows"))]
+const fn windows_installation_index(target: TargetApp) -> usize {
+    match target {
+        TargetApp::Doubao => 0,
+        TargetApp::DoubaoWork => 1,
+        TargetApp::WorkBuddy => 2,
+    }
+}
+
+#[cfg(any(test, target_os = "windows"))]
+fn windows_debug_args(port: u16) -> [String; 2] {
+    [
+        "--remote-debugging-address=127.0.0.1".into(),
+        format!("--remote-debugging-port={port}"),
+    ]
+}
+
+#[cfg(any(test, target_os = "windows"))]
+fn windows_tasklist_contains_process(output: &str, process_name: &str) -> bool {
+    output.lines().any(|line| {
+        line.split_whitespace()
+            .next()
+            .is_some_and(|image_name| image_name.eq_ignore_ascii_case(process_name))
+    })
 }
 
 #[cfg(any(test, target_os = "windows"))]
@@ -249,6 +298,7 @@ fn windows_app_root(target: TargetApp, local_app_data: &Path) -> PathBuf {
     local_app_data.join(match target {
         TargetApp::Doubao => "Doubao",
         TargetApp::DoubaoWork => "DoubaoWork",
+        TargetApp::WorkBuddy => "WorkBuddy",
     })
 }
 
@@ -293,6 +343,10 @@ fn windows_binary_in_root(target: TargetApp, local_app_data: &Path) -> Option<Pa
 
 #[cfg(any(test, target_os = "windows"))]
 fn registry_entry_matches(target: TargetApp, key_name: &str, display_name: &str) -> bool {
+    if target == TargetApp::WorkBuddy {
+        return key_name.eq_ignore_ascii_case("WorkBuddy")
+            || display_name.eq_ignore_ascii_case("WorkBuddy");
+    }
     let identity = format!("{key_name} {display_name}").to_ascii_lowercase();
     let is_doubao = identity.contains("doubao") || identity.contains("豆包");
     let is_work = identity.contains("work") || identity.contains("工作");
@@ -300,6 +354,7 @@ fn registry_entry_matches(target: TargetApp, key_name: &str, display_name: &str)
         && match target {
             TargetApp::Doubao => !is_work,
             TargetApp::DoubaoWork => is_work,
+            TargetApp::WorkBuddy => false,
         }
 }
 
@@ -422,13 +477,7 @@ fn windows_registry_install_paths(target: TargetApp) -> Vec<PathBuf> {
 
 #[cfg(target_os = "windows")]
 fn binary_from_install_path(target: TargetApp, path: &Path) -> Option<PathBuf> {
-    if path.is_file()
-        && path.file_name().is_some_and(|file_name| {
-            windows_executable_names(target)
-                .iter()
-                .any(|name| file_name.to_string_lossy().eq_ignore_ascii_case(name))
-        })
-    {
+    if path.is_file() && windows_binary_name_matches(target, path) {
         return Some(path.to_path_buf());
     }
     find_named_executable(path, windows_executable_names(target), 5)
@@ -437,7 +486,11 @@ fn binary_from_install_path(target: TargetApp, path: &Path) -> Option<PathBuf> {
 #[cfg(target_os = "windows")]
 fn windows_installed_binary_uncached(target: TargetApp) -> Option<PathBuf> {
     if let Some(binary) = explicit_binary(target) {
-        return Some(binary);
+        if target != TargetApp::WorkBuddy
+            || (binary.is_absolute() && windows_binary_name_matches(target, &binary))
+        {
+            return Some(binary);
+        }
     }
     if let Some(binary) =
         dirs::data_local_dir().and_then(|root| windows_binary_in_root(target, &root))
@@ -453,7 +506,7 @@ fn windows_installed_binary_uncached(target: TargetApp) -> Option<PathBuf> {
         let Some(root) = std::env::var_os(root_name).map(PathBuf::from) else {
             continue;
         };
-        for folder in ["ByteDance", "Doubao", "DoubaoWork"] {
+        for folder in ["ByteDance", "Doubao", "DoubaoWork", "WorkBuddy"] {
             if let Some(binary) = binary_from_install_path(target, &root.join(folder)) {
                 return Some(binary);
             }
@@ -466,18 +519,25 @@ fn windows_installed_binary_uncached(target: TargetApp) -> Option<PathBuf> {
 fn windows_installed_binary(target: TargetApp) -> Option<PathBuf> {
     use std::sync::OnceLock;
 
-    static INSTALLATIONS: OnceLock<[Option<PathBuf>; 2]> = OnceLock::new();
+    static INSTALLATIONS: OnceLock<[Option<PathBuf>; 3]> = OnceLock::new();
     let installations = INSTALLATIONS.get_or_init(|| {
         [
             windows_installed_binary_uncached(TargetApp::Doubao),
             windows_installed_binary_uncached(TargetApp::DoubaoWork),
+            windows_installed_binary_uncached(TargetApp::WorkBuddy),
         ]
     });
-    installations[match target {
-        TargetApp::Doubao => 0,
-        TargetApp::DoubaoWork => 1,
-    }]
-    .clone()
+    installations[windows_installation_index(target)].clone()
+}
+
+#[cfg(target_os = "windows")]
+fn windows_process_name(target: TargetApp) -> String {
+    installed_binary(target)
+        .and_then(|path| {
+            path.file_name()
+                .map(|name| name.to_string_lossy().into_owned())
+        })
+        .unwrap_or_else(|| windows_executable_names(target)[0].into())
 }
 
 #[cfg(target_os = "macos")]
@@ -500,10 +560,8 @@ pub(super) fn tell_app(target: TargetApp, action: &str, _spawn: bool) {
     if action != "quit" {
         return;
     }
-    let process_name = installed_binary(target)
-        .and_then(|path| path.file_name().map(|name| name.to_owned()))
-        .unwrap_or_else(|| windows_executable_names(target)[0].into());
-    let _ = Command::new("taskkill")
+    let process_name = windows_process_name(target);
+    let _ = windows_background_command("taskkill")
         .arg("/IM")
         .arg(process_name)
         .arg("/T")
@@ -527,6 +585,7 @@ pub(super) fn launch_app<F: FnMut(String)>(target: TargetApp, mut log: F) -> Res
         .arg("-b")
         .arg(target.bundle_id())
         .arg("--args")
+        .arg("--remote-debugging-address=127.0.0.1")
         .arg(format!("--remote-debugging-port={port}"))
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
@@ -550,7 +609,7 @@ pub(super) fn launch_app<F: FnMut(String)>(target: TargetApp, mut log: F) -> Res
     mark_launched(target);
     Command::new(&binary)
         .current_dir(working_directory)
-        .arg(format!("--remote-debugging-port={port}"))
+        .args(windows_debug_args(port))
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
         .spawn()
@@ -587,27 +646,22 @@ pub(super) fn kill_app(target: TargetApp) {
 
 #[cfg(target_os = "windows")]
 pub(super) fn kill_app(target: TargetApp) {
-    let process_name = installed_binary(target)
-        .and_then(|path| path.file_name().map(|name| name.to_owned()))
-        .unwrap_or_else(|| windows_executable_names(target)[0].into());
-    let _ = Command::new("taskkill")
+    let process_name = windows_process_name(target);
+    let _ = windows_background_command("taskkill")
         .arg("/F")
         .arg("/IM")
         .arg(&process_name)
         .arg("/T")
         .output();
     for _ in 0..20 {
-        let running = Command::new("tasklist")
-            .args([
-                "/FI",
-                &format!("IMAGENAME eq {}", process_name.to_string_lossy()),
-                "/NH",
-            ])
+        let running = windows_background_command("tasklist")
+            .args(["/FI", &format!("IMAGENAME eq {process_name}"), "/NH"])
             .output()
             .map(|output| {
-                String::from_utf8_lossy(&output.stdout)
-                    .to_ascii_lowercase()
-                    .contains(&process_name.to_string_lossy().to_ascii_lowercase())
+                windows_tasklist_contains_process(
+                    &String::from_utf8_lossy(&output.stdout),
+                    &process_name,
+                )
             })
             .unwrap_or(false);
         if !running {
@@ -619,6 +673,36 @@ pub(super) fn kill_app(target: TargetApp) {
 
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
 pub(super) fn kill_app(_target: TargetApp) {}
+
+#[cfg(target_os = "macos")]
+pub(super) fn process_running(target: TargetApp) -> bool {
+    let Some(binary) = installed_binary(target) else {
+        return false;
+    };
+    Command::new("pgrep")
+        .args(["-f", binary.to_string_lossy().as_ref()])
+        .output()
+        .is_ok_and(|output| output.status.success())
+}
+
+#[cfg(target_os = "windows")]
+pub(super) fn process_running(target: TargetApp) -> bool {
+    let process_name = windows_process_name(target);
+    windows_background_command("tasklist")
+        .args(["/FI", &format!("IMAGENAME eq {process_name}"), "/NH"])
+        .output()
+        .is_ok_and(|output| {
+            windows_tasklist_contains_process(
+                &String::from_utf8_lossy(&output.stdout),
+                &process_name,
+            )
+        })
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+pub(super) fn process_running(_target: TargetApp) -> bool {
+    false
+}
 
 #[cfg(test)]
 mod tests {
@@ -642,19 +726,22 @@ mod tests {
     }
 
     #[test]
-    fn windows_install_detection_checks_both_per_user_targets() {
+    fn windows_install_detection_checks_all_per_user_targets() {
         let root = std::env::temp_dir().join(format!(
             "doubao-skin-windows-detection-{}",
             std::process::id()
         ));
         let doubao = root.join("Doubao/Application/Doubao.exe");
         let work = root.join("DoubaoWork/Application/DoubaoWork.exe");
+        let workbuddy = root.join("Programs/WorkBuddy/WorkBuddy.exe");
         let internal_doubao = root.join("Doubao/Application/app/Doubao.exe");
         let internal_work = root.join("DoubaoWork/Application/app/DoubaoWork.exe");
         std::fs::create_dir_all(internal_doubao.parent().unwrap()).unwrap();
         std::fs::create_dir_all(internal_work.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(workbuddy.parent().unwrap()).unwrap();
         std::fs::write(&doubao, []).unwrap();
         std::fs::write(&work, []).unwrap();
+        std::fs::write(&workbuddy, []).unwrap();
         std::fs::write(&internal_doubao, []).unwrap();
         std::fs::write(&internal_work, []).unwrap();
 
@@ -665,6 +752,10 @@ mod tests {
         assert_eq!(
             windows_binary_in_root(TargetApp::DoubaoWork, &root),
             Some(work)
+        );
+        assert_eq!(
+            windows_binary_in_root(TargetApp::WorkBuddy, &root),
+            Some(workbuddy)
         );
 
         std::fs::remove_dir_all(root).unwrap();
@@ -696,7 +787,7 @@ mod tests {
     }
 
     #[test]
-    fn windows_registry_detection_keeps_the_two_products_isolated() {
+    fn windows_registry_detection_keeps_the_three_products_isolated() {
         assert!(registry_entry_matches(TargetApp::Doubao, "Doubao", "豆包"));
         assert!(!registry_entry_matches(
             TargetApp::DoubaoWork,
@@ -712,6 +803,21 @@ mod tests {
             TargetApp::Doubao,
             "DoubaoWork",
             "豆包工作"
+        ));
+        assert!(registry_entry_matches(
+            TargetApp::WorkBuddy,
+            "WorkBuddy",
+            "WorkBuddy"
+        ));
+        assert!(!registry_entry_matches(
+            TargetApp::WorkBuddy,
+            "WorkBuddy Helper",
+            "WorkBuddy Helper"
+        ));
+        assert!(!registry_entry_matches(
+            TargetApp::WorkBuddy,
+            "OtherBuddy",
+            "Other Buddy"
         ));
     }
 
@@ -773,5 +879,54 @@ mod tests {
             PathBuf::from("C:/Users/tester/Doubao/Application/app")
         );
         assert!(windows_launch_working_directory(Path::new("Doubao.exe")).is_err());
+    }
+
+    #[test]
+    fn windows_install_cache_has_one_slot_per_target() {
+        assert_eq!(windows_installation_index(TargetApp::Doubao), 0);
+        assert_eq!(windows_installation_index(TargetApp::DoubaoWork), 1);
+        assert_eq!(windows_installation_index(TargetApp::WorkBuddy), 2);
+    }
+
+    #[test]
+    fn windows_workbuddy_binary_name_is_exact() {
+        assert!(windows_binary_name_matches(
+            TargetApp::WorkBuddy,
+            Path::new("C:/Users/tester/AppData/Local/Programs/WorkBuddy/WorkBuddy.exe")
+        ));
+        assert!(!windows_binary_name_matches(
+            TargetApp::WorkBuddy,
+            Path::new("C:/Users/tester/AppData/Local/Programs/WorkBuddy/WorkBuddy Helper.exe")
+        ));
+    }
+
+    #[test]
+    fn windows_debug_arguments_bind_the_loopback_interface() {
+        assert_eq!(
+            windows_debug_args(9224),
+            [
+                "--remote-debugging-address=127.0.0.1".to_string(),
+                "--remote-debugging-port=9224".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn windows_tasklist_matching_requires_the_exact_image_name() {
+        let output = "WorkBuddy.exe                 4216 Console                    1     90,000 K\r\n\
+                      WorkBuddy Helper.exe          4220 Console                    1     12,000 K\r\n";
+        assert!(windows_tasklist_contains_process(output, "WorkBuddy.exe"));
+        assert!(!windows_tasklist_contains_process(
+            "WorkBuddy Helper.exe          4220 Console                    1     12,000 K\r\n",
+            "WorkBuddy.exe"
+        ));
+        assert!(!windows_tasklist_contains_process(
+            output,
+            "WorkBuddy Helper"
+        ));
+        assert!(!windows_tasklist_contains_process(
+            "INFO: No tasks are running which match the specified criteria.",
+            "WorkBuddy.exe"
+        ));
     }
 }

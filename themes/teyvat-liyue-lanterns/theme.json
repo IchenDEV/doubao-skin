@@ -1,175 +1,203 @@
 {
-  "$schema": "../../design/theme-standard/theme-v2.schema.json",
-  "schemaVersion": 2,
+  "$schema": "../../design/theme-standard/theme-v3.schema.json",
+  "author": "豆皮",
+  "description": "非官方同人主题：钟离与胡桃共赏璃月华灯",
   "id": "teyvat-liyue-lanterns",
   "name": "璃月华灯",
-  "description": "非官方同人主题：钟离与胡桃共赏璃月华灯",
-  "version": "1.1.0",
-  "author": "豆皮",
   "preview": {
-    "image": "preview.jpg",
-    "aspectRatio": "16:9",
+    "accent": "#d89a32",
     "appearance": "light",
-    "accent": "#d89a32"
+    "aspectRatio": "16:9",
+    "image": "preview.jpg"
   },
-  "store": {
-    "category": "gallery",
-    "tags": ["深色", "原神同人", "璃月", "角色", "彩色图标"],
-    "sortOrder": 32
+  "provenance": {
+    "artwork": "Newly generated ImageGen character fan art, environment, and icon illustrations; no official or community artwork bundled",
+    "inspiredBy": "Zhongli, Hu Tao, and Liyue from Genshin Impact; unofficial fan theme",
+    "license": "Original non-official fan adaptation; no endorsement or authorization claimed",
+    "sourceAccessedAt": "2026-08-30"
   },
-  "appearance": "both",
-  "background": {
-    "type": "image",
-    "src": "bg.jpg",
-    "fit": "cover",
-    "position": "center",
-    "opacity": 1,
-    "veil": 0.16,
-    "blur": 0,
-    "animation": "none"
-  },
-  "surfaceOpacity": 0.70,
-  "typography": {
-    "ui": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
-    "body": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
-    "code": "ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace",
-    "scale": 1.01,
-    "lineHeight": 1.64
-  },
-  "layout": {
-    "density": "comfortable",
-    "sidebarWidth": 258,
-    "chatMaxWidth": 900,
-    "composerMaxWidth": 770,
-    "selfMessageMaxWidth": 420,
-    "chatMargin": 30
-  },
-  "icons": {
-    "main": "icons/main.png",
-    "search": "icons/knowledge.png",
-    "newTask": "icons/new-task.png",
-    "scheduled": "icons/scheduled.png",
-    "skills": "icons/skills.png",
-    "cloud": "icons/cloud.png",
-    "remote": "icons/remote.png",
-    "conversation": "icons/conversation.png",
-    "project": "icons/project.png",
-    "confirm": "icons/send.png",
-    "connector": "icons/tools.png",
-    "send": "icons/send.png",
-    "stop": "icons/scheduled.png",
-    "attach": "icons/project.png",
-    "voice": "icons/voice.png",
-    "tools": "icons/tools.png",
-    "knowledge": "icons/knowledge.png",
-    "moreSkills": "icons/skills.png",
-    "dailyWork": "icons/daily-work.png",
-    "contentCreation": "icons/content-creation.png",
-    "research": "icons/knowledge.png",
-    "design": "icons/content-creation.png",
-    "readAloud": "icons/voice.png",
-    "copy": "icons/daily-work.png",
-    "sidebar": "icons/project.png"
-  },
-  "composer": {
-    "background": "rgba(31,29,51,0.94)",
-    "border": "1px solid rgba(216,154,50,0.42)",
-    "textColor": "#fff4d7",
-    "placeholderColor": "rgba(255,244,215,0.56)",
-    "caretColor": "#efbd62",
-    "iconColor": "#e7c47b",
-    "sendButtonBackground": "#d89a32",
-    "sendButtonIconColor": "#221a25",
-    "radius": 20,
-    "minHeight": 54,
-    "maxHeight": 240,
-    "padding": 14,
-    "gap": 10,
-    "iconSize": 20
-  },
-  "content": {
-    "chatBackground": "rgba(21,23,48,0.80)",
-    "userMessageBackground": "#bd6937",
-    "userMessageText": "#fff7e4",
-    "assistantMessageBackground": "rgba(36,33,55,0.94)",
-    "assistantMessageText": "#fff4d7",
-    "codeBackground": "#191a32",
-    "codeHeaderBackground": "#2b2943",
-    "selectionColor": "rgba(216,154,50,0.28)",
-    "scrollbarColor": "rgba(231,196,123,0.24)",
-    "scrollbarHoverColor": "rgba(231,196,123,0.44)"
-  },
-  "effects": {
-    "radiusScale": 1.08,
-    "shadow": "0 14px 38px rgba(15,12,31,0.30)",
-    "blur": 18,
-    "motion": "gentle",
-    "transitionMs": 180
-  },
-  "variants": {
-    "light": {
-      "composer": {
-        "background": "rgba(255,250,237,0.94)",
-        "border": "1px solid rgba(167,105,36,0.34)",
-        "textColor": "#49372d",
-        "placeholderColor": "rgba(73,55,45,0.56)",
-        "caretColor": "#a76924",
-        "iconColor": "#826037",
-        "sendButtonBackground": "#ba752b",
-        "sendButtonIconColor": "#ffffff",
-        "radius": 20,
-        "minHeight": 54,
-        "maxHeight": 240,
-        "padding": 14,
-        "gap": 10,
-        "iconSize": 20
-      },
-      "content": {
-        "chatBackground": "rgba(247,238,218,0.78)",
-        "userMessageBackground": "#ad5f36",
-        "userMessageText": "#ffffff",
-        "assistantMessageBackground": "rgba(255,250,237,0.94)",
-        "assistantMessageText": "#49372d",
-        "codeBackground": "#f0e1c5",
-        "codeHeaderBackground": "#e6d2ad",
-        "selectionColor": "rgba(167,105,36,0.22)",
-        "scrollbarColor": "rgba(94,68,49,0.22)",
-        "scrollbarHoverColor": "rgba(94,68,49,0.40)"
-      }
+  "schemaVersion": 3,
+  "shared": {
+    "appearance": "both",
+    "background": {
+      "animation": "none",
+      "blur": 0,
+      "fit": "cover",
+      "opacity": 1,
+      "position": "center",
+      "src": "bg.jpg",
+      "type": "image",
+      "veil": 0.16
     },
-    "dark": {
-      "composer": {
-        "background": "rgba(31,29,51,0.94)",
-        "border": "1px solid rgba(216,154,50,0.42)",
-        "textColor": "#fff4d7",
-        "placeholderColor": "rgba(255,244,215,0.56)",
-        "caretColor": "#efbd62",
-        "iconColor": "#e7c47b",
-        "sendButtonBackground": "#d89a32",
-        "sendButtonIconColor": "#221a25",
-        "radius": 20,
-        "minHeight": 54,
-        "maxHeight": 240,
-        "padding": 14,
-        "gap": 10,
-        "iconSize": 20
+    "composer": {
+      "background": "rgba(31,29,51,0.94)",
+      "border": "1px solid rgba(216,154,50,0.42)",
+      "caretColor": "#efbd62",
+      "gap": 10,
+      "iconColor": "#e7c47b",
+      "iconSize": 20,
+      "maxHeight": 240,
+      "minHeight": 54,
+      "padding": 14,
+      "placeholderColor": "rgba(255,244,215,0.56)",
+      "radius": 20,
+      "sendButtonBackground": "#d89a32",
+      "sendButtonIconColor": "#221a25",
+      "textColor": "#fff4d7"
+    },
+    "content": {
+      "assistantMessageBackground": "rgba(36,33,55,0.94)",
+      "assistantMessageText": "#fff4d7",
+      "chatBackground": "rgba(21,23,48,0.80)",
+      "codeBackground": "#191a32",
+      "codeHeaderBackground": "#2b2943",
+      "scrollbarColor": "rgba(231,196,123,0.24)",
+      "scrollbarHoverColor": "rgba(231,196,123,0.44)",
+      "selectionColor": "rgba(216,154,50,0.28)",
+      "userMessageBackground": "#bd6937",
+      "userMessageText": "#fff7e4"
+    },
+    "effects": {
+      "blur": 18,
+      "motion": "gentle",
+      "radiusScale": 1.08,
+      "shadow": "0 14px 38px rgba(15,12,31,0.30)",
+      "transitionMs": 180
+    },
+    "icons": {
+      "attach": "icons/project.png",
+      "cloud": "icons/cloud.png",
+      "confirm": "icons/send.png",
+      "connector": "icons/tools.png",
+      "contentCreation": "icons/content-creation.png",
+      "conversation": "icons/conversation.png",
+      "copy": "icons/daily-work.png",
+      "dailyWork": "icons/daily-work.png",
+      "design": "icons/content-creation.png",
+      "knowledge": "icons/knowledge.png",
+      "main": "icons/main.png",
+      "moreSkills": "icons/skills.png",
+      "newTask": "icons/new-task.png",
+      "project": "icons/project.png",
+      "readAloud": "icons/voice.png",
+      "remote": "icons/remote.png",
+      "research": "icons/knowledge.png",
+      "scheduled": "icons/scheduled.png",
+      "search": "icons/knowledge.png",
+      "send": "icons/send.png",
+      "sidebar": "icons/project.png",
+      "skills": "icons/skills.png",
+      "stop": "icons/scheduled.png",
+      "tools": "icons/tools.png",
+      "voice": "icons/voice.png"
+    },
+    "layout": {
+      "chatMargin": 30,
+      "chatMaxWidth": 900,
+      "composerMaxWidth": 770,
+      "density": "comfortable",
+      "selfMessageMaxWidth": 420,
+      "sidebarWidth": 258
+    },
+    "surfaceOpacity": 0.7,
+    "typography": {
+      "body": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
+      "code": "ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace",
+      "lineHeight": 1.64,
+      "scale": 1.01,
+      "ui": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif"
+    },
+    "variants": {
+      "dark": {
+        "background": {
+          "veil": 0.58
+        },
+        "composer": {
+          "background": "rgba(31,29,51,0.94)",
+          "border": "1px solid rgba(216,154,50,0.42)",
+          "caretColor": "#efbd62",
+          "gap": 10,
+          "iconColor": "#e7c47b",
+          "iconSize": 20,
+          "maxHeight": 240,
+          "minHeight": 54,
+          "padding": 14,
+          "placeholderColor": "rgba(255,244,215,0.56)",
+          "radius": 20,
+          "sendButtonBackground": "#d89a32",
+          "sendButtonIconColor": "#221a25",
+          "textColor": "#fff4d7"
+        },
+        "content": {
+          "assistantMessageBackground": "rgba(36,33,55,0.94)",
+          "assistantMessageText": "#fff4d7",
+          "chatBackground": "rgba(21,23,48,0.80)",
+          "codeBackground": "#191a32",
+          "codeHeaderBackground": "#2b2943",
+          "scrollbarColor": "rgba(231,196,123,0.24)",
+          "scrollbarHoverColor": "rgba(231,196,123,0.44)",
+          "selectionColor": "rgba(216,154,50,0.28)",
+          "userMessageBackground": "#bd6937",
+          "userMessageText": "#fff7e4"
+        }
       },
-      "content": {
-        "chatBackground": "rgba(21,23,48,0.80)",
-        "userMessageBackground": "#bd6937",
-        "userMessageText": "#fff7e4",
-        "assistantMessageBackground": "rgba(36,33,55,0.94)",
-        "assistantMessageText": "#fff4d7",
-        "codeBackground": "#191a32",
-        "codeHeaderBackground": "#2b2943",
-        "selectionColor": "rgba(216,154,50,0.28)",
-        "scrollbarColor": "rgba(231,196,123,0.24)",
-        "scrollbarHoverColor": "rgba(231,196,123,0.44)"
+      "light": {
+        "composer": {
+          "background": "rgba(255,250,237,0.94)",
+          "border": "1px solid rgba(167,105,36,0.34)",
+          "caretColor": "#a76924",
+          "gap": 10,
+          "iconColor": "#826037",
+          "iconSize": 20,
+          "maxHeight": 240,
+          "minHeight": 54,
+          "padding": 14,
+          "placeholderColor": "rgba(73,55,45,0.56)",
+          "radius": 20,
+          "sendButtonBackground": "#ba752b",
+          "sendButtonIconColor": "#ffffff",
+          "textColor": "#49372d"
+        },
+        "content": {
+          "assistantMessageBackground": "rgba(255,250,237,0.94)",
+          "assistantMessageText": "#49372d",
+          "chatBackground": "rgba(247,238,218,0.78)",
+          "codeBackground": "#f0e1c5",
+          "codeHeaderBackground": "#e6d2ad",
+          "scrollbarColor": "rgba(94,68,49,0.22)",
+          "scrollbarHoverColor": "rgba(94,68,49,0.40)",
+          "selectionColor": "rgba(167,105,36,0.22)",
+          "userMessageBackground": "#ad5f36",
+          "userMessageText": "#ffffff"
+        }
       }
     }
   },
-  "inspiredBy": "Zhongli, Hu Tao, and Liyue from Genshin Impact; unofficial fan theme",
-  "sourceAccessedAt": "2026-08-30",
-  "artwork": "Newly generated ImageGen character fan art, environment, and icon illustrations; no official or community artwork bundled",
-  "license": "Original non-official fan adaptation; no endorsement or authorization claimed"
+  "store": {
+    "category": "gallery",
+    "sortOrder": 32,
+    "tags": [
+      "深色",
+      "原神同人",
+      "璃月",
+      "角色",
+      "彩色图标"
+    ]
+  },
+  "targets": {
+    "doubao": {
+      "css": [
+        "styles/doubao-family.css"
+      ]
+    },
+    "doubao-work": {
+      "css": [
+        "styles/doubao-family.css"
+      ]
+    },
+    "workbuddy": {
+      "icons": null
+    }
+  },
+  "version": "2.0.0"
 }

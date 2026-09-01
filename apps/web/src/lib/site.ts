@@ -1,6 +1,6 @@
 export const SITE_NAME = "豆皮";
 export const SITE_NAME_EN = "DOUBAO THEMES";
-export const SITE_TAGLINE = "同时支持 macOS 与 Windows 版「豆包」「豆包工作」";
+export const SITE_TAGLINE = "支持 macOS / Windows 豆包系列，并在 macOS 实验支持 WorkBuddy";
 export const SITE_URL = "https://doubao-skin.idevlab.dev";
 export const SOCIAL_IMAGE = "/themes/peach-sunset.preview.jpg";
 export const REPO_URL = "https://github.com/IchenDEV/doubao-skin";

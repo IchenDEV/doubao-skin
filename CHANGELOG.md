@@ -6,6 +6,10 @@ All notable changes are recorded here. This project follows Semantic Versioning 
 
 ### Added
 
+- Theme package v3 contract with explicit Doubao, DoubaoWork, and WorkBuddy scope, shared/target layers, strict CSS/resource validation, migration tooling, and target-aware desktop/Web catalog UI.
+- Experimental WorkBuddy 5.3.14 live theming for v2 themes, with a dedicated loopback CDP port, strict main-renderer matching, explicit restart confirmation, and no automatic relaunch after user quit.
+- Standalone CLI distribution published as separate platform-specific release assets.
+- One-line CLI installer: `curl -fsSL .../install-cli.sh | sh`.
 - `doubao-skin --version` flag.
 - Windows desktop packages built on native Windows runners for x64, x86, and ARM64, each with one `doubao-skin.exe` entry point.
 - CLI binary standardized as `doubao-skin` for consistency with the product name.

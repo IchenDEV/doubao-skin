@@ -9,10 +9,11 @@ import {
   parseThemeFilters,
   themeFilterHref,
   type ThemeFilters,
+  type ThemeTargetFilter,
   type ThemeTypeFilter,
 } from "@/lib/theme-filters";
 
-type IconName = "grid" | "book" | "brush" | "image" | "drop" | "folder" | "github";
+type IconName = "grid" | "book" | "brush" | "image" | "drop" | "folder" | "github" | "app";
 
 function NavIcon({ name }: { name: IconName }) {
   const common = {
@@ -34,6 +35,7 @@ function NavIcon({ name }: { name: IconName }) {
     drop: <path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z" />,
     folder: <path d="M3 7.5h7l2-2h9v13H3v-11Z" />,
     github: <><circle cx="12" cy="12" r="9" /><path d="M8.5 19c.4-1.2.4-2.1 0-2.8-2.1-.3-3.3-1.4-3.3-3.9 0-1 .4-1.9 1.1-2.6-.2-.7-.2-1.6.1-2.5 1.1 0 2 .5 2.6 1a8.8 8.8 0 0 1 6 0c.7-.5 1.5-1 2.6-1 .3.9.3 1.8.1 2.5.7.7 1.1 1.6 1.1 2.6 0 2.5-1.2 3.6-3.3 3.9-.4.7-.4 1.6 0 2.8" /></>,
+    app: <><rect x="4" y="4" width="16" height="16" rx="4" /><path d="M8 12h8M12 8v8" /></>,
   };
   return <svg {...common}>{paths[name]}</svg>;
 }
@@ -56,14 +58,34 @@ function FilterLinks({
     { key: "pure", label: "纯色", icon: "drop" },
     { key: "background", label: "有背景", icon: "image" },
   ];
+  const targetOptions: { key: ThemeTargetFilter; label: string }[] = [
+    { key: "all", label: "全部应用" },
+    { key: "doubao", label: "豆包" },
+    { key: "doubao-work", label: "豆包工作" },
+    { key: "workbuddy", label: "WorkBuddy" },
+  ];
   return (
     <div className="filter-sections">
+      <section className="filter-group" aria-labelledby="target-filter-title">
+        <h2 id="target-filter-title">适用应用</h2>
+        {targetOptions.map((item) => (
+          <Link
+            key={item.key}
+            href={themeFilterHref({ ...state, target: item.key })}
+            className={state.target === item.key ? "is-active" : undefined}
+            aria-current={state.target === item.key ? "page" : undefined}
+            onClick={() => onChange({ ...state, target: item.key })}
+          >
+            <NavIcon name={item.key === "all" ? "grid" : "app"} />{item.label}
+          </Link>
+        ))}
+      </section>
       <section className="filter-group" aria-labelledby="type-filter-title">
         <h2 id="type-filter-title">类型</h2>
         {typeOptions.map((item) => (
           <Link
             key={item.key}
-            href={themeFilterHref({ type: item.key, series: state.series })}
+            href={themeFilterHref({ ...state, type: item.key })}
             className={state.type === item.key ? "is-active" : undefined}
             aria-current={state.type === item.key ? "page" : undefined}
             onClick={() => onChange({ ...state, type: item.key })}
@@ -75,7 +97,7 @@ function FilterLinks({
       <section className="filter-group" aria-labelledby="series-filter-title">
         <h2 id="series-filter-title">系列</h2>
         <Link
-          href={themeFilterHref({ type: state.type, series: "all" })}
+          href={themeFilterHref({ ...state, series: "all" })}
           className={state.series === "all" ? "is-active" : undefined}
           aria-current={state.series === "all" ? "page" : undefined}
           onClick={() => onChange({ ...state, series: "all" })}
@@ -85,7 +107,7 @@ function FilterLinks({
         {series.map((item) => (
           <Link
             key={item.key}
-            href={themeFilterHref({ type: state.type, series: item.key })}
+            href={themeFilterHref({ ...state, series: item.key })}
             className={state.series === item.key ? "is-active" : undefined}
             aria-current={state.series === item.key ? "page" : undefined}
             onClick={() => onChange({ ...state, series: item.key })}
@@ -104,7 +126,7 @@ export default function SiteHeader({
   series: { key: string; label: string }[];
 }) {
   const pathname = usePathname();
-  const [filters, setFilters] = useState<ThemeFilters>({ type: "all", series: "all" });
+  const [filters, setFilters] = useState<ThemeFilters>({ type: "all", series: "all", target: "all" });
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {

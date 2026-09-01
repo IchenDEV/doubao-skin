@@ -53,7 +53,7 @@ export default function GuidePage() {
       <header className="reading-head">
         <p className="eyebrow">使用指南</p>
         <h1>使用与下载</h1>
-        <p>下载与你当前系统匹配的桌面应用，或单独安装 CLI；两条安装链互不依赖。</p>
+        <p>下载与你当前系统匹配的桌面应用，选择适用主题，或单独安装 CLI；两条安装链互不依赖。</p>
       </header>
 
       <section className="doc-section" id="download">
@@ -111,7 +111,7 @@ export default function GuidePage() {
         <p className="step-number">04</p>
         <h2>应用与恢复</h2>
         <ol className="numbered-list">
-          <li>先保存「豆包」或「豆包工作」里正在进行的内容。</li>
+          <li>先保存目标应用里正在进行的内容。</li>
           <li>在“豆皮”中选择目标应用和喜欢的主题，确认预览。</li>
           <li>点击“应用主题”；需要还原时，点击“恢复默认”。</li>
         </ol>

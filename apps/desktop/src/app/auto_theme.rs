@@ -1,6 +1,6 @@
 //! Desktop transactions for the two automatic-theme switches.
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -9,6 +9,7 @@ use gpui::Context;
 use skin_core::auto_theme::{self, AutoThemeSettings, LastApplied};
 
 use crate::app::platform::{self, AutoThemeServiceStatus};
+use crate::app::theme_sessions::TargetSession;
 use crate::app::types::Msg;
 use crate::app::SkinApp;
 use crate::i18n::t;
@@ -46,13 +47,8 @@ fn keep_toggle_enables(settings: &AutoThemeSettings, status: AutoThemeServiceSta
 
 fn applied_settings(
     current: &AutoThemeSettings,
-    generation: u64,
-    current_generation: u64,
     last_applied: Option<LastApplied>,
 ) -> Option<AutoThemeSettings> {
-    if generation != current_generation {
-        return None;
-    }
     let mut next = current.clone();
     next.set_last_applied(last_applied?);
     Some(next)
@@ -72,21 +68,18 @@ impl SkinApp {
         }
     }
 
-    pub(crate) fn record_successful_apply(&mut self, generation: u64) {
-        let last_applied = self.active_target.and_then(|target| {
-            LastApplied::new(
-                target,
-                self.active_theme.clone()?,
-                self.active_surface_opacity,
-            )
-            .ok()
-        });
-        if let Some(next) = applied_settings(
-            &self.auto_theme_settings,
-            generation,
-            self.generation,
-            last_applied,
-        ) {
+    pub(crate) fn record_successful_apply(
+        &mut self,
+        target: skin_core::live::TargetApp,
+        generation: u64,
+    ) {
+        let last_applied = self
+            .theme_sessions
+            .active_settings(target, generation)
+            .and_then(|(theme_id, surface_opacity)| {
+                LastApplied::new(target, theme_id, surface_opacity).ok()
+            });
+        if let Some(next) = applied_settings(&self.auto_theme_settings, last_applied) {
             self.save_auto_theme_settings(next);
         }
     }
@@ -117,8 +110,8 @@ impl SkinApp {
             return;
         }
         if !enabling {
-            if let Some(stop) = self.live_stop.take() {
-                stop.store(true, Ordering::Relaxed);
+            if let Some(saved) = self.auto_theme_settings.last_applied() {
+                self.theme_sessions.request_stop(saved.target());
             }
             self.auto_theme_attempted_for_current_run = false;
         }
@@ -205,25 +198,17 @@ impl SkinApp {
             return;
         }
         self.auto_theme_last_check = Instant::now();
-        if !self.auto_theme_settings.keep_requested() || self.applying {
+        if !self.auto_theme_settings.keep_requested() {
             return;
         }
         let Some(saved) = self.auto_theme_settings.last_applied().cloned() else {
             return;
         };
-        if self
-            .live_thread
-            .as_ref()
-            .is_some_and(|thread| !thread.is_finished())
-        {
+        let target = saved.target();
+        if self.theme_sessions.has_session(target) {
             return;
         }
-        if let Some(thread) = self.live_thread.take() {
-            let _ = thread.join();
-            self.live_stop = None;
-        }
-
-        if !saved.target().is_running() {
+        if !target.is_running() {
             self.auto_theme_attempted_for_current_run = false;
             return;
         }
@@ -241,19 +226,26 @@ impl SkinApp {
             return;
         };
         selected.surface_opacity = saved.surface_opacity();
-        let target = saved.target();
         self.generation += 1;
         let generation = self.generation;
-        self.active_target = Some(target);
-        self.active_theme = Some(selected.id.clone());
-        self.active_surface_opacity = selected.surface_opacity;
-        self.applying = true;
         self.message = t().action_applying.into();
         self.auto_theme_attempted_for_current_run = true;
         let stop = Arc::new(AtomicBool::new(false));
-        self.live_stop = Some(stop.clone());
+        let previous = self.theme_sessions.begin_applying(
+            target,
+            TargetSession::pending(
+                selected.id.clone(),
+                selected.surface_opacity,
+                generation,
+                stop.clone(),
+            ),
+        );
+        let previous_thread = previous.and_then(TargetSession::into_thread);
         let tx = self.tx.clone();
-        self.live_thread = Some(std::thread::spawn(move || {
+        let thread = std::thread::spawn(move || {
+            if let Some(thread) = previous_thread {
+                let _ = thread.join();
+            }
             let tx_log = tx.clone();
             let mut reported = false;
             let result = skin_core::live::run_with_policy(
@@ -265,17 +257,20 @@ impl SkinApp {
                 move |line| {
                     if !reported && line.trim_start().starts_with("injected:") {
                         reported = true;
-                        let _ = tx_log.send(Msg::Applied(generation));
+                        let _ = tx_log.send(Msg::Applied { target, generation });
                     }
                     let _ = tx_log.send(Msg::Log(line));
                 },
             );
             let _ = tx.send(Msg::Done {
-                generation: Some(generation),
+                target,
+                generation,
                 ok: result.is_ok(),
                 restoring: false,
             });
-        }));
+        });
+        self.theme_sessions
+            .attach_thread(target, generation, thread);
         cx.notify();
     }
 }
@@ -342,8 +337,8 @@ mod tests {
     fn only_the_matching_apply_generation_updates_the_saved_theme() {
         let settings = saved_settings();
         let replacement = LastApplied::new(TargetApp::Doubao, "new-theme", None).unwrap();
-        assert!(applied_settings(&settings, 7, 8, Some(replacement.clone())).is_none());
-        let next = applied_settings(&settings, 8, 8, Some(replacement)).unwrap();
+        assert!(applied_settings(&settings, None).is_none());
+        let next = applied_settings(&settings, Some(replacement)).unwrap();
         assert_eq!(next.last_applied().unwrap().theme_id(), "new-theme");
         assert_eq!(next.last_applied().unwrap().target(), TargetApp::Doubao);
     }

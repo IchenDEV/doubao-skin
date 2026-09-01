@@ -66,6 +66,8 @@ reject "never fall back to a relative persistence path" \
   'PathBuf::from\("target-app"\)' "${source_roots[@]}"
 reject "runtime HTTP must not depend on an external curl process" \
   'Command::new\("curl"\)' "${source_roots[@]}"
+reject "Windows console utilities must use the hidden-process command adapter" \
+  'Command::new\("(tasklist|taskkill)"\)' crates/skin-core/src/live
 
 adapter_files='^(crates/skin-core/src/live/platform\.rs|crates/skin-core/src/build/macos\.rs):'
 reject_outside_adapters \

@@ -7,6 +7,7 @@ Doubao Skin is an independent project and is not affiliated with or endorsed by 
 - `crates/skin-core`, `apps/web`, project documentation, and original theme definitions are licensed under the repository [MIT License](LICENSE), unless a file or theme manifest says otherwise.
 - `apps/desktop` and distributed desktop binaries are licensed under [GPL-3.0-or-later](LICENSES/GPL-3.0-or-later.txt). The pinned Zed dependency declares GPUI and `gpui_platform` as Apache-2.0, while the resolved desktop dependency graph includes `ztracing` and `zlog`, both declared GPL-3.0-or-later.
 - Dependency versions are fixed by `Cargo.lock` and `apps/web/pnpm-lock.yaml`. Each dependency remains subject to its own license and notices.
+- Theme package v3 CSS validation uses `lightningcss` and its `parcel_selectors` parser component, both licensed under MPL-2.0. SVG resource validation uses `roxmltree`, licensed under MIT or Apache-2.0. Their source and licenses are available from the upstream packages identified in `Cargo.lock`; Doubao Skin uses them as unmodified library dependencies.
 
 ## Themes and artwork
 

@@ -1,0 +1,304 @@
+/* Migrated from v2 theme.css. Visual-only overrides for Doubao and DoubaoWork. */
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao"],
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao-work"],
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao"] body,
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao-work"] body {
+  --skin-generated-icon-mode: full-color;
+}
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao"][data-theme="light"],
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao-work"][data-theme="light"],
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao"][data-theme="light"] body,
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao-work"][data-theme="light"] body {
+  --N00: #fffaf2;
+  --N00-raw: 255,250,242;
+  --N50: #fff8ed;
+  --N50-raw: 255,248,237;
+  --N100: #f9edda;
+  --N100-raw: 249,237,218;
+  --N200: #eee0ca;
+  --N200-raw: 238,224,202;
+  --N300: #decdb4;
+  --N300-raw: 222,205,180;
+  --N350: #ccb99e;
+  --N350-raw: 204,185,158;
+  --N400: #b6a187;
+  --N400-raw: 182,161,135;
+  --N500: #98836f;
+  --N500-raw: 152,131,111;
+  --N600: #7c6857;
+  --N600-raw: 124,104,87;
+  --N650: #685544;
+  --N650-raw: 104,85,68;
+  --N700: #584737;
+  --N700-raw: 88,71,55;
+  --N800: #4c3b2d;
+  --N800-raw: 76,59,45;
+  --N900: #3b2a25;
+  --N900-raw: 59,42,37;
+  --N950: #221710;
+  --N950-raw: 34,23,16;
+  --B50: #fff2e9;
+  --B50-raw: 255,242,233;
+  --B100: #fbe0ce;
+  --B100-raw: 251,224,206;
+  --B200: #f4c2a0;
+  --B200-raw: 244,194,160;
+  --B300: #e99c6b;
+  --B300-raw: 233,156,107;
+  --B350: #ef9a72;
+  --B350-raw: 239,154,114;
+  --B400: #e27d57;
+  --B400-raw: 226,125,87;
+  --B500: #d66a45;
+  --B500-raw: 214,106,69;
+  --B600: #be5535;
+  --B600-raw: 190,85,53;
+  --B700: #9d432a;
+  --B700-raw: 157,67,42;
+  --B800: #512314;
+  --B800-raw: 81,35,20;
+  --B900: #37170e;
+  --B900-raw: 55,23,14;
+  --s-color-bg-body: #fff8ed33;
+  --s-color-bg-body-raw: 255,248,237;
+  --s-color-bg-dialogs: #fffaf2f5;
+  --s-color-bg-dialogs-raw: 255,250,242;
+  --s-color-bg-secondary: #eee0cac7;
+  --s-color-bg-secondary-raw: 238,224,202;
+  --s-color-bg-invert-secondary: #3b2a25f0;
+  --s-color-bg-invert-secondary-raw: 59,42,37;
+  --s-color-bg-static-black-secondary: #3b2a25f0;
+  --s-color-bg-static-black-secondary-raw: 59,42,37;
+  --s-color-bg-base: #decdb49e;
+  --s-color-bg-base-raw: 222,205,180;
+  --s-color-bg-tertiary: #f9eddacc;
+  --s-color-bg-tertiary-raw: 249,237,218;
+  --s-color-bg-invert-tertiary: #4c3b2df0;
+  --s-color-bg-invert-tertiary-raw: 76,59,45;
+  --s-color-bg-static-black-tertiary: #4c3b2df0;
+  --s-color-bg-static-black-tertiary-raw: 76,59,45;
+  --s-color-bg-quaternary: #eee0cad1;
+  --s-color-bg-quaternary-raw: 238,224,202;
+  --s-color-bg-invert-quaternary: #584737f0;
+  --s-color-bg-invert-quaternary-raw: 88,71,55;
+  --s-color-bg-static-black-quaternary: #584737f0;
+  --s-color-bg-static-black-quaternary-raw: 88,71,55;
+  --s-color-bg-primary: #fffaf2db;
+  --s-color-bg-primary-raw: 255,250,242;
+  --s-color-bg-invert-primary: #221710f5;
+  --s-color-bg-invert-primary-raw: 34,23,16;
+  --s-color-bg-static-black-primary: #221710f5;
+  --s-color-bg-static-black-primary-raw: 34,23,16;
+  --s-color-bg-content-base: #fffaf2b3;
+  --s-color-bg-content-base-raw: 255,250,242;
+  --s-color-bg-float: #fffaf2f5;
+  --s-color-bg-float-raw: 255,250,242;
+  --dbx-bg-base-web: #decdb49e;
+  --dbx-bg-base-web-raw: 222,205,180;
+  --dbx-bg-base-2: #eee0cab8;
+  --dbx-bg-base-2-raw: 238,224,202;
+  --dbx-bg-base-5: #f9eddac2;
+  --dbx-bg-base-5-raw: 249,237,218;
+  --dbx-bg-body-web: #fffaf252;
+  --dbx-bg-body-web-raw: 255,250,242;
+  --dbx-bg-body-white: #fffaf25c;
+  --dbx-bg-body-white-raw: 255,250,242;
+  --dbx-bg-body-mac: #fffaf252;
+  --dbx-bg-browser-mac: #eee0cabd;
+  --dbx-bg-browser-win: #eee0ca;
+  --dbx-bg-browser-win-raw: 238,224,202;
+  --dbx-bg-float: #fffaf2f5;
+  --dbx-bg-float-raw: 255,250,242;
+  --semi-color-primary: #d66a45;
+  --semi-color-primary-hover: #be5535;
+  --semi-color-primary-active: #9d432a;
+  --semi-color-focus-border: #d66a45;
+  --semi-color-primary-light-default: #d66a4538;
+  --semi-color-primary-disabled: #d66a4559;
+  --s-color-text-primary: #3b2a25;
+  --s-color-text-primary-raw: 59,42,37;
+  --s-color-text-secondary: #3b2a25d6;
+  --s-color-text-tertiary: #3b2a259e;
+  --s-color-text-quaternary: #3b2a2570;
+  --s-color-text-disable: #3b2a2540;
+  --dbx-text-primary: #3b2a25eb;
+  --color-dbx-text-primary: #3b2a25eb;
+  --dbx-text-secondary: #3b2a25bd;
+  --color-dbx-text-secondary: #3b2a25bd;
+  --dbx-text-tertiary: #3b2a258f;
+  --dbx-text-disable: #3b2a2547;
+  --color-dbx-text-disable: #3b2a2547;
+  --dbx-text-markdown: #3b2a25eb;
+  --dbx-code-text: #3b2a25eb;
+  --snack-icon-cocoa: #70483b;
+  --snack-icon-peach: #b84f32;
+  --snack-icon-drool: #1d7f91;
+  --snack-icon-mint: #2f7f4d;
+  --snack-icon-grape: #6f50b4;
+  --snack-icon-berry: #b6416b;
+}
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao"][data-theme="dark"],
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao-work"][data-theme="dark"],
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao"][data-theme="dark"] body,
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao-work"][data-theme="dark"] body {
+  --N00: #271f22;
+  --N50: #30262a;
+  --N100: #3a2d32;
+  --N200: #49383e;
+  --N500: #9a7c82;
+  --N700: #d9c3bd;
+  --N900: #fff3e8;
+  --N950: #fffaf4;
+  --s-color-bg-body: #1c1519c2;
+  --s-color-bg-dialogs: #2a2024f5;
+  --s-color-bg-secondary: #3a2d32eb;
+  --s-color-bg-base: #49383ed6;
+  --s-color-bg-tertiary: #30262af0;
+  --s-color-bg-primary: #271f22f0;
+  --s-color-bg-content-base: #1c1519c7;
+  --s-color-bg-float: #2a2024f5;
+  --dbx-bg-base-web: #49383ed6;
+  --dbx-bg-body-web: #1c1519d6;
+  --dbx-bg-body-white: #271f22e6;
+  --dbx-bg-body-mac: #1c1519d6;
+  --dbx-bg-float: #2a2024f5;
+  --s-color-text-primary: #fff3e8;
+  --dbx-text-primary: #fff3e8f0;
+  --dbx-text-secondary: #fff3e8bd;
+  --dbx-text-markdown: #fff3e8f0;
+  --B500: #f0a079;
+  --B600: #f4b08e;
+  --semi-color-primary: #f0a079;
+  --semi-color-primary-hover: #f4b08e;
+  --semi-color-focus-border: #f0a079;
+  --semi-color-primary-light-default: #f0a07938;
+  --semi-color-primary-disabled: #f0a0795c;
+}
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao"][data-theme="dark"],
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao-work"][data-theme="dark"],
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao"][data-theme="dark"] body,
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao-work"][data-theme="dark"] body {
+  --N00: #271f22;
+  --N00-raw: 39,31,34;
+  --N50: #30262a;
+  --N50-raw: 48,38,42;
+  --N100: #3a2d32;
+  --N100-raw: 58,45,50;
+  --N200: #49383e;
+  --N200-raw: 73,56,62;
+  --N300: #5b454c;
+  --N300-raw: 91,69,76;
+  --N350: #6a5259;
+  --N350-raw: 106,82,89;
+  --N400: #7c6269;
+  --N400-raw: 124,98,105;
+  --N500: #9a7c82;
+  --N500-raw: 154,124,130;
+  --N600: #bda1a0;
+  --N600-raw: 189,161,160;
+  --N650: #cbb1ad;
+  --N650-raw: 203,177,173;
+  --N700: #d9c3bd;
+  --N700-raw: 217,195,189;
+  --N800: #eddad0;
+  --N800-raw: 237,218,208;
+  --N900: #fff3e8;
+  --N900-raw: 255,243,232;
+  --N950: #fffaf4;
+  --N950-raw: 255,250,244;
+  --s-color-bg-body: #1c1519;
+  --s-color-bg-body-raw: 28,21,25;
+  --s-color-bg-dialogs: #2a2024;
+  --s-color-bg-dialogs-raw: 42,32,36;
+  --s-color-bg-secondary: #3a2d32;
+  --s-color-bg-secondary-raw: 58,45,50;
+  --s-color-bg-invert-secondary: #3a2d32;
+  --s-color-bg-invert-secondary-raw: 58,45,50;
+  --s-color-bg-static-black-secondary: #3a2d32;
+  --s-color-bg-static-black-secondary-raw: 58,45,50;
+  --s-color-bg-base: #30262a;
+  --s-color-bg-base-raw: 48,38,42;
+  --s-color-bg-tertiary: #30262a;
+  --s-color-bg-tertiary-raw: 48,38,42;
+  --s-color-bg-invert-tertiary: #30262a;
+  --s-color-bg-invert-tertiary-raw: 48,38,42;
+  --s-color-bg-static-black-tertiary: #30262a;
+  --s-color-bg-static-black-tertiary-raw: 48,38,42;
+  --s-color-bg-quaternary: #271f22;
+  --s-color-bg-quaternary-raw: 39,31,34;
+  --s-color-bg-invert-quaternary: #271f22;
+  --s-color-bg-invert-quaternary-raw: 39,31,34;
+  --s-color-bg-static-black-quaternary: #271f22;
+  --s-color-bg-static-black-quaternary-raw: 39,31,34;
+  --s-color-bg-primary: #30262a;
+  --s-color-bg-primary-raw: 48,38,42;
+  --s-color-bg-invert-primary: #30262a;
+  --s-color-bg-invert-primary-raw: 48,38,42;
+  --s-color-bg-static-black-primary: #30262a;
+  --s-color-bg-static-black-primary-raw: 48,38,42;
+  --s-color-bg-content-base: #1c1519;
+  --s-color-bg-content-base-raw: 28,21,25;
+  --s-color-bg-float: #2a2024;
+  --s-color-bg-float-raw: 42,32,36;
+  --dbx-bg-base-web: #30262a;
+  --dbx-bg-base-web-raw: 48,38,42;
+  --dbx-bg-base-2: #271f22;
+  --dbx-bg-base-2-raw: 39,31,34;
+  --dbx-bg-base-5: #30262a;
+  --dbx-bg-base-5-raw: 48,38,42;
+  --dbx-bg-body-web: #1c1519;
+  --dbx-bg-body-web-raw: 28,21,25;
+  --dbx-bg-body-white: #271f22;
+  --dbx-bg-body-white-raw: 39,31,34;
+  --dbx-bg-body-mac: #1c1519;
+  --dbx-bg-body-mac-raw: 28,21,25;
+  --dbx-bg-browser-mac: #3a2d32;
+  --dbx-bg-browser-mac-raw: 58,45,50;
+  --dbx-bg-browser-win: #3a2d32;
+  --dbx-bg-browser-win-raw: 58,45,50;
+  --dbx-bg-float: #49383e;
+  --dbx-bg-float-raw: 73,56,62;
+  --s-color-text-primary: #fff3e8;
+  --s-color-text-primary-raw: 255,243,232;
+  --s-color-text-secondary: #fff3e8db;
+  --s-color-text-tertiary: #fff3e8a8;
+  --s-color-text-quaternary: #fff3e880;
+  --s-color-text-disable: #fff3e83d;
+  --dbx-text-primary: #fff3e8f0;
+  --color-dbx-text-primary: #fff3e8f0;
+  --dbx-text-secondary: #fff3e8bd;
+  --color-dbx-text-secondary: #fff3e8bd;
+  --dbx-text-tertiary: #fff3e894;
+  --dbx-text-disable: #fff3e84d;
+  --color-dbx-text-disable: #fff3e84d;
+  --dbx-text-markdown: #fff3e8f0;
+  --dbx-code-text: #fff3e8f0;
+  --snack-icon-cocoa: #ffd8c4;
+  --snack-icon-peach: #f3a17c;
+  --snack-icon-drool: #6dd1dc;
+  --snack-icon-mint: #72c58a;
+  --snack-icon-grape: #c0a1ff;
+  --snack-icon-berry: #f592b3;
+}
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao"][data-theme="dark"],
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao-work"][data-theme="dark"],
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao"][data-theme="dark"] body,
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao-work"][data-theme="dark"] body {
+  --s-color-bg-body: #1c1519b8;
+  --s-color-bg-content-base: #1c1519c2;
+  --dbx-bg-body-web: #1c1519d1;
+  --dbx-bg-body-white: #271f22d6;
+  --dbx-bg-body-mac: #1c1519d1;
+  --chat-bg-color: #1c1519ad;
+  --chatarea-bg-color: #1c1519ad;
+}
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao"] svg[data-doubao-theme-icon]:not([data-doubao-theme-icon="main"]),
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao-work"] svg[data-doubao-theme-icon]:not([data-doubao-theme-icon="main"]) {
+  color: #0000 !important;
+  background: var(--doubao-theme-icon) center/contain no-repeat !important;
+  background-color: #0000 !important;
+}
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao"] img[data-doubao-theme-icon]:not([data-doubao-theme-icon="main"]),
+html[data-skin="doubao-snack-giggle"][data-skin-target="doubao-work"] img[data-doubao-theme-icon]:not([data-doubao-theme-icon="main"]) {
+  background: none !important;
+}

@@ -50,6 +50,44 @@ function parseColors(css) {
   return colors;
 }
 
+function structuredColors(info) {
+  const visual = info.schemaVersion === 3 ? info.shared : info;
+  const appearance = info.preview?.appearance === "light" ? "light" : "dark";
+  const variant = visual?.variants?.[appearance] ?? {};
+  const content = { ...visual?.content, ...variant.content };
+  const composer = { ...visual?.composer, ...variant.composer };
+  const accent = info.preview?.accent ?? defaultColors.accent;
+  return {
+    base: content.chatBackground ?? defaultColors.base,
+    base2: composer.background ?? defaultColors.base2,
+    primary: content.assistantMessageBackground ?? defaultColors.primary,
+    float: composer.background ?? defaultColors.float,
+    text: content.assistantMessageText ?? defaultColors.text,
+    muted: composer.placeholderColor ?? defaultColors.muted,
+    hairline: content.scrollbarColor ?? defaultColors.hairline,
+    accent,
+    accentHover: accent,
+    brand: accent,
+  };
+}
+
+function runThemeCli(args) {
+  let output;
+  try {
+    output = execFileSync(
+      "cargo",
+      ["run", "-q", "-p", "skin-core", "--bin", "doubao-skin", "--", ...args, "--json"],
+      { cwd: repoDir, encoding: "utf8" },
+    );
+  } catch (error) {
+    const response = JSON.parse(String(error.stdout ?? "{}"));
+    throw new Error(response.error?.message ?? `doubao-skin ${args[0]} failed`);
+  }
+  const response = JSON.parse(output);
+  if (!response.ok) throw new Error(response.error?.message ?? `doubao-skin ${args[0]} failed`);
+  return response.result;
+}
+
 async function exportImage(source, id) {
   fs.mkdirSync(publicThemesDir, { recursive: true });
   const detail = path.join(publicThemesDir, `${id}.jpg`);
@@ -86,10 +124,11 @@ async function renderPackagePreview(directory, info, colors, backgroundName) {
     ? safeRelativeAsset(directory, backgroundName, "background")
     : null;
   const hasBackground = backgroundPath && fs.existsSync(backgroundPath);
+  const visual = info.schemaVersion === 3 ? info.shared : info;
   const previewAppearance = info.preview?.appearance === "light" ? "light" : "dark";
-  const variant = info.variants?.[previewAppearance] ?? {};
-  const previewContent = { ...info.content, ...variant.content };
-  const previewComposer = { ...info.composer, ...variant.composer };
+  const variant = visual?.variants?.[previewAppearance] ?? {};
+  const previewContent = { ...visual?.content, ...variant.content };
+  const previewComposer = { ...visual?.composer, ...variant.composer };
   const neutral = previewAppearance === "light" ? "#f5f5f3" : "#121318";
   const neutral2 = previewAppearance === "light" ? "#ebecea" : "#1a1c22";
   const accent = svgPaint(info.preview?.accent, colors.accent);
@@ -105,7 +144,7 @@ async function renderPackagePreview(directory, info, colors, backgroundName) {
   const user = svgPaint(previewContent.userMessageBackground, colors.accent);
   const userText = svgPaint(previewContent.userMessageText, "#ffffff");
   const composer = svgPaint(previewComposer.background, floating);
-  const surface = hasBackground ? Math.max(0.58, info.surfaceOpacity ?? 0.68) : 1;
+  const surface = hasBackground ? Math.max(0.58, visual?.surfaceOpacity ?? 0.68) : 1;
 
   const baseLayer = hasBackground
     ? await sharp(backgroundPath).resize(width, height, { fit: "cover" }).toBuffer()
@@ -210,16 +249,12 @@ function archiveContentsMatch(left, right) {
   }
 }
 
-function exportPackage(directoryName, id) {
+function exportPackage(directory, id) {
   fs.mkdirSync(publicPackagesDir, { recursive: true });
   const destination = path.join(publicPackagesDir, `${id}.doubao-skin.zip`);
   const candidate = `${destination}.candidate`;
   fs.rmSync(candidate, { force: true });
-  execFileSync(
-    "zip",
-    ["-X", "-q", "-r", candidate, directoryName, "-x", "*/.DS_Store"],
-    { cwd: themesDir },
-  );
+  runThemeCli(["pack", directory, candidate]);
   if (fs.existsSync(destination) && archiveContentsMatch(destination, candidate)) {
     fs.rmSync(candidate, { force: true });
   } else {
@@ -234,11 +269,21 @@ function exportPackage(directoryName, id) {
   };
 }
 
+const requestedThemes = new Set(
+  (process.env.DOUBAO_SKIN_SYNC_THEME_IDS ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean),
+);
 const themeDirectories = fs.readdirSync(themesDir, { withFileTypes: true })
   .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(themesDir, entry.name, "theme.json")))
   .map((entry) => entry.name)
+  .filter((id) => requestedThemes.size === 0 || requestedThemes.has(id))
   .sort();
 if (themeDirectories.length === 0) throw new Error(`No themes found under ${themesDir}`);
+if (requestedThemes.size > 0 && themeDirectories.length !== requestedThemes.size) {
+  throw new Error("DOUBAO_SKIN_SYNC_THEME_IDS contains an unknown theme id");
+}
 
 fs.mkdirSync(path.dirname(databasePath), { recursive: true });
 fs.mkdirSync(publicThemesDir, { recursive: true });
@@ -255,6 +300,7 @@ const catalogThemes = [];
 for (const [index, directoryName] of themeDirectories.entries()) {
   const directory = path.join(themesDir, directoryName);
   const info = JSON.parse(fs.readFileSync(path.join(directory, "theme.json"), "utf8"));
+  const validation = runThemeCli(["check", directory]).validation;
   const id = info.id || directoryName;
   if (id !== directoryName) throw new Error(`${directoryName}: theme id must match the directory name`);
   if (!info.version || !info.author || !info.preview?.image || !info.preview?.accent) {
@@ -265,28 +311,34 @@ for (const [index, directoryName] of themeDirectories.entries()) {
   }
   const cssPath = path.join(directory, "theme.css");
   const parsedColors = parseColors(fs.existsSync(cssPath) ? fs.readFileSync(cssPath, "utf8") : "");
-  const colors = parsedColors || defaultColors;
+  const colors = parsedColors || structuredColors(info);
+  const visual = info.schemaVersion === 3 ? info.shared : info;
+  const previewInfo = info.schemaVersion === 3 ? { ...info, ...info.shared } : info;
   let bgDetail = null;
   let bgCard = null;
-  const backgroundName = typeof info.background === "string"
-    ? info.background
-    : info.background?.src ?? info.background?.source;
+  const backgroundName = typeof visual.background === "string"
+    ? visual.background
+    : visual.background?.src ?? visual.background?.source;
   if (backgroundName && fs.existsSync(path.join(directory, backgroundName))) {
     [bgDetail, bgCard] = await exportImage(path.join(directory, backgroundName), id);
   }
   const previewSource = await renderPackagePreview(directory, info, colors, backgroundName);
   const [previewDetail, previewCard] = await exportPreview(previewSource, id);
-  const iconUrl = exportIcon(directory, info, id);
-  const packageInfo = exportPackage(directoryName, id);
+  const iconUrl = exportIcon(directory, previewInfo, id);
+  const packageInfo = exportPackage(directory, id);
   const sortOrder = info.store.sortOrder ?? 900 + index;
   preparedThemes.push({
     id, name: info.name || id, description: info.description || "", version: info.version,
     author: info.author, category: info.store.category, tags: JSON.stringify(info.store.tags),
-    hasBackground: bgDetail ? 1 : 0, veil: info.veil ?? info.background?.veil ?? null,
+    hasBackground: bgDetail ? 1 : 0, veil: visual.veil ?? visual.background?.veil ?? null,
     colors: JSON.stringify(colors), bgDetail, bgCard, previewDetail, previewCard,
-    inspiredBy: info.inspiredBy ?? null, sourceUrl: info.sourceUrl ?? null,
-    sourceDownloads: info.sourceDownloads ?? null, sourceSnapshot: info.sourceSnapshot ?? null,
+    inspiredBy: info.provenance?.inspiredBy ?? info.inspiredBy ?? null,
+    sourceUrl: info.provenance?.sourceUrl ?? info.sourceUrl ?? null,
+    sourceDownloads: info.provenance?.sourceDownloads ?? info.sourceDownloads ?? null,
+    sourceSnapshot: info.provenance?.sourceVersion ?? info.sourceSnapshot ?? null,
     isDefaultPalette: parsedColors ? 0 : 1,
+    schemaVersion: validation.schemaVersion,
+    targets: JSON.stringify(validation.targets),
     sortOrder,
   });
   catalogThemes.push({
@@ -297,6 +349,8 @@ for (const [index, directoryName] of themeDirectories.entries()) {
     author: info.author,
     category: info.store.category,
     tags: info.store.tags,
+    schemaVersion: validation.schemaVersion,
+    targets: validation.targets,
     previewUrl: previewDetail,
     thumbnailUrl: previewCard ?? bgCard,
     iconUrl,
@@ -315,6 +369,7 @@ database.exec(`
     id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '',
     version TEXT NOT NULL, author TEXT NOT NULL, category TEXT NOT NULL DEFAULT 'misc',
     tags TEXT NOT NULL DEFAULT '[]', has_background INTEGER NOT NULL DEFAULT 0,
+    schema_version INTEGER NOT NULL DEFAULT 1, targets TEXT NOT NULL DEFAULT '{}',
     veil REAL, colors TEXT NOT NULL, bg_detail TEXT, bg_card TEXT,
     preview_detail TEXT, preview_card TEXT, inspired_by TEXT,
     source_url TEXT, source_downloads INTEGER, source_snapshot TEXT,
@@ -324,10 +379,10 @@ database.exec(`
 `);
 const insertTheme = database.prepare(`
   INSERT INTO themes (id, name, description, version, author, category, tags,
-    has_background, veil, colors, bg_detail, bg_card, preview_detail, preview_card,
+    has_background, schema_version, targets, veil, colors, bg_detail, bg_card, preview_detail, preview_card,
     inspired_by, source_url, source_downloads, source_snapshot, is_default_palette, sort_order)
   VALUES (@id, @name, @description, @version, @author, @category, @tags,
-    @hasBackground, @veil, @colors, @bgDetail, @bgCard, @previewDetail, @previewCard,
+    @hasBackground, @schemaVersion, @targets, @veil, @colors, @bgDetail, @bgCard, @previewDetail, @previewCard,
     @inspiredBy, @sourceUrl, @sourceDownloads, @sourceSnapshot, @isDefaultPalette, @sortOrder)
 `);
 

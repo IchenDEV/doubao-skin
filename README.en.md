@@ -6,7 +6,7 @@
 
 # Doubao Skin
 
-**A native theme manager for the macOS and Windows versions of Doubao and Doubao Work.**
+**A native theme manager for Doubao and Doubao Work on macOS and Windows, with experimental WorkBuddy support on macOS.**
 
 [Theme gallery](https://doubao-skin.idevlab.dev) · [Guide & downloads](https://doubao-skin.idevlab.dev/guide#download) · [Create & contribute](https://doubao-skin.idevlab.dev/contribute)
 
@@ -20,7 +20,7 @@
 
 ![Doubao Skin online gallery](docs/images/gallery.png)
 
-> macOS and Windows are supported. This is an independent project and does not modify the official Doubao or Doubao Work apps.
+> macOS and Windows are supported. This is an independent project, not an official Doubao or WorkBuddy product, and it does not modify official app bundles.
 
 ## Real transformed pages
 
@@ -42,11 +42,12 @@ These screenshots were captured from a real local Doubao Work window with themes
 ## Features
 
 - Native macOS and Windows app for browsing, previewing, installing, applying, and restoring themes.
-- 30 built-in themes across solid colors, atmospheric backgrounds, editor palettes, and brand-inspired styles.
+- 34 built-in themes across solid colors, atmospheric backgrounds, editor palettes, and brand-inspired styles.
 - Online theme store with verifiable `.doubao-skin.zip` packages.
 - Universal macOS ZIP/DMG plus separate Windows x64, x86, and ARM64 ZIPs.
 - One Rust toolchain shared by the desktop app, CLI, Codex plugin, and Claude Code plugin.
 - Live injection and offline-clone modes while the official app bundle remains untouched.
+- Experimental WorkBuddy 5.3.14 support: v2 themes use compatibility mode, while v3 themes load only when `targets.workbuddy` is declared. WorkBuddy remains live-mode only, without protocol-bridge or offline-clone support.
 - Responsive website with compound filters, dark mode, theme details, guides, and contribution documentation.
 - One layered yuba identity shared by the desktop app and website, with default, dark, and monochrome system appearances.
 
@@ -66,19 +67,21 @@ If macOS blocks the first launch, go to **System Settings → Privacy & Security
 Release packages use one continuous community self-signed certificate. They are not Apple-notarized; future versions retain this signing identity unless an announced security rotation is required.
 
 1. Open Doubao Skin.
-2. Choose Doubao or Doubao Work.
+2. Choose Doubao, Doubao Work, or experimental `WorkBuddy` (`Command-1`, `Command-2`, and `Command-3` also switch targets).
 3. Pick a theme and review the preview.
 4. Select **Apply Theme**. Use **Restore Default** to undo it.
 
-The in-app store installs remote themes directly. You can also drag a local package into the window or import one with **Install Theme…**. Installed themes use the platform data directory: `~/Library/Application Support/Doubao Skin/themes/` on macOS, `%LOCALAPPDATA%\Doubao Skin\themes\` on Windows, and `$XDG_DATA_HOME/Doubao Skin/themes/` on Linux (falling back to `~/.local/share`).
+WorkBuddy has been verified with version 5.3.14. If it is already running without local debugging enabled, the first Apply action explains the impact and changes to **Restart and Apply**; only that second explicit action may quit and restart WorkBuddy. Save any in-progress work first. If WorkBuddy is later quit by the user, Doubao Skin does not relaunch it.
+
+The in-app store installs remote themes directly. You can also drag a local package into the window or import one with **Install Theme…** / `Command-O` on macOS. Installed themes use the platform data directory: `~/Library/Application Support/Doubao Skin/themes/` on macOS, `%LOCALAPPDATA%\Doubao Skin\themes\` on Windows, and `$XDG_DATA_HOME/Doubao Skin/themes/` on Linux (falling back to `~/.local/share`).
 
 ## Themes
 
-Browse and filter every theme at [doubao-skin.idevlab.dev](https://doubao-skin.idevlab.dev). The current set contains 30 themes:
+Browse and filter every theme at [doubao-skin.idevlab.dev](https://doubao-skin.idevlab.dev). The current set contains 34 themes:
 
 - **Solid and editor palettes:** Violet Night, Ocean Cyan, Forest, Pure Dark, Peach Sunset, Huaxia Blue, plus Catppuccin, Dracula, Nord, Gruvbox, Solarized, and One Half adaptations.
 - **Atmospheric backgrounds:** Gothic Void, Sakura Night, Cyber Neon, Mist Forest, Cozy Room, Neon Koi, Moon Pine, Crimson Rain, and Machine Overseer.
-- **Bright and brand-inspired:** QQ Light Blue, Whale Maid, Tea Party, Flower Club, Starry Room, Snack Giggle, Dessert Giggle, GitHub Repository, and Claude Warm.
+- **Bright, brand, and fan-inspired:** QQ Light Blue, Whale Maid, Tea Party, Flower Club, Starry Room, Snack Giggle, Dessert Giggle, GitHub Repository, Claude Warm, Teyvat Dandelion Wind, Liyue Lanterns, Gugugaga Administrator, and Gugugaga Snowfield.
 
 Asset provenance and licenses are recorded in each `theme.json`, the [theme research notes](design/theme-standard/codex-theme-research.md), and [third-party notices](THIRD_PARTY_NOTICES.md).
 
@@ -185,7 +188,7 @@ workflow            Artifact-driven delivery and verification records
 
 ## Create and contribute themes
 
-Use `doubao-skin create` or `$create-doubao-theme` to generate a `schemaVersion: 2` theme. See the [theme standard](design/theme-standard/README.md) and [JSON schema](design/theme-standard/theme-v2.schema.json).
+Use `doubao-skin create` or `$create-doubao-theme` to generate a `schemaVersion: 3` theme, and declare its Doubao, DoubaoWork, and WorkBuddy scope with `--targets`. See the [theme standard](design/theme-standard/README.md), [v3 multi-host guide](design/theme-standard/theme-v3.md), and [v3 JSON schema](design/theme-standard/theme-v3.schema.json). Existing v1/v2 user themes remain readable.
 
 Before opening a pull request:
 

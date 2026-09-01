@@ -1,4 +1,4 @@
 interface:
   display_name: "应用豆皮"
-  short_description: "安全安装、应用、恢复并管理豆包工作主题"
-  default_prompt: "使用 $apply-doubao-theme 检查并应用我指定的豆包工作主题，并在任何有副作用的操作前先征得确认。"
+  short_description: "安全安装、应用和恢复三款 macOS 应用主题"
+  default_prompt: "使用 $apply-doubao-theme 检查主题适用范围，并应用到我指定的目标应用。"

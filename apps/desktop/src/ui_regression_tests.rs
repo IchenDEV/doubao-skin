@@ -1,13 +1,18 @@
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use gpui::{point, px, size, ImageSource, Resource, WindowBounds};
 
+use skin_core::theme_package::{SupportDeclaration, SupportLevel, TargetSupport};
 use skin_core::{live, theme};
 
 use crate::app::actions::application_menu;
+use crate::app::helpers::target_shortcut_for_platform;
+use crate::app::theme_sessions::{TargetSession, ThemeSessions};
 use crate::app::{
     auto_theme::control_state, initial_target, platform::AutoThemeServiceStatus, preview_identity,
-    theme_is_active, uses_short_compact_layout,
+    support_label, target_shortcut, uses_short_compact_layout,
 };
 use crate::i18n::t;
 use crate::preview::preview_rgba;
@@ -140,46 +145,184 @@ fn preview_profile_uses_the_app_identity_instead_of_one_theme_name() {
         preview_identity(live::TargetApp::DoubaoWork).0,
         l.target_doubao_work
     );
+    assert_eq!(
+        preview_identity(live::TargetApp::WorkBuddy).0,
+        l.target_workbuddy
+    );
+    assert_eq!(
+        target_shortcut(live::TargetApp::WorkBuddy),
+        target_shortcut_for_platform(std::env::consts::OS, live::TargetApp::WorkBuddy)
+    );
+    assert_eq!(
+        target_shortcut_for_platform("windows", live::TargetApp::WorkBuddy),
+        "Ctrl-3"
+    );
+    assert_eq!(
+        target_shortcut_for_platform("macos", live::TargetApp::WorkBuddy),
+        "Command-3"
+    );
+}
+
+#[test]
+fn support_badges_distinguish_target_capability() {
+    assert_eq!(
+        support_label(TargetSupport {
+            level: SupportLevel::Tailored,
+            declaration: SupportDeclaration::Explicit,
+        }),
+        "专属适配"
+    );
+    assert_eq!(
+        support_label(TargetSupport {
+            level: SupportLevel::Shared,
+            declaration: SupportDeclaration::Explicit,
+        }),
+        "共享适配"
+    );
+    assert_eq!(
+        support_label(TargetSupport {
+            level: SupportLevel::Shared,
+            declaration: SupportDeclaration::LegacyInferred,
+        }),
+        "兼容模式"
+    );
 }
 
 #[test]
 fn target_default_respects_installation_and_saved_preference() {
     assert_eq!(
-        initial_target(Some("doubao"), true, true),
+        initial_target(Some("doubao"), true, true, true),
         live::TargetApp::Doubao
     );
     assert_eq!(
-        initial_target(Some("unknown"), true, true),
+        initial_target(Some("unknown"), true, true, true),
         live::TargetApp::DoubaoWork
     );
     assert_eq!(
-        initial_target(Some("doubao-work"), true, false),
+        initial_target(Some("doubao-work"), true, false, true),
         live::TargetApp::Doubao
     );
     assert_eq!(
-        initial_target(Some("doubao"), false, true),
+        initial_target(Some("doubao"), false, true, true),
         live::TargetApp::DoubaoWork
     );
     assert_eq!(
-        initial_target(None, false, false),
+        initial_target(Some("workbuddy"), true, true, true),
+        live::TargetApp::WorkBuddy
+    );
+    assert_eq!(
+        initial_target(None, false, false, true),
+        live::TargetApp::WorkBuddy
+    );
+    assert_eq!(
+        initial_target(None, false, false, false),
         live::TargetApp::DoubaoWork
     );
 }
 
 #[test]
-fn active_theme_is_scoped_to_its_target() {
-    assert!(theme_is_active(
-        Some(live::TargetApp::Doubao),
-        Some("violet-night"),
+fn applying_to_a_second_target_preserves_the_first_target_session() {
+    let mut sessions = ThemeSessions::default();
+    let workbuddy_stop = Arc::new(AtomicBool::new(false));
+    let doubao_stop = Arc::new(AtomicBool::new(false));
+
+    sessions.begin_applying(
+        live::TargetApp::WorkBuddy,
+        TargetSession::for_test("gallery-whale-maid", Some(0.68), 1, workbuddy_stop.clone()),
+    );
+    assert!(sessions.mark_applied(live::TargetApp::WorkBuddy, 1));
+    sessions.begin_applying(
         live::TargetApp::Doubao,
-        "violet-night"
-    ));
-    assert!(!theme_is_active(
-        Some(live::TargetApp::DoubaoWork),
-        Some("violet-night"),
+        TargetSession::for_test("pure-dark", None, 2, doubao_stop),
+    );
+    assert!(sessions.mark_applied(live::TargetApp::Doubao, 2));
+
+    assert!(sessions.is_active(live::TargetApp::WorkBuddy, "gallery-whale-maid", Some(0.68),));
+    assert!(sessions.is_active(live::TargetApp::Doubao, "pure-dark", None));
+    assert!(
+        !workbuddy_stop.load(Ordering::Relaxed),
+        "applying to 豆包 must not stop the WorkBuddy watcher"
+    );
+}
+
+#[test]
+fn replacing_one_target_stops_only_its_previous_generation() {
+    let mut sessions = ThemeSessions::default();
+    let old_workbuddy_stop = Arc::new(AtomicBool::new(false));
+    let current_workbuddy_stop = Arc::new(AtomicBool::new(false));
+    let doubao_stop = Arc::new(AtomicBool::new(false));
+
+    sessions.begin_applying(
+        live::TargetApp::WorkBuddy,
+        TargetSession::for_test(
+            "gallery-whale-maid",
+            Some(0.68),
+            1,
+            old_workbuddy_stop.clone(),
+        ),
+    );
+    assert!(sessions.mark_applied(live::TargetApp::WorkBuddy, 1));
+    sessions.begin_applying(
         live::TargetApp::Doubao,
-        "violet-night"
-    ));
+        TargetSession::for_test("pure-dark", None, 2, doubao_stop.clone()),
+    );
+    assert!(sessions.mark_applied(live::TargetApp::Doubao, 2));
+    sessions.begin_applying(
+        live::TargetApp::WorkBuddy,
+        TargetSession::for_test("qq-light-blue", None, 3, current_workbuddy_stop.clone()),
+    );
+    assert!(sessions.mark_applied(live::TargetApp::WorkBuddy, 3));
+
+    assert!(old_workbuddy_stop.load(Ordering::Relaxed));
+    assert!(!current_workbuddy_stop.load(Ordering::Relaxed));
+    assert!(!doubao_stop.load(Ordering::Relaxed));
+    assert!(!sessions.complete_if_generation(live::TargetApp::WorkBuddy, 1));
+    assert!(sessions.is_active(live::TargetApp::WorkBuddy, "qq-light-blue", None));
+    assert!(sessions.is_active(live::TargetApp::Doubao, "pure-dark", None));
+}
+
+#[test]
+fn restoring_one_target_blocks_only_that_target_until_completion() {
+    let mut sessions = ThemeSessions::default();
+    let workbuddy_stop = Arc::new(AtomicBool::new(false));
+
+    sessions.begin_applying(
+        live::TargetApp::WorkBuddy,
+        TargetSession::for_test("gallery-whale-maid", Some(0.68), 1, workbuddy_stop.clone()),
+    );
+    assert!(sessions.mark_applied(live::TargetApp::WorkBuddy, 1));
+
+    let previous = sessions.begin_restoring(live::TargetApp::WorkBuddy, 2);
+    assert!(previous.is_some());
+    assert!(workbuddy_stop.load(Ordering::Relaxed));
+    assert!(sessions.is_busy(live::TargetApp::WorkBuddy));
+    assert!(!sessions.is_busy(live::TargetApp::Doubao));
+    assert!(!sessions.is_active(live::TargetApp::WorkBuddy, "gallery-whale-maid", Some(0.68),));
+}
+
+#[test]
+fn completion_generation_is_scoped_to_its_target() {
+    let mut sessions = ThemeSessions::default();
+
+    sessions.begin_applying(
+        live::TargetApp::WorkBuddy,
+        TargetSession::for_test(
+            "gallery-whale-maid",
+            Some(0.68),
+            1,
+            Arc::new(AtomicBool::new(false)),
+        ),
+    );
+    assert!(sessions.mark_applied(live::TargetApp::WorkBuddy, 1));
+    sessions.begin_applying(
+        live::TargetApp::Doubao,
+        TargetSession::for_test("pure-dark", None, 2, Arc::new(AtomicBool::new(false))),
+    );
+    assert!(sessions.mark_applied(live::TargetApp::Doubao, 2));
+
+    assert!(sessions.complete_if_generation(live::TargetApp::WorkBuddy, 1));
+    assert!(!sessions.is_active(live::TargetApp::WorkBuddy, "gallery-whale-maid", Some(0.68),));
+    assert!(sessions.is_active(live::TargetApp::Doubao, "pure-dark", None));
 }
 
 #[test]

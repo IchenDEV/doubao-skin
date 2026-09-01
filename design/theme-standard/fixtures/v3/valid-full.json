@@ -1,0 +1,121 @@
+{
+  "$schema": "../../../theme-v3.schema.json",
+  "schemaVersion": 3,
+  "id": "fixture-full",
+  "name": "完整示例",
+  "description": "覆盖共享、目标、外观、资源与 CSS 的完整合成契约样例",
+  "version": "2.0.0",
+  "author": "豆皮",
+  "preview": {
+    "image": "preview.jpg",
+    "aspectRatio": "16:9",
+    "appearance": "light",
+    "accent": "#9b7a5e"
+  },
+  "store": {
+    "category": "brand",
+    "tags": ["浅色", "蓝色", "角色"],
+    "sortOrder": 20
+  },
+  "provenance": {
+    "license": "MIT",
+    "artwork": "Synthetic contract fixture"
+  },
+  "shared": {
+    "appearance": "both",
+    "surfaceOpacity": 0.68,
+    "background": {
+      "type": "image",
+      "src": "assets/bg.jpg",
+      "fit": "cover",
+      "position": "center",
+      "opacity": 1,
+      "veil": 0.04,
+      "blur": 0,
+      "animation": "none",
+      "durationSeconds": 20
+    },
+    "typography": {
+      "ui": "-apple-system, BlinkMacSystemFont, PingFang SC, sans-serif",
+      "body": "-apple-system, BlinkMacSystemFont, PingFang SC, sans-serif",
+      "code": "SFMono-Regular, Menlo, monospace",
+      "scale": 1.01,
+      "lineHeight": 1.62
+    },
+    "composer": {
+      "background": "rgba(255,255,255,0.96)",
+      "border": "1px solid rgba(122,78,41,0.28)",
+      "textColor": "#352970",
+      "placeholderColor": "rgba(53,41,112,0.60)",
+      "caretColor": "#7a4e29",
+      "iconColor": "rgba(53,41,112,0.82)",
+      "sendButtonBackground": "#7a4e29",
+      "sendButtonIconColor": "#ffffff",
+      "radius": 22
+    },
+    "content": {
+      "chatBackground": "rgba(189,153,153,0.16)",
+      "userMessageBackground": "#7a4e29",
+      "userMessageText": "#ffffff",
+      "assistantMessageBackground": "rgba(255,255,255,0.96)",
+      "assistantMessageText": "#352970",
+      "codeBackground": "#f0f6ff",
+      "codeHeaderBackground": "#e6edf8",
+      "selectionColor": "rgba(122,78,41,0.24)",
+      "scrollbarColor": "rgba(122,78,41,0.26)",
+      "scrollbarHoverColor": "rgba(122,78,41,0.42)"
+    },
+    "icons": {
+      "main": "assets/icons/main.png"
+    },
+    "effects": {
+      "radiusScale": 1.15,
+      "shadow": "0 12px 34px rgba(65,43,50,0.14)",
+      "blur": 18,
+      "motion": "gentle",
+      "transitionMs": 180
+    },
+    "css": ["styles/shared.css"],
+    "variants": {
+      "light": {},
+      "dark": {
+        "composer": {
+          "background": "rgba(29,31,37,0.96)",
+          "border": "1px solid rgba(155,122,94,0.38)",
+          "textColor": "#f7f8fa",
+          "placeholderColor": "rgba(247,248,250,0.58)",
+          "caretColor": "#9b7a5e",
+          "iconColor": "rgba(247,248,250,0.82)",
+          "sendButtonBackground": "#9b7a5e",
+          "sendButtonIconColor": "#ffffff"
+        },
+        "content": {
+          "chatBackground": "rgba(18,20,25,0.88)",
+          "userMessageBackground": "#9b7a5e",
+          "userMessageText": "#ffffff",
+          "assistantMessageBackground": "rgba(29,31,37,0.94)",
+          "assistantMessageText": "#f7f8fa",
+          "codeBackground": "rgba(0,0,0,0.30)",
+          "codeHeaderBackground": "rgba(0,0,0,0.42)",
+          "selectionColor": "rgba(155,122,94,0.28)",
+          "scrollbarColor": "rgba(155,122,94,0.28)",
+          "scrollbarHoverColor": "rgba(155,122,94,0.46)"
+        }
+      }
+    }
+  },
+  "targets": {
+    "doubao": { "css": ["styles/doubao-family.css"] },
+    "doubao-work": { "css": ["styles/doubao-family.css"] },
+    "workbuddy": {
+      "icons": null,
+      "css": ["styles/workbuddy.css"],
+      "preview": {
+        "image": "preview-workbuddy.jpg",
+        "aspectRatio": "16:9",
+        "appearance": "light",
+        "accent": "#9b7a5e"
+      }
+    }
+  }
+}

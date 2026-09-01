@@ -169,7 +169,11 @@ impl SkinApp {
         let colors = self.colors;
         let row = &self.themes[index];
         let selected = index == self.selected;
-        let active = self.active_theme.as_deref() == Some(row.theme.id.as_str());
+        let active = self.theme_sessions.is_active(
+            self.selected_target,
+            row.theme.id.as_str(),
+            row.preview.has_background.then_some(self.surface_opacity),
+        );
         let accent = row.preview.colors.accent;
         let item = div()
             .id(("theme", index))

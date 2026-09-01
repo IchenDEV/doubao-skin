@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use serde_json::{json, Value};
 use skin_core::authoring::{self, Appearance, CreateOptions};
+use skin_core::theme_package::ThemeTarget;
 use skin_core::{build, live, theme};
 
 const EXIT_ARGUMENTS: i32 = 2;
@@ -208,6 +209,7 @@ fn execute(args: &[String]) -> Result<Value, CliError> {
             let path = authoring::preview(&theme_dir).map_err(CliError::theme_operation)?;
             Ok(json!({"path": path}))
         }
+        "migrate-v3" => migrate_v3_command(rest),
         "pack" => pack_command(rest),
         "install" => {
             let package = one_path(rest, "install <package>")?;
@@ -236,6 +238,26 @@ fn execute(args: &[String]) -> Result<Value, CliError> {
     }
 }
 
+fn migrate_v3_command(args: &[String]) -> Result<Value, CliError> {
+    let theme_dir = args
+        .first()
+        .filter(|value| !value.starts_with('-'))
+        .map(PathBuf::from)
+        .ok_or_else(|| CliError::arguments("用法：migrate-v3 <theme-dir> [--write]"))?;
+    let write = match &args[1..] {
+        [] => false,
+        [flag] if flag == "--write" => true,
+        _ => {
+            return Err(CliError::arguments(
+                "用法：migrate-v3 <theme-dir> [--write]",
+            ))
+        }
+    };
+    let report = authoring::migrate_v3(&theme_dir, write).map_err(CliError::theme_operation)?;
+    serde_json::to_value(report)
+        .map_err(|error| CliError::external(format!("无法生成迁移报告：{error}")))
+}
+
 fn create_command(args: &[String]) -> Result<Value, CliError> {
     let theme_dir = args
         .first()
@@ -247,6 +269,7 @@ fn create_command(args: &[String]) -> Result<Value, CliError> {
     let mut author = "本地用户".to_string();
     let mut accent = "#3370eb".to_string();
     let mut appearance = Appearance::Both;
+    let mut targets = None;
     let mut index = 1;
     while index < args.len() {
         match args[index].as_str() {
@@ -260,12 +283,20 @@ fn create_command(args: &[String]) -> Result<Value, CliError> {
                 appearance = Appearance::parse(option_value(args, &mut index, "--appearance")?)
                     .map_err(CliError::arguments)?
             }
+            "--targets" => {
+                targets = Some(parse_targets(option_value(args, &mut index, "--targets")?)?)
+            }
             unknown => return Err(CliError::arguments(format!("create 不支持参数 {unknown}"))),
         }
         index += 1;
     }
     let name = name.ok_or_else(|| CliError::arguments("create 需要 --name <名称>"))?;
     let description = description.unwrap_or_else(|| format!("{name}主题"));
+    let targets = targets.ok_or_else(|| {
+        CliError::arguments(
+            "create 需要 --targets <doubao,doubao-work,workbuddy>，请显式声明支持范围",
+        )
+    })?;
     let report = authoring::create(
         &theme_dir,
         &CreateOptions {
@@ -274,6 +305,7 @@ fn create_command(args: &[String]) -> Result<Value, CliError> {
             author,
             accent,
             appearance,
+            targets,
         },
     )
     .map_err(CliError::theme_operation)?;
@@ -315,8 +347,9 @@ fn apply_command(args: &[String]) -> Result<Value, CliError> {
         match args[index].as_str() {
             "--target" => {
                 let value = option_value(args, &mut index, "--target")?;
-                target = live::TargetApp::from_id(value)
-                    .ok_or_else(|| CliError::arguments("--target 必须是 doubao 或 doubao-work"))?;
+                target = live::TargetApp::from_id(value).ok_or_else(|| {
+                    CliError::arguments("--target 必须是 doubao、doubao-work 或 workbuddy")
+                })?;
             }
             "--watch" => watch = true,
             unknown => return Err(CliError::arguments(format!("apply 不支持参数 {unknown}"))),
@@ -324,6 +357,13 @@ fn apply_command(args: &[String]) -> Result<Value, CliError> {
         index += 1;
     }
     let selected = resolve_theme(input)?;
+    if !selected.supports_target(target) {
+        return Err(CliError::invalid(format!(
+            "主题 {} 不支持{}",
+            selected.name,
+            target.display_name()
+        )));
+    }
     let stop = Arc::new(AtomicBool::new(false));
     let mut injected = 0usize;
     live::run(&selected, target, !watch, stop, |line| {
@@ -349,8 +389,9 @@ fn restore_command(args: &[String]) -> Result<Value, CliError> {
         match args[index].as_str() {
             "--target" => {
                 let value = option_value(args, &mut index, "--target")?;
-                target = live::TargetApp::from_id(value)
-                    .ok_or_else(|| CliError::arguments("--target 必须是 doubao 或 doubao-work"))?;
+                target = live::TargetApp::from_id(value).ok_or_else(|| {
+                    CliError::arguments("--target 必须是 doubao、doubao-work 或 workbuddy")
+                })?;
             }
             unknown => return Err(CliError::arguments(format!("restore 不支持参数 {unknown}"))),
         }
@@ -420,7 +461,25 @@ fn remove_flag(args: &mut Vec<String>, flag: &str) -> bool {
 }
 
 fn report_json(report: &authoring::CheckReport) -> Value {
-    json!({"id": report.id, "files": report.files})
+    json!({
+        "id": report.id,
+        "files": report.files,
+        "validation": report.validation
+    })
+}
+
+fn parse_targets(value: &str) -> Result<std::collections::BTreeSet<ThemeTarget>, CliError> {
+    let mut targets = std::collections::BTreeSet::new();
+    for value in value.split(',') {
+        let target = ThemeTarget::parse(value.trim()).ok_or_else(|| {
+            CliError::arguments("--targets 只支持 doubao、doubao-work、workbuddy")
+        })?;
+        targets.insert(target);
+    }
+    if targets.is_empty() {
+        return Err(CliError::arguments("--targets 不能为空"));
+    }
+    Ok(targets)
 }
 
 fn theme_json(theme: &theme::Theme) -> Value {
@@ -456,6 +515,13 @@ fn text_result(command: &str, value: &Value) -> String {
         "create" => format!("主题已创建：{}", text_field(value, "id")),
         "check" => format!("检查通过：{}", text_field(value, "id")),
         "preview" => format!("预览已生成：{}", text_field(value, "path")),
+        "migrate-v3" => {
+            if value["written"].as_bool() == Some(true) {
+                format!("主题已迁移到 v3：{}", text_field(value, "id"))
+            } else {
+                format!("v3 迁移预检通过：{}", text_field(value, "id"))
+            }
+        }
         "pack" => format!("主题包已生成：{}", text_field(value, "path")),
         "install" => format!("主题已安装：{}", text_field(value, "id")),
         "apply" => format!("主题已应用：{}", text_field(value, "id")),
@@ -477,13 +543,14 @@ fn usage() -> &'static str {
         " — 豆皮命令行工具\n\n\
 用法：\n\
   doubao-skin list [--json]\n\
-  doubao-skin create <theme-dir> --name <名称> [--description <描述>] [--accent <#RRGGBB>] [--appearance light|dark|both] [--author <作者>]\n\
+  doubao-skin create <theme-dir> --name <名称> --targets <doubao,doubao-work,workbuddy> [--description <描述>] [--accent <#RRGGBB>] [--appearance light|dark|both] [--author <作者>]\n\
   doubao-skin check <theme-dir>\n\
   doubao-skin preview <theme-dir>\n\
+  doubao-skin migrate-v3 <theme-dir> [--write]\n\
   doubao-skin pack <theme-dir> [output.doubao-skin.zip]\n\
   doubao-skin install <package>\n\
-  doubao-skin apply <theme> [--target doubao|doubao-work] [--watch]  # macOS / Windows\n\
-  doubao-skin restore [--target doubao|doubao-work]                  # macOS / Windows\n\
+  doubao-skin apply <theme> [--target doubao|doubao-work|workbuddy] [--watch]\n\
+  doubao-skin restore [--target doubao|doubao-work|workbuddy]\n\
   doubao-skin build <theme>                                        # 仅 macOS\n\
   doubao-skin remove-build                                         # 仅 macOS\n\
   doubao-skin --version\n\n\

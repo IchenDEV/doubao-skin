@@ -7,10 +7,10 @@ mod input;
 mod install;
 pub(crate) mod platform;
 pub(crate) mod theme_ops;
+pub(crate) mod theme_sessions;
 pub(crate) mod types;
 
 use std::collections::VecDeque;
-use std::sync::atomic::AtomicBool;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -20,8 +20,9 @@ use skin_core::{auto_theme as core_auto_theme, live, theme};
 
 pub use self::helpers::{
     initial_target, preview_identity, read_target_preference, save_target_preference,
-    theme_is_active, uses_short_compact_layout,
+    support_label, target_shortcut, uses_short_compact_layout,
 };
+use crate::app::theme_sessions::ThemeSessions;
 use crate::app::types::{Msg, SourceView, StoreRow, ThemeRow};
 use crate::i18n::t;
 use crate::ui::constants::MAX_INTERNAL_LOGS;
@@ -43,15 +44,11 @@ pub struct SkinApp {
     pub(crate) search_active: bool,
     pub(crate) internal_logs: VecDeque<String>,
     pub(crate) message: String,
-    pub(crate) applying: bool,
     pub(crate) selected_target: live::TargetApp,
-    pub(crate) active_target: Option<live::TargetApp>,
-    pub(crate) active_theme: Option<String>,
-    pub(crate) active_surface_opacity: Option<f32>,
+    pub(crate) restart_confirmation_target: Option<live::TargetApp>,
     pub(crate) surface_opacity: f32,
     pub(crate) opacity_drag_start: Option<(gpui::Pixels, f32)>,
-    pub(crate) live_stop: Option<Arc<AtomicBool>>,
-    pub(crate) live_thread: Option<std::thread::JoinHandle<()>>,
+    pub(crate) theme_sessions: ThemeSessions,
     pub(crate) auto_theme_settings: core_auto_theme::AutoThemeSettings,
     pub(crate) auto_theme_service_status: platform::AutoThemeServiceStatus,
     pub(crate) auto_theme_busy: bool,
@@ -84,10 +81,16 @@ impl SkinApp {
             }
         })
         .detach();
+        let selected_target = initial_target(
+            read_target_preference().as_deref(),
+            live::TargetApp::Doubao.is_installed(),
+            live::TargetApp::DoubaoWork.is_installed(),
+            live::TargetApp::WorkBuddy.is_installed(),
+        );
         let themes: Vec<ThemeRow> = theme::list_installed()
             .into_iter()
             .map(|theme| ThemeRow {
-                preview: theme.preview_style(),
+                preview: theme.preview_style_for(selected_target),
                 theme,
             })
             .collect();
@@ -95,11 +98,6 @@ impl SkinApp {
             .first()
             .map(|row| row.preview.surface_opacity)
             .unwrap_or(1.0);
-        let selected_target = initial_target(
-            read_target_preference().as_deref(),
-            live::TargetApp::Doubao.is_installed(),
-            live::TargetApp::DoubaoWork.is_installed(),
-        );
         let url_buf = url_buffer.clone();
         cx.spawn(async move |this, cx| loop {
             while let Ok(msg) = rx.try_recv() {
@@ -158,15 +156,11 @@ impl SkinApp {
             search_active: false,
             internal_logs: VecDeque::new(),
             message: auto_theme_error.unwrap_or_default(),
-            applying: false,
             selected_target,
-            active_target: None,
-            active_theme: None,
-            active_surface_opacity: None,
+            restart_confirmation_target: None,
             surface_opacity,
             opacity_drag_start: None,
-            live_stop: None,
-            live_thread: None,
+            theme_sessions: ThemeSessions::default(),
             auto_theme_settings,
             auto_theme_service_status,
             auto_theme_busy: false,
@@ -184,28 +178,34 @@ impl SkinApp {
                 self.internal_logs.push_front(line);
                 self.internal_logs.truncate(MAX_INTERNAL_LOGS);
             }
-            Msg::Applied(generation) if generation == self.generation => {
-                self.applying = false;
-                self.message = l.action_applied.into();
-                self.record_successful_apply(generation);
+            Msg::Applied { target, generation }
+                if self.theme_sessions.mark_applied(target, generation) =>
+            {
+                if self.selected_target == target {
+                    self.message = l.action_applied.into();
+                }
+                self.record_successful_apply(target, generation);
             }
-            Msg::Applied(_) => {}
+            Msg::Applied { .. } => {}
             Msg::Done {
+                target,
                 generation,
                 ok,
                 restoring,
             } => {
-                if generation.is_none() || generation == Some(self.generation) {
-                    self.applying = false;
-                    if restoring && ok {
+                let current_operation = self
+                    .theme_sessions
+                    .complete_if_generation(target, generation);
+                if current_operation && restoring && ok {
+                    if self.selected_target == target {
                         self.message = l.action_restored.into();
-                        self.finish_successful_restore();
+                    }
+                    self.finish_successful_restore();
+                } else if self.selected_target == target && current_operation {
+                    if ok && target == live::TargetApp::WorkBuddy {
+                        self.message = "WorkBuddy 已退出，主题监听已停止".into();
                     } else if !ok {
                         self.message = l.action_apply_failed.into();
-                        self.active_target = None;
-                        self.active_theme = None;
-                        self.active_surface_opacity = None;
-                        self.live_stop = None;
                     }
                 }
             }
@@ -215,9 +215,7 @@ impl SkinApp {
                     Ok(rows) => {
                         self.store_rows = rows;
                         self.store_error = None;
-                        if self.store_selected >= self.store_rows.len() {
-                            self.store_selected = 0;
-                        }
+                        self.ensure_store_selected_match();
                     }
                     Err(error) => self.store_error = Some(error),
                 }
@@ -295,7 +293,7 @@ impl SkinApp {
         self.themes = theme::list_installed()
             .into_iter()
             .map(|theme| ThemeRow {
-                preview: theme.preview_style(),
+                preview: theme.preview_style_for(self.selected_target),
                 theme,
             })
             .collect();

@@ -2,6 +2,7 @@
 
 use std::path::PathBuf;
 
+use skin_core::theme_package::{SupportDeclaration, SupportLevel, TargetSupport};
 use skin_core::{live, theme};
 
 use crate::i18n::t;
@@ -29,19 +30,26 @@ pub fn initial_target(
     saved: Option<&str>,
     doubao_installed: bool,
     work_installed: bool,
+    workbuddy_installed: bool,
 ) -> live::TargetApp {
     if let Some(saved) = saved.and_then(live::TargetApp::from_id) {
         let installed = match saved {
             live::TargetApp::Doubao => doubao_installed,
             live::TargetApp::DoubaoWork => work_installed,
+            live::TargetApp::WorkBuddy => workbuddy_installed,
         };
         if installed {
             return saved;
         }
     }
-    match (doubao_installed, work_installed) {
-        (true, false) => live::TargetApp::Doubao,
-        _ => live::TargetApp::DoubaoWork,
+    if work_installed {
+        live::TargetApp::DoubaoWork
+    } else if doubao_installed {
+        live::TargetApp::Doubao
+    } else if workbuddy_installed {
+        live::TargetApp::WorkBuddy
+    } else {
+        live::TargetApp::DoubaoWork
     }
 }
 
@@ -50,19 +58,40 @@ pub fn uses_short_compact_layout(compact: bool, height: gpui::Pixels) -> bool {
     compact && height <= px(600.)
 }
 
-pub fn theme_is_active(
-    active_target: Option<live::TargetApp>,
-    active_theme: Option<&str>,
-    selected_target: live::TargetApp,
-    theme_id: &str,
-) -> bool {
-    active_target == Some(selected_target) && active_theme == Some(theme_id)
-}
-
 pub fn preview_identity(target: live::TargetApp) -> (&'static str, &'static str) {
     let l = t();
     match target {
         live::TargetApp::Doubao => (l.target_doubao, l.target_doubao_greeting),
         live::TargetApp::DoubaoWork => (l.target_doubao_work, l.target_doubao_work_greeting),
+        live::TargetApp::WorkBuddy => (l.target_workbuddy, l.target_workbuddy_greeting),
+    }
+}
+
+pub fn target_shortcut(target: live::TargetApp) -> &'static str {
+    target_shortcut_for_platform(std::env::consts::OS, target)
+}
+
+pub fn target_shortcut_for_platform(target_os: &str, target: live::TargetApp) -> &'static str {
+    match (target_os == "windows", target) {
+        (true, live::TargetApp::Doubao) => "Ctrl-1",
+        (true, live::TargetApp::DoubaoWork) => "Ctrl-2",
+        (true, live::TargetApp::WorkBuddy) => "Ctrl-3",
+        (false, live::TargetApp::Doubao) => "Command-1",
+        (false, live::TargetApp::DoubaoWork) => "Command-2",
+        (false, live::TargetApp::WorkBuddy) => "Command-3",
+    }
+}
+
+pub fn support_label(support: TargetSupport) -> &'static str {
+    if !support.is_supported() {
+        return "不支持";
+    }
+    if support.declaration == SupportDeclaration::LegacyInferred {
+        return "兼容模式";
+    }
+    match support.level {
+        SupportLevel::Tailored => "专属适配",
+        SupportLevel::Shared => "共享适配",
+        SupportLevel::Unsupported => "不支持",
     }
 }

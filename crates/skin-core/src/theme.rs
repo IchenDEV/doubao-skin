@@ -6,6 +6,7 @@
 //!               html[data-skin][data-theme=dark] (see the bundled themes).
 //!   icon.icns   (optional) replaces the app icon of the skin build
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
@@ -15,6 +16,10 @@ use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
 use crate::live;
+use crate::theme_package::{
+    self, SupportDeclaration, SupportLevel, TargetSupport, ThemePackageAppearance, ThemeTarget,
+    ValidatedThemePackage,
+};
 
 /// Default location of the bundled themes: `<repo>/themes`, resolved at
 /// compile time from this crate (`crates/skin-core` -> repo root).
@@ -119,6 +124,28 @@ pub struct StoreTheme {
     pub icon_url: Option<String>,
     #[serde(default)]
     pub accent: Option<String>,
+    #[serde(default)]
+    pub schema_version: u32,
+    #[serde(default)]
+    pub targets: BTreeMap<String, StoreTargetSupport>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StoreTargetSupport {
+    pub support_level: SupportLevel,
+    pub declaration: SupportDeclaration,
+}
+
+impl StoreTheme {
+    pub fn supports_target(&self, target: live::TargetApp) -> bool {
+        if self.targets.is_empty() {
+            return true;
+        }
+        self.targets
+            .get(theme_target(target).as_str())
+            .is_some_and(|support| support.support_level != SupportLevel::Unsupported)
+    }
 }
 
 /// Marker bytes used to detect pages that already carry an injection.
@@ -167,6 +194,14 @@ impl ThemeAppearance {
             Self::DarkOnly => ThemeMode::Dark,
             Self::Both => ThemeMode::Auto,
         }
+    }
+}
+
+fn theme_target(target: live::TargetApp) -> ThemeTarget {
+    match target {
+        live::TargetApp::Doubao => ThemeTarget::Doubao,
+        live::TargetApp::DoubaoWork => ThemeTarget::DoubaoWork,
+        live::TargetApp::WorkBuddy => ThemeTarget::WorkBuddy,
     }
 }
 
@@ -392,6 +427,63 @@ pub fn surface_opacity_profile(surface: f32) -> SurfaceOpacityProfile {
 }
 
 impl Theme {
+    pub fn supports_target(&self, target: live::TargetApp) -> bool {
+        self.target_support(target).is_supported()
+    }
+
+    pub fn target_support(&self, target: live::TargetApp) -> TargetSupport {
+        if let Some(package) = &self.package {
+            return package.support(theme_target(target));
+        }
+        match (self.schema_version, target) {
+            (1, live::TargetApp::WorkBuddy) => TargetSupport {
+                level: SupportLevel::Unsupported,
+                declaration: SupportDeclaration::LegacyInferred,
+            },
+            (2.., live::TargetApp::WorkBuddy) => TargetSupport {
+                level: SupportLevel::Shared,
+                declaration: SupportDeclaration::LegacyInferred,
+            },
+            _ => TargetSupport {
+                level: SupportLevel::Tailored,
+                declaration: SupportDeclaration::LegacyInferred,
+            },
+        }
+    }
+
+    /// Resolve the preview declared for a concrete host application. v1/v2
+    /// packages keep their single package preview for compatibility.
+    pub fn preview_image_for(&self, target: live::TargetApp) -> Option<PathBuf> {
+        let Some(package) = self.package.as_deref() else {
+            return self.preview_image.clone();
+        };
+        let package_target = theme_target(target);
+        let appearance = preview_appearance_for(package, package_target)?;
+        package
+            .resolve(package_target, appearance)
+            .ok()
+            .and_then(|resolved| resolved.preview)
+            .or_else(|| self.preview_image.clone())
+    }
+
+    /// Build the native mock preview from the same merged target/appearance
+    /// values that the runtime injector consumes.
+    pub fn preview_style_for(&self, target: live::TargetApp) -> PreviewStyle {
+        let Some(package) = self.package.as_deref() else {
+            return self.preview_style();
+        };
+        let package_target = theme_target(target);
+        let Some(appearance) = preview_appearance_for(package, package_target) else {
+            return self.preview_style();
+        };
+        let Ok((meta, css)) = flattened_v3_meta(package, package_target, appearance, true) else {
+            return self.preview_style();
+        };
+        theme_from_meta(package.root().to_path_buf(), meta, css, None)
+            .map(|theme| theme.preview_style())
+            .unwrap_or_else(|_| self.preview_style())
+    }
+
     /// Preview colors for the UI. Themes without a color ramp (pure-dark)
     /// fall back to neutral dark grays + a blue accent (#3370eb).
     pub fn preview_colors(&self) -> PreviewColors {
@@ -630,13 +722,13 @@ impl Theme {
     /// opposite appearance must not leak into the preview.
     fn preview_css_color(&self, var: &str) -> Option<PreviewColor> {
         let desired = match self.preview_mode {
-            ThemeMode::Light => "data-theme=light",
-            ThemeMode::Dark => "data-theme=dark",
+            ThemeMode::Light => ("data-theme=light", "data-theme=\"light\""),
+            ThemeMode::Dark => ("data-theme=dark", "data-theme=\"dark\""),
             ThemeMode::Auto => return self.css_preview_color(var),
         };
         let opposite = match self.preview_mode {
-            ThemeMode::Light => "data-theme=dark",
-            ThemeMode::Dark => "data-theme=light",
+            ThemeMode::Light => ("data-theme=dark", "data-theme=\"dark\""),
+            ThemeMode::Dark => ("data-theme=light", "data-theme=\"light\""),
             ThemeMode::Auto => unreachable!(),
         };
         let mut offset = 0;
@@ -654,9 +746,9 @@ impl Theme {
                 if let Some(open) = before.rfind('{') {
                     let selector_start = before[..open].rfind('}').map_or(0, |end| end + 1);
                     let selector = &before[selector_start..open];
-                    if selector.contains(desired) {
+                    if selector.contains(desired.0) || selector.contains(desired.1) {
                         scoped = Some(value);
-                    } else if !selector.contains(opposite) {
+                    } else if !selector.contains(opposite.0) && !selector.contains(opposite.1) {
                         unscoped = Some(value);
                     }
                 }
@@ -682,6 +774,29 @@ impl Theme {
         let value = after[colon + 1..].split(';').next()?.trim();
         parse_preview_color(value)
     }
+}
+
+fn preview_appearance_for(
+    package: &ValidatedThemePackage,
+    target: ThemeTarget,
+) -> Option<ThemePackageAppearance> {
+    let appearances = package.appearances(target);
+    let requested = package
+        .manifest()
+        .get("targets")
+        .and_then(|targets| targets.get(target.as_str()))
+        .and_then(|target| target.get("preview"))
+        .or_else(|| package.manifest().get("preview"))
+        .and_then(|preview| preview.get("appearance"))
+        .and_then(serde_json::Value::as_str)
+        .and_then(|appearance| match appearance {
+            "light" => Some(ThemePackageAppearance::Light),
+            "dark" => Some(ThemePackageAppearance::Dark),
+            _ => None,
+        });
+    requested
+        .filter(|appearance| appearances.contains(appearance))
+        .or_else(|| appearances.first().copied())
 }
 
 /// Blend every pixel toward `base` by `k`: out = img*(1-k) + base*k.
@@ -805,6 +920,7 @@ pub struct Theme {
     pub variants: ThemeVariants,
     pub effects: ThemeEffects,
     pub path: PathBuf,
+    package: Option<Box<ValidatedThemePackage>>,
 }
 
 #[derive(Deserialize)]
@@ -1033,6 +1149,10 @@ impl Theme {
     /// Snippet injected into HTML pages (offline build). Live mode calls the
     /// same bootstrap so both application paths support the same theme fields.
     pub fn snippet(&self) -> Vec<u8> {
+        if self.package.is_some() {
+            let script = self.bootstrap_js_for_target(live::TargetApp::DoubaoWork);
+            return format!("<script nonce=\"argus-csp-token\">{script}</script>").into_bytes();
+        }
         let css = self.injected_css();
         let script = self.bootstrap_js(None, None);
         format!(
@@ -1060,12 +1180,26 @@ impl Theme {
                 "html[data-skin], html[data-skin] body {{ --skin-bg-image: url(\"{uri}\"); }}\n"
             ));
         }
-        out.push_str(&self.css);
-        out.push_str(&self.semantic_css());
-        out.push_str(&self.backdrop_css());
-        out.push_str(&self.surface_opacity_css());
-        out.push_str("\nhtml[data-skin][data-skin-target=doubao] #chat-route-main{background-color:transparent!important;}");
+        if self.schema_version >= 3 {
+            // v3 fixes the cascade contract: trusted host adapter, declared
+            // package CSS chain, then non-overridable runtime/user rules.
+            out.push_str(&self.semantic_css());
+            out.push_str(&self.backdrop_css());
+            out.push_str(&self.css);
+            out.push_str(&self.surface_opacity_css());
+            out.push_str(&self.doubao_runtime_safety_css());
+        } else {
+            out.push_str(&self.css);
+            out.push_str(&self.semantic_css());
+            out.push_str(&self.backdrop_css());
+            out.push_str(&self.surface_opacity_css());
+            out.push_str(&self.doubao_runtime_safety_css());
+        }
         out
+    }
+
+    fn doubao_runtime_safety_css(&self) -> String {
+        "\nhtml[data-skin][data-skin-target=doubao] #chat-route-main{background-color:transparent!important;}@media(prefers-reduced-motion:reduce){html[data-skin] *,html[data-skin] *::before,html[data-skin] *::after{animation-duration:0.001ms!important;animation-iteration-count:1!important;transition-duration:0.001ms!important;}}".into()
     }
 
     pub(crate) fn injected_css(&self) -> String {
@@ -1078,6 +1212,184 @@ impl Theme {
             "html{{color-scheme:{color_scheme}}}{}",
             self.effective_css()
         )
+    }
+
+    pub(crate) fn injected_css_for(&self, target: live::TargetApp) -> String {
+        if target == live::TargetApp::WorkBuddy {
+            self.workbuddy_css()
+        } else {
+            self.injected_css()
+        }
+    }
+
+    fn workbuddy_css(&self) -> String {
+        let root = "html[data-skin][data-skin-target=workbuddy]";
+        let fallback_dark = self.mode != ThemeMode::Light;
+        let surface_opacity = self.surface_opacity.map(surface_opacity_profile);
+        let mut css = String::new();
+        let background = self.background_spec.as_ref();
+        css.push_str(&format!(
+            "{root}{{color-scheme:{};{}--wb-skin-font-ui:{};--wb-skin-font-body:{};--wb-skin-font-code:{};--wb-skin-shadow:{};--wb-skin-blur:{}px;--wb-skin-surface-blur:{}px;--wb-skin-transition:{}ms;--wb-skin-background-opacity:{};--wb-skin-background-fit:{};--wb-skin-background-position:{};}}",
+            if fallback_dark { "dark" } else { "light" },
+            workbuddy_palette_vars(
+                &self.composer,
+                &self.content,
+                fallback_dark,
+                surface_opacity,
+            ),
+            css_atom(
+                self.typography.ui.as_deref().unwrap_or("-apple-system, BlinkMacSystemFont, sans-serif"),
+                "-apple-system, BlinkMacSystemFont, sans-serif"
+            ),
+            css_atom(
+                self.typography
+                    .body
+                    .as_deref()
+                    .or(self.typography.ui.as_deref())
+                    .unwrap_or("-apple-system, BlinkMacSystemFont, sans-serif"),
+                "-apple-system, BlinkMacSystemFont, sans-serif"
+            ),
+            css_atom(
+                self.typography.code.as_deref().unwrap_or("SFMono-Regular, Menlo, monospace"),
+                "SFMono-Regular, Menlo, monospace"
+            ),
+            css_atom(self.effects.shadow.as_deref().unwrap_or("0 12px 32px rgba(0,0,0,.18)"), "0 12px 32px rgba(0,0,0,.18)"),
+            background.map_or(0.0, |value| value.blur.clamp(0.0, 40.0)),
+            self.effects
+                .blur
+                .map_or(14.0, |value| value.clamp(0.0, 40.0)),
+            self.effects.transition_ms.unwrap_or(150).min(1000),
+            background.map_or(1.0, |value| value.opacity.clamp(0.0, 1.0)),
+            css_atom(background.map(|value| value.fit.as_str()).unwrap_or("cover"), "cover"),
+            css_atom(background.map(|value| value.position.as_str()).unwrap_or("center"), "center"),
+        ));
+        if let Some(light) = self.variants.light.as_ref() {
+            css.push_str(&format!(
+                "{root}[data-theme=light]{{color-scheme:light;{}}}",
+                workbuddy_palette_vars(&light.composer, &light.content, false, surface_opacity,)
+            ));
+        }
+        if let Some(dark) = self.variants.dark.as_ref() {
+            css.push_str(&format!(
+                "{root}[data-theme=dark]{{color-scheme:dark;{}}}",
+                workbuddy_palette_vars(&dark.composer, &dark.content, true, surface_opacity,)
+            ));
+        }
+        css.push_str(&format!(
+            r#"
+{root},{root} body{{background:transparent!important;color:var(--wb-skin-text)!important;font-family:var(--wb-skin-font-body)!important;}}
+{root} body{{position:relative!important;}}
+{root} .teams-container{{position:relative!important;z-index:1!important;background:var(--wb-skin-main)!important;color:var(--wb-skin-text)!important;font-family:var(--wb-skin-font-body)!important;}}
+{root} .teams-container :has(> .teams-content-wrapper){{background:transparent!important;}}
+{root} #doubao-skin-backdrop{{position:fixed!important;inset:0!important;z-index:0!important;pointer-events:none!important;background-size:var(--wb-skin-background-fit)!important;background-position:var(--wb-skin-background-position)!important;background-repeat:no-repeat!important;filter:blur(var(--wb-skin-blur))!important;opacity:var(--wb-skin-background-opacity)!important;}}
+{root} #doubao-skin-backdrop video{{width:100%!important;height:100%!important;object-fit:var(--wb-skin-background-fit)!important;object-position:var(--wb-skin-background-position)!important;}}
+{root} .conversation-sidebar{{--wb-skin-sidebar-accent:color-mix(in srgb,var(--wb-skin-text) 74%,var(--wb-skin-accent));background-color:color-mix(in srgb,var(--wb-skin-sidebar-shell) 90%,transparent)!important;background-image:radial-gradient(circle at 12% 6%,color-mix(in srgb,var(--wb-skin-sidebar-accent) 9%,transparent),transparent 32%),radial-gradient(circle at 88% 24%,color-mix(in srgb,var(--wb-skin-accent) 5%,transparent),transparent 28%),linear-gradient(180deg,color-mix(in srgb,white 5%,transparent),transparent 46%)!important;color:var(--wb-skin-text)!important;border-right:1px solid color-mix(in srgb,var(--wb-skin-sidebar-accent) 8%,transparent)!important;box-shadow:8px 0 24px color-mix(in srgb,var(--wb-skin-text) 4%,transparent)!important;backdrop-filter:blur(var(--wb-skin-surface-blur)) saturate(1.08)!important;}}
+{root} :is(.conversation-list,.conversation-list-header,.conversation-list-content){{background:transparent!important;color:var(--wb-skin-text)!important;}}
+{root} .teams-content-wrapper,
+{root} .teams-main-content,
+{root} .main-content,
+{root} .chat-container,
+{root} .wb-cb-chat,
+{root} .wb-home-page,
+{root} .wb-home-page__main-content{{background:transparent!important;color:var(--wb-skin-text)!important;}}
+{root} .conversation-list :is(button,a,span,p,label),
+{root} .wb-home-page__main-content :is(h1,h2,h3,h4,p,span,label,button,a),
+{root} .wb-home-page__main-content svg{{color:var(--wb-skin-text)!important;}}
+{root} .conversation-list *,
+{root} .wb-home-page__main-content,
+{root} .wb-home-page__main-content p,
+{root} .wb-home-page__main-content span{{border-color:var(--wb-skin-border-color)!important;}}
+{root} section.wb-home-composer:has([role=textbox]){{background:transparent!important;border-color:transparent!important;box-shadow:none!important;}}
+{root} .wb-home-composer__input-slot{{background:var(--wb-skin-composer-strong)!important;border:var(--wb-skin-border)!important;border-color:color-mix(in srgb,var(--wb-skin-accent) 18%,transparent)!important;border-radius:var(--wb-skin-radius)!important;box-shadow:var(--wb-skin-shadow)!important;color:var(--wb-skin-composer-text)!important;backdrop-filter:blur(var(--wb-skin-surface-blur)) saturate(1.08)!important;transition:background-color var(--wb-skin-transition),border-color var(--wb-skin-transition)!important;}}
+{root} .wb-home-composer :has(> div > [role=textbox]){{background:transparent!important;box-shadow:none!important;}}
+{root} [role=textbox]{{color:var(--wb-skin-composer-text)!important;caret-color:var(--wb-skin-accent)!important;}}
+{root} [role=textbox][data-placeholder]::before,
+{root} [role=textbox]::placeholder{{color:var(--wb-skin-muted)!important;}}
+{root} .wb-button{{background:var(--wb-skin-surface)!important;border-color:var(--wb-skin-border-color)!important;color:var(--wb-skin-text)!important;}}
+{root} .conversation-list-tabs{{gap:2px!important;padding:4px 8px 8px!important;}}
+{root} .conversation-list-tab-button{{min-height:34px!important;margin:0!important;padding:0 10px!important;border:0!important;border-radius:11px!important;font-size:13px!important;font-weight:500!important;transition:background-color 160ms ease,box-shadow 160ms ease,color 160ms ease!important;}}
+{root} .conversation-list-tab-button[aria-selected=false]{{background:transparent!important;border-color:transparent!important;color:var(--wb-skin-text)!important;}}
+{root} .conversation-list-tabs .conversation-list-tab-button[aria-selected=true]{{background-color:var(--wb-skin-surface-strong)!important;background-image:linear-gradient(135deg,color-mix(in srgb,var(--wb-skin-sidebar-accent) 12%,transparent),color-mix(in srgb,var(--wb-skin-sidebar-accent) 5%,transparent))!important;color:var(--wb-skin-sidebar-accent)!important;font-weight:600!important;box-shadow:0 3px 10px color-mix(in srgb,var(--wb-skin-sidebar-accent) 7%,transparent)!important;}}
+{root} .conversation-list-tabs .conversation-list-tab-button[aria-selected=true] :is(span,svg){{color:var(--wb-skin-sidebar-accent)!important;}}
+{root} .conversation-list-tabs .conversation-list-tab-button[aria-selected=true]::after{{content:"";flex:0 0 auto;width:5px;height:5px;margin-left:8px;border-radius:999px;background:var(--wb-skin-sidebar-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--wb-skin-sidebar-accent) 6%,transparent);}}
+{root} .conversation-list-tab-button[aria-selected=false] svg,
+{root} .conversation-list-header svg{{color:color-mix(in srgb,var(--wb-skin-text) 72%,transparent)!important;}}
+{root} .conversation-section-label{{min-height:28px!important;margin:4px 0 0!important;padding:12px 12px 5px!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;color:var(--wb-skin-muted)!important;font-size:11px!important;font-weight:600!important;letter-spacing:.02em!important;}}
+{root} .conversation-section-label::after{{content:"";flex:1 1 auto;height:1px;margin-left:10px;background:linear-gradient(90deg,color-mix(in srgb,var(--wb-skin-sidebar-accent) 10%,transparent),transparent);}}
+{root} .conversation-section-label :is(.conversation-section-label-text,.conversation-section-chevron){{color:color-mix(in srgb,var(--wb-skin-text) 70%,transparent)!important;}}
+{root} .collapsible-section-header{{min-height:32px!important;margin:5px 8px 2px!important;padding-inline:10px!important;background:transparent!important;border:0!important;border-radius:8px!important;box-shadow:inset 1px 0 0 color-mix(in srgb,var(--wb-skin-sidebar-accent) 10%,transparent)!important;backdrop-filter:none!important;font-size:12px!important;font-weight:600!important;}}
+{root} .collapsible-section-header :is(.collapsible-section-icon,.collapsible-section-chevron){{color:color-mix(in srgb,var(--wb-skin-sidebar-accent) 72%,transparent)!important;}}
+{root} .conversation-list .conversation-agent-card{{min-height:30px!important;margin:1px 8px!important;padding-inline:10px!important;background:transparent!important;color:var(--wb-skin-text)!important;border:0!important;border-radius:9px!important;transition:background-color 150ms ease!important;}}
+{root} .conversation-sidebar .conversation-list .conversation-agent-card :is(span,p){{color:var(--wb-skin-text)!important;}}
+{root} .conversation-sidebar .conversation-list .conversation-agent-card [class*=time]{{color:var(--wb-skin-muted)!important;}}
+{root} .conversation-sidebar .wb-button--ghost{{background:transparent!important;border-color:transparent!important;box-shadow:none!important;}}
+{root} .conversation-show-more-button{{margin-inline:8px!important;border-radius:9px!important;color:var(--wb-skin-muted)!important;font-size:11px!important;}}
+{root} .conversation-list-footer{{border-top:0!important;box-shadow:inset 0 1px 0 color-mix(in srgb,var(--wb-skin-sidebar-accent) 10%,transparent)!important;}}
+{root} .daily-checkin{{opacity:.88!important;border-radius:12px!important;overflow:hidden!important;box-shadow:0 4px 14px color-mix(in srgb,var(--wb-skin-sidebar-accent) 5%,transparent)!important;}}
+@media(hover:hover){{{root} .conversation-list-tab-button[aria-selected=false]:hover,{root} .conversation-agent-card:hover,{root} .conversation-show-more-button:hover,{root} .user-menu-trigger:hover{{background:color-mix(in srgb,var(--wb-skin-sidebar-accent) 12%,transparent)!important;}}}}
+{root} .wb-scene-tabs[role=tablist]{{background:var(--wb-skin-control-track)!important;border:1px solid color-mix(in srgb,var(--wb-skin-accent) 12%,transparent)!important;box-shadow:0 6px 18px color-mix(in srgb,var(--wb-skin-text) 6%,transparent)!important;backdrop-filter:blur(var(--wb-skin-surface-blur)) saturate(1.08)!important;}}
+{root} .wb-scene-tabs__pill[aria-selected=false]{{background:transparent!important;border-color:transparent!important;color:var(--wb-skin-text)!important;}}
+{root} .wb-scene-tabs__pill[aria-selected=true]{{background:var(--wb-skin-surface-strong)!important;color:var(--wb-skin-accent)!important;font-weight:600!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--wb-skin-accent) 35%,transparent),0 2px 6px color-mix(in srgb,var(--wb-skin-text) 7%,transparent)!important;}}
+{root} .wb-scene-tabs__pill[aria-selected=true] :is(span,svg){{color:var(--wb-skin-accent)!important;}}
+{root} .quick-actions__item{{background:var(--wb-skin-control)!important;border-color:color-mix(in srgb,var(--wb-skin-accent) 14%,transparent)!important;color:var(--wb-skin-text)!important;box-shadow:0 4px 12px color-mix(in srgb,var(--wb-skin-text) 6%,transparent)!important;backdrop-filter:blur(var(--wb-skin-surface-blur)) saturate(1.06)!important;}}
+{root} [role=tab][aria-selected=true]:not(.wb-scene-tabs__pill):not(.conversation-list-tab-button){{background:var(--wb-skin-accent)!important;color:var(--wb-skin-accent-text)!important;}}
+{root} [role=dialog],
+{root} [role=menu],
+{root} [role=listbox],
+{root} .view-selector-dropdown,
+{root} [class*=popover],
+{root} [class*=dropdown]{{background:var(--wb-skin-surface)!important;border-color:var(--wb-skin-border-color)!important;color:var(--wb-skin-text)!important;box-shadow:var(--wb-skin-shadow)!important;}}
+{root} pre,
+{root} code{{background:var(--wb-skin-code)!important;color:var(--wb-skin-text)!important;font-family:var(--wb-skin-font-code)!important;}}
+{root} pre>header{{background:var(--wb-skin-code-header)!important;}}
+{root} ::selection{{background:var(--wb-skin-selection)!important;}}
+{root} *{{scrollbar-color:var(--wb-skin-scrollbar) transparent;}}
+{root} ::-webkit-scrollbar-thumb{{background:var(--wb-skin-scrollbar)!important;border-radius:999px!important;}}
+{root} ::-webkit-scrollbar-thumb:hover{{background:var(--wb-skin-scrollbar-hover)!important;}}
+"#
+        ));
+        if self.schema_version >= 3 {
+            css.push_str(&self.css);
+            css.push_str(&self.workbuddy_runtime_safety_css(root, fallback_dark));
+        }
+        css
+    }
+
+    fn workbuddy_runtime_safety_css(&self, root: &str, dark: bool) -> String {
+        let mut css = String::new();
+        if let Some(opacity) = self.surface_opacity.map(surface_opacity_profile) {
+            let palette =
+                workbuddy_palette_vars(&self.composer, &self.content, dark, Some(opacity));
+            const SURFACE_NAMES: [&str; 11] = [
+                "--wb-skin-main",
+                "--wb-skin-sidebar",
+                "--wb-skin-sidebar-shell",
+                "--wb-skin-surface",
+                "--wb-skin-surface-strong",
+                "--wb-skin-control-track",
+                "--wb-skin-control",
+                "--wb-skin-composer",
+                "--wb-skin-composer-strong",
+                "--wb-skin-code",
+                "--wb-skin-code-header",
+            ];
+            css.push_str(root);
+            css.push('{');
+            for declaration in palette.split_terminator(';') {
+                if SURFACE_NAMES
+                    .iter()
+                    .any(|name| declaration.starts_with(&format!("{name}:")))
+                {
+                    css.push_str(declaration);
+                    css.push_str("!important;");
+                }
+            }
+            css.push('}');
+        }
+        css.push_str(&format!(
+            "@media(prefers-reduced-motion:reduce){{{root} *,{root} *::before,{root} *::after{{animation-duration:0.001ms!important;animation-iteration-count:1!important;transition-duration:0.001ms!important;}}}}"
+        ));
+        css
     }
 
     /// Legacy image themes keep their baked veil. In v2 the veil is a
@@ -1108,16 +1420,35 @@ impl Theme {
         ))
     }
 
-    /// Theme base color for the veil: --s-color-bg-body, else #121317.
+    /// Theme base color for generated host tokens and the backdrop veil.
+    /// v3 themes can be entirely structured and therefore have no raw CSS.
     fn base_color(&self) -> (u8, u8, u8) {
-        let c = self.css_color("--s-color-bg-body").unwrap_or(0x121317);
+        let c = self
+            .css_color("--s-color-bg-body")
+            .or_else(|| {
+                self.content
+                    .chat_background
+                    .as_deref()
+                    .and_then(parse_preview_color)
+                    .map(|color| color.rgb)
+            })
+            .unwrap_or(0x121317);
         ((c >> 16) as u8, (c >> 8) as u8, c as u8)
     }
 
-    /// First `n` distinct `#rrggbb` colors found in the theme CSS (for UI
-    /// swatches), as 0xRRGGBB values.
+    /// First `n` distinct `#rrggbb` colors found in the effective author color
+    /// source (for UI swatches), as 0xRRGGBB values. v3 packages can be fully
+    /// structured and have no declared CSS, so use the trusted semantic CSS
+    /// generated from their resolved manifest values.
     pub fn swatches(&self, n: usize) -> Vec<u32> {
-        let bytes = self.css.as_bytes();
+        let semantic;
+        let source = if self.schema_version >= 3 {
+            semantic = self.semantic_css();
+            semantic.as_str()
+        } else {
+            self.css.as_str()
+        };
+        let bytes = source.as_bytes();
         let mut colors: Vec<u32> = Vec::new();
         let mut i = 0;
         while i + 7 <= bytes.len() && colors.len() < n {
@@ -1137,8 +1468,12 @@ impl Theme {
         colors
     }
 
-    fn background_runtime_json(&self) -> serde_json::Value {
-        let Some(spec) = self.background_spec.as_ref().filter(|b| !b.legacy) else {
+    fn background_runtime_json(&self, include_legacy: bool) -> serde_json::Value {
+        let Some(spec) = self
+            .background_spec
+            .as_ref()
+            .filter(|background| include_legacy || !background.legacy)
+        else {
             return serde_json::Value::Null;
         };
         let source = match spec.kind {
@@ -1349,6 +1684,11 @@ impl Theme {
         );
         push_css_value(
             &mut vars,
+            "--doubao-skin-runtime-composer-background",
+            self.composer.background.as_deref(),
+        );
+        push_css_value(
+            &mut vars,
             "--color-composebox-background",
             self.composer.background.as_deref(),
         );
@@ -1364,7 +1704,17 @@ impl Theme {
         );
         push_css_value(
             &mut vars,
+            "--doubao-skin-runtime-composer-border",
+            self.composer.border.as_deref(),
+        );
+        push_css_value(
+            &mut vars,
             "--input-guidance-input-editor-color",
+            self.composer.text_color.as_deref(),
+        );
+        push_css_value(
+            &mut vars,
+            "--doubao-skin-runtime-composer-text",
             self.composer.text_color.as_deref(),
         );
         push_css_value(
@@ -1375,6 +1725,11 @@ impl Theme {
         push_css_value(
             &mut vars,
             "--input-guidance-input-editor-placeholder-color",
+            self.composer.placeholder_color.as_deref(),
+        );
+        push_css_value(
+            &mut vars,
+            "--doubao-skin-runtime-composer-placeholder",
             self.composer.placeholder_color.as_deref(),
         );
         push_css_value(
@@ -1661,7 +2016,7 @@ impl Theme {
                 variant.composer.border.is_some() || variant.composer.caret_color.is_some()
             })
         {
-            css.push_str("\nhtml[data-skin] [data-doubao-theme-composer]{border:var(--input-guidance-input-container-border)!important;}html[data-skin] [data-doubao-theme-composer]:focus-within{border-color:var(--semi-color-focus-border)!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--semi-color-focus-border) 28%,transparent)!important;outline:none!important;}");
+            css.push_str("\nhtml[data-skin] [data-doubao-theme-composer]{--input-guidance-input-container-background:var(--doubao-skin-runtime-composer-background)!important;background:var(--doubao-skin-runtime-composer-background)!important;border:var(--doubao-skin-runtime-composer-border,var(--input-guidance-input-container-border))!important;color:var(--doubao-skin-runtime-composer-text)!important;}html[data-skin] [data-doubao-theme-composer] [contenteditable=true],html[data-skin] [data-doubao-theme-composer] textarea{color:var(--doubao-skin-runtime-composer-text)!important;caret-color:var(--input-guidance-input-editor-caret-color)!important;}html[data-skin] [data-doubao-theme-composer] [data-placeholder]::before,html[data-skin] [data-doubao-theme-composer] textarea::placeholder{color:var(--doubao-skin-runtime-composer-placeholder)!important;}html[data-skin] [data-doubao-theme-composer]:focus-within{border-color:var(--semi-color-focus-border)!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--semi-color-focus-border) 28%,transparent)!important;outline:none!important;}");
         }
         if self.effects.shadow.is_some() {
             css.push_str("\nhtml[data-skin] body{--dbx-drop-shadow-md:var(--skin-shadow)!important;--s-shadow-level1:var(--skin-shadow)!important;}");
@@ -1678,6 +2033,20 @@ impl Theme {
         {
             css.push_str("\nhtml[data-skin] svg[data-doubao-theme-icon]{background-color:currentColor!important;mask:var(--doubao-theme-icon) center/contain no-repeat!important;-webkit-mask:var(--doubao-theme-icon) center/contain no-repeat!important;}html[data-skin] svg[data-doubao-theme-icon] *{opacity:0!important;}html[data-skin] img[data-doubao-theme-icon]{content:var(--doubao-theme-icon)!important;object-fit:contain!important;}html[data-skin] img[data-doubao-theme-icon=main]{content:var(--skin-icon-main)!important;}html[data-skin] svg[data-doubao-theme-icon=main]{background:var(--skin-icon-main) center/contain no-repeat!important;mask:none!important;-webkit-mask:none!important;}html[data-skin] [data-doubao-theme-icon=main]{--doubao-theme-icon:var(--skin-icon-main);}html[data-skin] [data-doubao-theme-icon=new-task]{--doubao-theme-icon:var(--skin-icon-new-task);}html[data-skin] [data-doubao-theme-icon=scheduled]{--doubao-theme-icon:var(--skin-icon-scheduled);}html[data-skin] [data-doubao-theme-icon=skills]{--doubao-theme-icon:var(--skin-icon-skills);}html[data-skin] [data-doubao-theme-icon=cloud]{--doubao-theme-icon:var(--skin-icon-cloud);}html[data-skin] [data-doubao-theme-icon=remote]{--doubao-theme-icon:var(--skin-icon-remote);}html[data-skin] [data-doubao-theme-icon=conversation]{--doubao-theme-icon:var(--skin-icon-conversation);}html[data-skin] [data-doubao-theme-icon=project]{--doubao-theme-icon:var(--skin-icon-project);}html[data-skin] [data-doubao-theme-icon=confirm]{--doubao-theme-icon:var(--skin-icon-confirm);}html[data-skin] [data-doubao-theme-icon=connector]{--doubao-theme-icon:var(--skin-icon-connector);}html[data-skin] [data-doubao-theme-icon=send]{--doubao-theme-icon:var(--skin-icon-send);}html[data-skin] [data-doubao-theme-icon=stop]{--doubao-theme-icon:var(--skin-icon-stop);}html[data-skin] [data-doubao-theme-icon=attach]{--doubao-theme-icon:var(--skin-icon-attach);}html[data-skin] [data-doubao-theme-icon=voice]{--doubao-theme-icon:var(--skin-icon-voice);}html[data-skin] [data-doubao-theme-icon=tools]{--doubao-theme-icon:var(--skin-icon-tools);}html[data-skin] [data-doubao-theme-icon=knowledge]{--doubao-theme-icon:var(--skin-icon-knowledge);}html[data-skin] [data-doubao-theme-icon=more-skills]{--doubao-theme-icon:var(--skin-icon-more-skills);}html[data-skin] [data-doubao-theme-icon=daily-work]{--doubao-theme-icon:var(--skin-icon-daily-work);}html[data-skin] [data-doubao-theme-icon=content-creation]{--doubao-theme-icon:var(--skin-icon-content-creation);}html[data-skin] [data-doubao-theme-icon=research]{--doubao-theme-icon:var(--skin-icon-research);}html[data-skin] [data-doubao-theme-icon=design]{--doubao-theme-icon:var(--skin-icon-design);}html[data-skin] [data-doubao-theme-icon=read-aloud]{--doubao-theme-icon:var(--skin-icon-read-aloud);}html[data-skin] [data-doubao-theme-icon=copy]{--doubao-theme-icon:var(--skin-icon-copy);}html[data-skin] [data-doubao-theme-icon=sidebar]{--doubao-theme-icon:var(--skin-icon-sidebar);}");
             css.push_str("html[data-skin] [data-doubao-theme-icon=search]{--doubao-theme-icon:var(--skin-icon-search);}");
+        }
+        if self.icons.has_raster()
+            || self
+                .variants
+                .light
+                .as_ref()
+                .is_some_and(|variant| variant.icons.has_raster())
+            || self
+                .variants
+                .dark
+                .as_ref()
+                .is_some_and(|variant| variant.icons.has_raster())
+        {
+            css.push_str("\nhtml[data-skin]{--skin-generated-icon-mode:full-color;}html[data-skin] svg[data-doubao-theme-icon]:not([data-doubao-theme-icon=main]){color:transparent!important;background:var(--doubao-theme-icon) center/contain no-repeat!important;background-color:transparent!important;mask:none!important;-webkit-mask:none!important;}html[data-skin] img[data-doubao-theme-icon]:not([data-doubao-theme-icon=main]){content:var(--doubao-theme-icon)!important;object-fit:contain!important;background:none!important;mask:none!important;-webkit-mask:none!important;}html[data-skin] [data-doubao-theme-icon=new-task],html[data-skin] [data-doubao-theme-icon=scheduled]{transform:translateY(-1px)!important;}");
         }
         if self.effects.motion.as_deref() == Some("none") {
             css.push_str("\nhtml[data-skin] *,html[data-skin] *::before,html[data-skin] *::after{animation-duration:0.001ms!important;animation-iteration-count:1!important;transition-duration:0.001ms!important;}");
@@ -1731,6 +2100,15 @@ impl Theme {
         let sidebar = opacity.sidebar;
         let layer = opacity.layer;
         let input = opacity.input;
+        let composer_surface = color_with_alpha(
+            self.composer.background.as_deref(),
+            if self.preview_mode == ThemeMode::Light {
+                "#ffffff"
+            } else {
+                "#232528"
+            },
+            input,
+        );
         let legacy_background = if self
             .background_spec
             .as_ref()
@@ -1741,13 +2119,131 @@ impl Theme {
             ""
         };
         format!(
-            "\nhtml:root[data-skin],html:root[data-skin] body{{--skin-surface-opacity:{surface};--N00:rgba(var(--N00-raw),{page})!important;--N50:rgba(var(--N50-raw),{sidebar})!important;--N100:rgba(var(--N100-raw),{layer})!important;--N200:rgba(var(--N200-raw),{layer})!important;--s-color-bg-body:rgba(var(--s-color-bg-body-raw),{page})!important;--s-color-bg-secondary:rgba(var(--s-color-bg-secondary-raw),{layer})!important;--s-color-bg-base:rgba(var(--s-color-bg-base-raw),{layer})!important;--s-color-bg-tertiary:rgba(var(--s-color-bg-tertiary-raw),{layer})!important;--s-color-bg-quaternary:rgba(var(--s-color-bg-quaternary-raw),{layer})!important;--s-color-bg-primary:rgba(var(--s-color-bg-primary-raw),{layer})!important;--s-color-bg-content-base:rgba(var(--s-color-bg-content-base-raw),{page})!important;--dbx-bg-base-web:rgba(var(--dbx-bg-base-web-raw),{layer})!important;--dbx-bg-base-2:rgba(var(--dbx-bg-base-2-raw),{layer})!important;--dbx-bg-base-5:rgba(var(--dbx-bg-base-5-raw),{layer})!important;--dbx-bg-body-web:rgba(var(--dbx-bg-body-web-raw),{sidebar})!important;--dbx-bg-body-white:rgba(var(--dbx-bg-body-white-raw),{sidebar})!important;--dbx-bg-body-mac:rgba(var(--dbx-bg-body-web-raw),{sidebar})!important;--chat-bg-color:rgba(var(--s-color-bg-body-raw),{page})!important;--chatarea-bg-color:rgba(var(--s-color-bg-body-raw),{page})!important;--g-msg-bubble-bg:rgba(var(--s-color-bg-float-raw),{surface})!important;--input-guidance-input-container-background:rgba(var(--s-color-bg-float-raw),{input})!important;--color-composebox-background:rgba(var(--s-color-bg-float-raw),{input})!important;--cr-composebox-background-color:rgba(var(--s-color-bg-float-raw),{input})!important;}}html[data-skin][data-skin-target=doubao-work] [class*=\"greeting-text-\"]{{overflow:clip!important;}}{legacy_background}"
+            "\nhtml:root[data-skin],html:root[data-skin] body{{--skin-surface-opacity:{surface};--N00:rgba(var(--N00-raw),{page})!important;--N50:rgba(var(--N50-raw),{sidebar})!important;--N100:rgba(var(--N100-raw),{layer})!important;--N200:rgba(var(--N200-raw),{layer})!important;--s-color-bg-body:rgba(var(--s-color-bg-body-raw),{page})!important;--s-color-bg-secondary:rgba(var(--s-color-bg-secondary-raw),{layer})!important;--s-color-bg-base:rgba(var(--s-color-bg-base-raw),{layer})!important;--s-color-bg-tertiary:rgba(var(--s-color-bg-tertiary-raw),{layer})!important;--s-color-bg-quaternary:rgba(var(--s-color-bg-quaternary-raw),{layer})!important;--s-color-bg-primary:rgba(var(--s-color-bg-primary-raw),{layer})!important;--s-color-bg-content-base:rgba(var(--s-color-bg-content-base-raw),{page})!important;--dbx-bg-base-web:rgba(var(--dbx-bg-base-web-raw),{layer})!important;--dbx-bg-base-2:rgba(var(--dbx-bg-base-2-raw),{layer})!important;--dbx-bg-base-5:rgba(var(--dbx-bg-base-5-raw),{layer})!important;--dbx-bg-body-web:rgba(var(--dbx-bg-body-web-raw),{sidebar})!important;--dbx-bg-body-white:rgba(var(--dbx-bg-body-white-raw),{sidebar})!important;--dbx-bg-body-mac:rgba(var(--dbx-bg-body-web-raw),{sidebar})!important;--chat-bg-color:rgba(var(--s-color-bg-body-raw),{page})!important;--chatarea-bg-color:rgba(var(--s-color-bg-body-raw),{page})!important;--g-msg-bubble-bg:rgba(var(--s-color-bg-float-raw),{surface})!important;--input-guidance-input-container-background:rgba(var(--s-color-bg-float-raw),{input})!important;--color-composebox-background:rgba(var(--s-color-bg-float-raw),{input})!important;--cr-composebox-background-color:rgba(var(--s-color-bg-float-raw),{input})!important;}}html[data-skin] [data-doubao-theme-composer]{{--input-guidance-input-container-background:{composer_surface}!important;background:{composer_surface}!important;}}html[data-skin][data-skin-target=doubao-work] [class*=\"greeting-text-\"]{{overflow:clip!important;}}{legacy_background}"
         )
+    }
+
+    pub(crate) fn bootstrap_js_for_target(&self, target: live::TargetApp) -> String {
+        let Some(package) = self.package.as_deref() else {
+            let css = self.injected_css_for(target);
+            return self.bootstrap_js(Some(&css), Some(target.id()));
+        };
+        let package_target = theme_target(target);
+        let appearances = package.appearances(package_target);
+        if appearances.is_empty() {
+            return javascript_failure(format!(
+                "theme {} does not support {}",
+                self.id,
+                target.id()
+            ));
+        }
+
+        let mut css = serde_json::Map::new();
+        let mut backgrounds = serde_json::Map::new();
+        let mut icons = serde_json::Map::new();
+        for appearance in appearances.iter().copied() {
+            let (meta, raw_css) =
+                match flattened_v3_meta(package, package_target, appearance, false) {
+                    Ok(value) => value,
+                    Err(error) => return javascript_failure(error),
+                };
+            let runtime = match theme_from_meta(package.root().to_path_buf(), meta, raw_css, None) {
+                Ok(theme) => theme,
+                Err(error) => return javascript_failure(error),
+            };
+            css.insert(
+                appearance.as_str().into(),
+                serde_json::Value::String(runtime.injected_css_for(target)),
+            );
+            backgrounds.insert(
+                appearance.as_str().into(),
+                runtime.background_runtime_json(target == live::TargetApp::WorkBuddy),
+            );
+            icons.insert(appearance.as_str().into(), runtime.runtime_icons_json());
+        }
+        let wrap = |values: serde_json::Map<String, serde_json::Value>| {
+            let mut payload = serde_json::Map::new();
+            payload.insert(
+                "__doubaoSkinByAppearance".into(),
+                serde_json::Value::Bool(true),
+            );
+            payload.extend(values);
+            serde_json::Value::Object(payload)
+        };
+        let mode = match appearances.as_slice() {
+            [ThemePackageAppearance::Light] => ThemeMode::Light,
+            [ThemePackageAppearance::Dark] => ThemeMode::Dark,
+            _ => ThemeMode::Auto,
+        };
+        self.render_bootstrap(
+            mode,
+            Some(target.id()),
+            wrap(css),
+            wrap(backgrounds),
+            wrap(icons),
+        )
+    }
+
+    fn runtime_icons_json(&self) -> serde_json::Value {
+        let light = self.variants.light.as_ref().map(|variant| &variant.icons);
+        let dark = self.variants.dark.as_ref().map(|variant| &variant.icons);
+        serde_json::json!({
+            "main": self.icons.main.is_some() || light.is_some_and(|icons| icons.main.is_some()) || dark.is_some_and(|icons| icons.main.is_some()),
+            "search": self.icons.search.is_some() || light.is_some_and(|icons| icons.search.is_some()) || dark.is_some_and(|icons| icons.search.is_some()),
+            "new-task": self.icons.new_task.is_some() || light.is_some_and(|icons| icons.new_task.is_some()) || dark.is_some_and(|icons| icons.new_task.is_some()),
+            "scheduled": self.icons.scheduled.is_some() || light.is_some_and(|icons| icons.scheduled.is_some()) || dark.is_some_and(|icons| icons.scheduled.is_some()),
+            "skills": self.icons.skills.is_some() || light.is_some_and(|icons| icons.skills.is_some()) || dark.is_some_and(|icons| icons.skills.is_some()),
+            "cloud": self.icons.cloud.is_some() || light.is_some_and(|icons| icons.cloud.is_some()) || dark.is_some_and(|icons| icons.cloud.is_some()),
+            "remote": self.icons.remote.is_some() || light.is_some_and(|icons| icons.remote.is_some()) || dark.is_some_and(|icons| icons.remote.is_some()),
+            "conversation": self.icons.conversation.is_some() || light.is_some_and(|icons| icons.conversation.is_some()) || dark.is_some_and(|icons| icons.conversation.is_some()),
+            "project": self.icons.project.is_some() || light.is_some_and(|icons| icons.project.is_some()) || dark.is_some_and(|icons| icons.project.is_some()),
+            "confirm": self.icons.confirm.is_some() || light.is_some_and(|icons| icons.confirm.is_some()) || dark.is_some_and(|icons| icons.confirm.is_some()),
+            "connector": self.icons.connector.is_some() || light.is_some_and(|icons| icons.connector.is_some()) || dark.is_some_and(|icons| icons.connector.is_some()),
+            "send": self.icons.send.is_some() || light.is_some_and(|icons| icons.send.is_some()) || dark.is_some_and(|icons| icons.send.is_some()),
+            "stop": self.icons.stop.is_some() || light.is_some_and(|icons| icons.stop.is_some()) || dark.is_some_and(|icons| icons.stop.is_some()),
+            "attach": self.icons.attach.is_some() || light.is_some_and(|icons| icons.attach.is_some()) || dark.is_some_and(|icons| icons.attach.is_some()),
+            "voice": self.icons.voice.is_some() || light.is_some_and(|icons| icons.voice.is_some()) || dark.is_some_and(|icons| icons.voice.is_some()),
+            "tools": self.icons.tools.is_some() || light.is_some_and(|icons| icons.tools.is_some()) || dark.is_some_and(|icons| icons.tools.is_some()),
+            "knowledge": self.icons.knowledge.is_some() || light.is_some_and(|icons| icons.knowledge.is_some()) || dark.is_some_and(|icons| icons.knowledge.is_some()),
+            "more-skills": self.icons.more_skills.is_some() || light.is_some_and(|icons| icons.more_skills.is_some()) || dark.is_some_and(|icons| icons.more_skills.is_some()),
+            "daily-work": self.icons.daily_work.is_some() || light.is_some_and(|icons| icons.daily_work.is_some()) || dark.is_some_and(|icons| icons.daily_work.is_some()),
+            "content-creation": self.icons.content_creation.is_some() || light.is_some_and(|icons| icons.content_creation.is_some()) || dark.is_some_and(|icons| icons.content_creation.is_some()),
+            "research": self.icons.research.is_some() || light.is_some_and(|icons| icons.research.is_some()) || dark.is_some_and(|icons| icons.research.is_some()),
+            "design": self.icons.design.is_some() || light.is_some_and(|icons| icons.design.is_some()) || dark.is_some_and(|icons| icons.design.is_some()),
+            "read-aloud": self.icons.read_aloud.is_some() || light.is_some_and(|icons| icons.read_aloud.is_some()) || dark.is_some_and(|icons| icons.read_aloud.is_some()),
+            "copy": self.icons.copy.is_some() || light.is_some_and(|icons| icons.copy.is_some()) || dark.is_some_and(|icons| icons.copy.is_some()),
+            "sidebar": self.icons.sidebar.is_some() || light.is_some_and(|icons| icons.sidebar.is_some()) || dark.is_some_and(|icons| icons.sidebar.is_some()),
+        })
+    }
+
+    fn render_bootstrap(
+        &self,
+        mode: ThemeMode,
+        target: Option<&str>,
+        css: serde_json::Value,
+        background: serde_json::Value,
+        icons: serde_json::Value,
+    ) -> String {
+        let skin = serde_json::to_string(&self.id).unwrap_or_else(|_| "\"theme\"".into());
+        let mode = serde_json::to_string(mode.as_str()).unwrap();
+        let target = target
+            .map(serde_json::to_string)
+            .transpose()
+            .unwrap_or(None)
+            .unwrap_or_else(|| "null".into());
+        JS_BOOTSTRAP
+            .replace("%SKIN%", &skin)
+            .replace("%MODE%", &mode)
+            .replace("%TARGET%", &target)
+            .replace("%CSS%", &css.to_string())
+            .replace("%BACKGROUND%", &background.to_string())
+            .replace("%ICONS%", &icons.to_string())
     }
 
     pub(crate) fn bootstrap_js(&self, css: Option<&str>, target: Option<&str>) -> String {
         let skin = serde_json::to_string(&self.id).unwrap_or_else(|_| "\"theme\"".into());
         let mode = serde_json::to_string(self.mode.as_str()).unwrap();
+        let workbuddy = target == Some("workbuddy");
         let target = target
             .map(serde_json::to_string)
             .transpose()
@@ -1758,7 +2254,7 @@ impl Theme {
             .transpose()
             .unwrap_or(None)
             .unwrap_or_else(|| "null".into());
-        let background = self.background_runtime_json().to_string();
+        let background = self.background_runtime_json(workbuddy).to_string();
         let light = self.variants.light.as_ref().map(|variant| &variant.icons);
         let dark = self.variants.dark.as_ref().map(|variant| &variant.icons);
         let icons = serde_json::json!({
@@ -1799,9 +2295,225 @@ impl Theme {
     }
 }
 
+fn workbuddy_palette_vars(
+    composer: &ComposerStyle,
+    content: &ContentStyle,
+    dark: bool,
+    opacity: Option<SurfaceOpacityProfile>,
+) -> String {
+    let fallback_main = if dark { "#16131f" } else { "#f8f9fb" };
+    let fallback_surface = if dark { "#221d30" } else { "#ffffff" };
+    let fallback_text = if dark { "#f2eff8" } else { "#202124" };
+    let fallback_muted = if dark {
+        "rgba(242,239,248,.58)"
+    } else {
+        "rgba(32,33,36,.56)"
+    };
+    let fallback_border = if dark {
+        "1px solid rgba(255,255,255,.14)"
+    } else {
+        "1px solid rgba(0,0,0,.12)"
+    };
+    let fallback_accent = if dark { "#9d7bea" } else { "#8d6fd3" };
+    let fallback_accent_text = if dark { "#0d0b16" } else { "#ffffff" };
+    let fallback_code = if dark { "#1e1a2e" } else { "#f0eef5" };
+    let fallback_code_header = if dark { "#2b2540" } else { "#e6e2ee" };
+    let value = |candidate: Option<&str>, fallback: &str| {
+        css_atom(candidate.unwrap_or(fallback), fallback).to_string()
+    };
+    let surface = |candidate: Option<&str>, fallback: &str, alpha: Option<f32>| {
+        let value = value(candidate, fallback);
+        let Some(alpha) = alpha else {
+            return value;
+        };
+        let Some(color) = parse_preview_color(&value) else {
+            return value;
+        };
+        format!(
+            "rgba({},{},{},{})",
+            (color.rgb >> 16) & 0xff,
+            (color.rgb >> 8) & 0xff,
+            color.rgb & 0xff,
+            alpha.clamp(0.0, 1.0)
+        )
+    };
+    let sidebar_shell_alpha = opacity.map(|value| (0.38 + value.surface * 0.48).clamp(0.58, 0.88));
+    let control_track_alpha = opacity.map(|value| (0.18 + value.surface * 0.55).clamp(0.38, 0.78));
+    let control_alpha = opacity.map(|value| (0.34 + value.surface * 0.58).clamp(0.58, 0.90));
+    let strong_alpha = opacity.map(|value| (0.60 + value.surface * 0.40).clamp(0.74, 1.0));
+    let radius = composer.radius.unwrap_or(18.0).clamp(0.0, 48.0);
+    [
+        (
+            "--wb-skin-main",
+            surface(
+                content.chat_background.as_deref(),
+                fallback_main,
+                opacity.map(|value| value.page),
+            ),
+        ),
+        (
+            "--wb-skin-sidebar",
+            surface(
+                content.assistant_message_background.as_deref(),
+                fallback_surface,
+                opacity.map(|value| value.sidebar),
+            ),
+        ),
+        (
+            "--wb-skin-sidebar-shell",
+            surface(
+                content.assistant_message_background.as_deref(),
+                fallback_surface,
+                sidebar_shell_alpha,
+            ),
+        ),
+        (
+            "--wb-skin-surface",
+            surface(
+                content.assistant_message_background.as_deref(),
+                fallback_surface,
+                opacity.map(|value| value.layer),
+            ),
+        ),
+        (
+            "--wb-skin-surface-strong",
+            surface(
+                content.assistant_message_background.as_deref(),
+                fallback_surface,
+                strong_alpha,
+            ),
+        ),
+        (
+            "--wb-skin-control-track",
+            surface(
+                content.assistant_message_background.as_deref(),
+                fallback_surface,
+                control_track_alpha,
+            ),
+        ),
+        (
+            "--wb-skin-control",
+            surface(
+                content.assistant_message_background.as_deref(),
+                fallback_surface,
+                control_alpha,
+            ),
+        ),
+        (
+            "--wb-skin-text",
+            value(content.assistant_message_text.as_deref(), fallback_text),
+        ),
+        (
+            "--wb-skin-composer",
+            surface(
+                composer.background.as_deref(),
+                fallback_surface,
+                opacity.map(|value| value.input),
+            ),
+        ),
+        (
+            "--wb-skin-composer-strong",
+            surface(
+                composer.background.as_deref(),
+                fallback_surface,
+                strong_alpha,
+            ),
+        ),
+        (
+            "--wb-skin-composer-text",
+            value(composer.text_color.as_deref(), fallback_text),
+        ),
+        (
+            "--wb-skin-muted",
+            value(composer.placeholder_color.as_deref(), fallback_muted),
+        ),
+        (
+            "--wb-skin-border",
+            value(composer.border.as_deref(), fallback_border),
+        ),
+        (
+            "--wb-skin-border-color",
+            value(composer.caret_color.as_deref(), fallback_accent),
+        ),
+        (
+            "--wb-skin-accent",
+            value(
+                composer
+                    .send_button_background
+                    .as_deref()
+                    .or(composer.caret_color.as_deref()),
+                fallback_accent,
+            ),
+        ),
+        (
+            "--wb-skin-accent-text",
+            value(
+                composer.send_button_icon_color.as_deref(),
+                fallback_accent_text,
+            ),
+        ),
+        (
+            "--wb-skin-code",
+            surface(
+                content.code_background.as_deref(),
+                fallback_code,
+                opacity.map(|value| value.layer),
+            ),
+        ),
+        (
+            "--wb-skin-code-header",
+            surface(
+                content.code_header_background.as_deref(),
+                fallback_code_header,
+                opacity.map(|value| value.layer),
+            ),
+        ),
+        (
+            "--wb-skin-selection",
+            value(content.selection_color.as_deref(), "rgba(141,111,211,.24)"),
+        ),
+        (
+            "--wb-skin-scrollbar",
+            value(content.scrollbar_color.as_deref(), "rgba(141,111,211,.28)"),
+        ),
+        (
+            "--wb-skin-scrollbar-hover",
+            value(
+                content.scrollbar_hover_color.as_deref(),
+                "rgba(141,111,211,.46)",
+            ),
+        ),
+        ("--wb-skin-radius", format!("{radius}px")),
+    ]
+    .into_iter()
+    .map(|(name, value)| format!("{name}:{value};"))
+    .collect()
+}
+
+fn color_with_alpha(candidate: Option<&str>, fallback: &str, alpha: f32) -> String {
+    let value = css_atom(candidate.unwrap_or(fallback), fallback);
+    let Some(color) = parse_preview_color(value) else {
+        return value.to_string();
+    };
+    format!(
+        "rgba({},{},{},{})",
+        (color.rgb >> 16) & 0xff,
+        (color.rgb >> 8) & 0xff,
+        color.rgb & 0xff,
+        alpha.clamp(0.0, 1.0)
+    )
+}
+
+fn javascript_failure(message: impl AsRef<str>) -> String {
+    let message =
+        serde_json::to_string(message.as_ref()).unwrap_or_else(|_| "\"theme error\"".into());
+    format!("(function(){{throw new Error({message});}})();")
+}
+
 const JS_BOOTSTRAP: &str = r#"(function(){
 if(window.__doubaoSkinRuntime&&typeof window.__doubaoSkinRuntime.destroy==='function')window.__doubaoSkinRuntime.destroy();
 var SKIN=%SKIN%,MODE=%MODE%,TARGET=%TARGET%,CSS=%CSS%,BG=%BACKGROUND%,ICONS=%ICONS%;
+var CSS_SOURCE=CSS,BG_SOURCE=BG,ICONS_SOURCE=ICONS;
 var media=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)');
 var observer=null,timer=null,pending=null,original={root:null,body:null};
 function attrState(el,name){return {had:el.hasAttribute(name),value:el.getAttribute(name)};}
@@ -1813,10 +2525,16 @@ function rememberOriginal(){
 }
 function appMode(){
   var e=document.documentElement,b=document.body,values=[e&&e.getAttribute('data-theme'),e&&e.getAttribute('theme-mode'),b&&b.getAttribute('theme-mode'),b&&b.getAttribute('data-theme')];
+  if(TARGET==='workbuddy'){
+    var classes=((e&&e.className)||'')+' '+((b&&b.className)||'');
+    if(/(^|\s)(dark|cb-dark|vscode-dark)(\s|$)/.test(classes))return 'dark';
+    if(/(^|\s)(light|cb-light|vscode-light)(\s|$)/.test(classes))return 'light';
+  }
   for(var i=0;i<values.length;i++){if(values[i]==='dark'||values[i]==='light')return values[i];}
   return media&&media.matches?'dark':'light';
 }
 function chosenMode(){return MODE==='auto'?appMode():MODE;}
+function appearanceValue(value,mode){if(value&&value.__doubaoSkinByAppearance===true)return Object.prototype.hasOwnProperty.call(value,mode)?value[mode]:null;return value;}
 function iconTarget(el){if(el.matches&&el.matches('svg,img'))return el;return el.querySelector&&el.querySelector('svg,img');}
 function markComposerIcons(){
   document.querySelectorAll('[data-doubao-theme-composer]').forEach(function(el){el.removeAttribute('data-doubao-theme-composer');});
@@ -1861,6 +2579,8 @@ function ensureBackdrop(){
   if(!BG){if(old)old.remove();return;}
   var layer=old;
   if(!layer){layer=document.createElement('div');layer.id='doubao-skin-backdrop';layer.setAttribute('aria-hidden','true');}
+  layer.style.backgroundImage='none';
+  if(BG.kind!=='video'){var stale=layer.querySelector('video');if(stale)stale.remove();}
   if(BG.kind==='image')layer.style.backgroundImage='url("'+BG.source+'")';
   if(BG.kind==='gradient')layer.style.backgroundImage=BG.gradient||'none';
   if(BG.kind==='video'){
@@ -1875,13 +2595,15 @@ function ensureBackdrop(){
 function apply(){
   var selected=chosenMode(),e=document.documentElement,b=document.body;
   if(!e)return;
+  CSS=appearanceValue(CSS_SOURCE,selected);BG=appearanceValue(BG_SOURCE,selected);ICONS=appearanceValue(ICONS_SOURCE,selected)||{};
   rememberOriginal();
-  if(MODE!=='auto'&&e.getAttribute('data-theme')!==selected)e.setAttribute('data-theme',selected);
+  var forceTheme=MODE!=='auto'||TARGET==='workbuddy';
+  if(forceTheme&&e.getAttribute('data-theme')!==selected)e.setAttribute('data-theme',selected);
   if(e.getAttribute('data-skin')!==SKIN)e.setAttribute('data-skin',SKIN);
   if(TARGET&&e.getAttribute('data-skin-target')!==TARGET)e.setAttribute('data-skin-target',TARGET);
-  if(MODE!=='auto'&&b&&b.getAttribute('theme-mode')!==selected)b.setAttribute('theme-mode',selected);
+  if(forceTheme&&b&&b.getAttribute('theme-mode')!==selected)b.setAttribute('theme-mode',selected);
   if(CSS!==null&&document.head){var s=document.getElementById('doubao-skin-style');if(!s){s=document.createElement('style');s.id='doubao-skin-style';s.setAttribute('nonce','argus-csp-token');document.head.appendChild(s);}if(s.textContent!==CSS)s.textContent=CSS;}
-  ensureBackdrop();markIcons();
+  ensureBackdrop();if(TARGET!=='workbuddy')markIcons();
 }
 function schedule(){if(pending!==null)return;pending=setTimeout(function(){pending=null;apply();},0);}
 function start(){if(observer||!document.documentElement)return;apply();observer=new MutationObserver(schedule);observer.observe(document.documentElement,{attributes:true,childList:true,subtree:true,attributeFilter:['data-theme','data-skin','data-skin-target','theme-mode','aria-label','title']});}
@@ -1894,8 +2616,8 @@ function destroy(){
   if(window.__doubaoSkinTimer===timer)window.__doubaoSkinTimer=null;
   var e=document.documentElement,b=document.body,style=document.getElementById('doubao-skin-style'),backdrop=document.getElementById('doubao-skin-backdrop');
   if(style)style.remove();if(backdrop)backdrop.remove();
-  if(original.root){restoreAttr(e,'data-skin',original.root.dataSkin);restoreAttr(e,'data-skin-target',original.root.dataSkinTarget);if(MODE!=='auto')restoreAttr(e,'data-theme',original.root.dataTheme);}
-  if(original.body&&MODE!=='auto')restoreAttr(b,'theme-mode',original.body.themeMode);
+  if(original.root){restoreAttr(e,'data-skin',original.root.dataSkin);restoreAttr(e,'data-skin-target',original.root.dataSkinTarget);if(MODE!=='auto'||TARGET==='workbuddy')restoreAttr(e,'data-theme',original.root.dataTheme);}
+  if(original.body&&(MODE!=='auto'||TARGET==='workbuddy'))restoreAttr(b,'theme-mode',original.body.themeMode);
   document.querySelectorAll('[data-doubao-theme-icon]').forEach(function(el){el.removeAttribute('data-doubao-theme-icon');});
   document.querySelectorAll('[data-doubao-theme-composer]').forEach(function(el){el.removeAttribute('data-doubao-theme-composer');});
   if(window.__doubaoSkinRuntime&&window.__doubaoSkinRuntime.destroy===destroy)delete window.__doubaoSkinRuntime;
@@ -1946,6 +2668,10 @@ fn appearance_variant_css(mode: &str, variant: &AppearanceVariant) -> String {
             variant.composer.background.as_deref(),
         ),
         (
+            "--doubao-skin-runtime-composer-background",
+            variant.composer.background.as_deref(),
+        ),
+        (
             "--color-composebox-background",
             variant.composer.background.as_deref(),
         ),
@@ -1958,7 +2684,15 @@ fn appearance_variant_css(mode: &str, variant: &AppearanceVariant) -> String {
             variant.composer.border.as_deref(),
         ),
         (
+            "--doubao-skin-runtime-composer-border",
+            variant.composer.border.as_deref(),
+        ),
+        (
             "--input-guidance-input-editor-color",
+            variant.composer.text_color.as_deref(),
+        ),
+        (
+            "--doubao-skin-runtime-composer-text",
             variant.composer.text_color.as_deref(),
         ),
         (
@@ -1967,6 +2701,10 @@ fn appearance_variant_css(mode: &str, variant: &AppearanceVariant) -> String {
         ),
         (
             "--input-guidance-input-editor-placeholder-color",
+            variant.composer.placeholder_color.as_deref(),
+        ),
+        (
+            "--doubao-skin-runtime-composer-placeholder",
             variant.composer.placeholder_color.as_deref(),
         ),
         (
@@ -2211,6 +2949,48 @@ impl ThemeIcons {
             || self.copy.is_some()
             || self.sidebar.is_some()
     }
+
+    fn has_raster(&self) -> bool {
+        [
+            &self.main,
+            &self.search,
+            &self.new_task,
+            &self.scheduled,
+            &self.skills,
+            &self.cloud,
+            &self.remote,
+            &self.conversation,
+            &self.project,
+            &self.confirm,
+            &self.connector,
+            &self.send,
+            &self.stop,
+            &self.attach,
+            &self.voice,
+            &self.tools,
+            &self.knowledge,
+            &self.more_skills,
+            &self.daily_work,
+            &self.content_creation,
+            &self.research,
+            &self.design,
+            &self.read_aloud,
+            &self.copy,
+            &self.sidebar,
+        ]
+        .into_iter()
+        .flatten()
+        .any(|path| {
+            path.extension()
+                .and_then(|extension| extension.to_str())
+                .is_some_and(|extension| {
+                    matches!(
+                        extension.to_ascii_lowercase().as_str(),
+                        "png" | "jpg" | "jpeg" | "webp" | "gif"
+                    )
+                })
+        })
+    }
 }
 
 fn css_atom<'a>(value: &'a str, fallback: &'a str) -> &'a str {
@@ -2380,15 +3160,138 @@ pub fn load(themes_dir: &Path, id_or_path: &str) -> Result<Theme, String> {
     };
     let meta_text = fs::read_to_string(path.join("theme.json"))
         .map_err(|e| format!("cannot read {}: {e}", path.join("theme.json").display()))?;
+    let manifest: serde_json::Value =
+        serde_json::from_str(&meta_text).map_err(|e| format!("bad theme.json: {e}"))?;
+    if manifest
+        .get("schemaVersion")
+        .and_then(serde_json::Value::as_u64)
+        == Some(3)
+    {
+        let package =
+            theme_package::validate_theme_package(&path).map_err(|error| error.to_string())?;
+        return theme_from_v3_package(package);
+    }
     let meta: ThemeMeta =
         serde_json::from_str(&meta_text).map_err(|e| format!("bad theme.json: {e}"))?;
+    let css = fs::read_to_string(path.join("theme.css"))
+        .map_err(|e| format!("cannot read theme.css: {e}"))?;
+    theme_from_meta(path, meta, css, None)
+}
+
+fn theme_from_v3_package(package: ValidatedThemePackage) -> Result<Theme, String> {
+    let target = [
+        ThemeTarget::DoubaoWork,
+        ThemeTarget::Doubao,
+        ThemeTarget::WorkBuddy,
+    ]
+    .into_iter()
+    .find(|target| package.support(*target).is_supported())
+    .ok_or_else(|| "v3 theme has no supported target".to_string())?;
+    let appearance = preview_appearance_for(&package, target)
+        .ok_or_else(|| format!("v3 theme does not resolve for {target}"))?;
+    let (meta, css) = flattened_v3_meta(&package, target, appearance, true)?;
+    theme_from_meta(
+        package.root().to_path_buf(),
+        meta,
+        css,
+        Some(Box::new(package)),
+    )
+}
+
+fn flattened_v3_meta(
+    package: &ValidatedThemePackage,
+    target: ThemeTarget,
+    appearance: ThemePackageAppearance,
+    include_variants: bool,
+) -> Result<(ThemeMeta, String), String> {
+    let resolved = package
+        .resolve(target, appearance)
+        .map_err(|error| error.to_string())?;
+    let mut flat = package
+        .manifest()
+        .as_object()
+        .cloned()
+        .ok_or_else(|| "v3 theme manifest must be an object".to_string())?;
+    flat.remove("shared");
+    flat.remove("targets");
+    flat.remove("provenance");
+    for (key, value) in resolved
+        .visual()
+        .as_object()
+        .ok_or_else(|| "resolved v3 visual must be an object".to_string())?
+    {
+        flat.insert(key.clone(), value.clone());
+    }
+    if let Some(target_preview) = package
+        .manifest()
+        .get("targets")
+        .and_then(|targets| targets.get(target.as_str()))
+        .and_then(|target| target.get("preview"))
+    {
+        flat.insert("preview".into(), target_preview.clone());
+    }
+    let appearances = package.appearances(target);
+    let appearance_name = if !include_variants {
+        match appearance {
+            ThemePackageAppearance::Light => "light-only",
+            ThemePackageAppearance::Dark => "dark-only",
+        }
+    } else {
+        match appearances.as_slice() {
+            [ThemePackageAppearance::Light] => "light-only",
+            [ThemePackageAppearance::Dark] => "dark-only",
+            _ => "both",
+        }
+    };
+    flat.insert(
+        "appearance".into(),
+        serde_json::Value::String(appearance_name.into()),
+    );
+
+    if include_variants && appearances.len() == 2 {
+        let mut variants = serde_json::Map::new();
+        for current in appearances {
+            let current_visual = package
+                .resolve(target, current)
+                .map_err(|error| error.to_string())?;
+            let mut variant = serde_json::Map::new();
+            for field in ["composer", "content", "icons"] {
+                if let Some(value) = current_visual.visual().get(field) {
+                    variant.insert(field.into(), value.clone());
+                }
+            }
+            variants.insert(current.as_str().into(), serde_json::Value::Object(variant));
+        }
+        flat.insert("variants".into(), serde_json::Value::Object(variants));
+    } else {
+        flat.remove("variants");
+    }
+
+    let meta: ThemeMeta = serde_json::from_value(serde_json::Value::Object(flat))
+        .map_err(|error| format!("cannot bridge resolved v3 visual into runtime: {error}"))?;
+    let mut css = String::new();
+    for path in &resolved.css_files {
+        let source = fs::read_to_string(path)
+            .map_err(|error| format!("cannot read resolved CSS {}: {error}", path.display()))?;
+        css.push_str(&source);
+        if !source.ends_with('\n') {
+            css.push('\n');
+        }
+    }
+    Ok((meta, css))
+}
+
+fn theme_from_meta(
+    path: PathBuf,
+    meta: ThemeMeta,
+    css: String,
+    package: Option<Box<ValidatedThemePackage>>,
+) -> Result<Theme, String> {
     let appearance_is_explicit = meta.appearance.is_some();
     let appearance = meta
         .appearance
         .unwrap_or_else(|| ThemeAppearance::from_legacy_mode(meta.mode));
     let mode = appearance.mode();
-    let css = fs::read_to_string(path.join("theme.css"))
-        .map_err(|e| format!("cannot read theme.css: {e}"))?;
     let icon = path.join("icon.icns");
     let schema_version = meta.schema_version;
     let preview_image = meta
@@ -2610,6 +3513,7 @@ pub fn load(themes_dir: &Path, id_or_path: &str) -> Result<Theme, String> {
         variants,
         effects,
         path,
+        package,
     })
 }
 
@@ -2965,18 +3869,16 @@ fn download_file(
 }
 
 fn find_packaged_theme_root(staging: &Path) -> Result<PathBuf, String> {
-    if staging.join("theme.json").is_file() && staging.join("theme.css").is_file() {
+    if staging.join("theme.json").is_file() {
         return Ok(staging.to_path_buf());
     }
     let mut roots = fs::read_dir(staging)
         .map_err(|_| "无法读取解压后的主题包".to_string())?
         .filter_map(|entry| entry.ok().map(|entry| entry.path()))
-        .filter(|path| {
-            path.is_dir() && path.join("theme.json").is_file() && path.join("theme.css").is_file()
-        })
+        .filter(|path| path.is_dir() && path.join("theme.json").is_file())
         .collect::<Vec<_>>();
     if roots.len() != 1 {
-        return Err("主题包必须包含一个 theme.json 和 theme.css".into());
+        return Err("主题包必须包含且只能包含一个主题根目录和 theme.json".into());
     }
     Ok(roots.remove(0))
 }
@@ -3021,6 +3923,132 @@ mod tests {
     use zip::write::SimpleFileOptions;
 
     static THEME_STORE_ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    #[test]
+    fn bundled_v3_theme_declares_all_targets_explicitly() {
+        let themes = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../themes");
+        let theme = load(&themes, "doubao-snack-giggle").expect("v3 theme");
+        assert_eq!(theme.schema_version, 3);
+        for target in [
+            live::TargetApp::Doubao,
+            live::TargetApp::DoubaoWork,
+            live::TargetApp::WorkBuddy,
+        ] {
+            let support = theme.target_support(target);
+            assert!(
+                support.is_supported(),
+                "{} should be supported",
+                target.id()
+            );
+            assert_eq!(support.declaration, SupportDeclaration::Explicit);
+        }
+    }
+
+    #[test]
+    fn workbuddy_background_theme_exposes_artwork_and_surface_opacity() {
+        let themes = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../themes");
+        let theme = load(&themes, "gallery-whale-maid").expect("whale theme");
+        assert_eq!(theme.surface_opacity, Some(0.68));
+
+        let css = theme.injected_css_for(live::TargetApp::WorkBuddy);
+        for expected in [
+            "--wb-skin-main:rgba(189,153,153,0.374);",
+            "--wb-skin-sidebar:rgba(255,255,255,0.51);",
+            "--wb-skin-composer:rgba(255,255,255,0.76);",
+            "--wb-skin-blur:0px;",
+            ".teams-container :has(> .teams-content-wrapper){background:transparent!important;}",
+        ] {
+            assert!(css.contains(expected), "missing WorkBuddy rule {expected}");
+        }
+        assert!(css.contains(
+            "html[data-skin][data-skin-target=workbuddy],html[data-skin][data-skin-target=workbuddy] body{background:transparent!important;"
+        ));
+    }
+
+    #[test]
+    fn workbuddy_surface_roles_avoid_nested_panels_and_weak_controls() {
+        let themes = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../themes");
+        let theme = load(&themes, "gallery-whale-maid").expect("whale theme");
+        let css = theme.injected_css_for(live::TargetApp::WorkBuddy);
+
+        for expected in [
+            "--wb-skin-control-track:rgba(255,255,255,0.554);",
+            "--wb-skin-control:rgba(255,255,255,0.734",
+            "--wb-skin-surface-strong:rgba(255,255,255,0.872",
+            "--wb-skin-composer-strong:rgba(255,255,255,0.872",
+            ".wb-scene-tabs[role=tablist]{background:var(--wb-skin-control-track)!important;",
+            ".wb-scene-tabs__pill[aria-selected=false]{background:transparent!important;",
+            ".wb-scene-tabs__pill[aria-selected=true]{background:var(--wb-skin-surface-strong)!important;",
+            "section.wb-home-composer:has([role=textbox]){background:transparent!important;",
+            ".wb-home-composer__input-slot{background:var(--wb-skin-composer-strong)!important;",
+            ".wb-home-composer :has(> div > [role=textbox]){background:transparent!important;",
+            ".quick-actions__item{background:var(--wb-skin-control)!important;",
+        ] {
+            assert!(css.contains(expected), "missing WorkBuddy rule {expected}");
+        }
+    }
+
+    #[test]
+    fn workbuddy_sidebar_uses_one_shell_and_transparent_navigation_rows() {
+        let themes = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../themes");
+        let theme = load(&themes, "gallery-whale-maid").expect("whale theme");
+        let css = theme.injected_css_for(live::TargetApp::WorkBuddy);
+
+        for expected in [
+            "--wb-skin-sidebar-shell:rgba(255,255,255,0.706",
+            ".conversation-sidebar{--wb-skin-sidebar-accent:color-mix(in srgb,var(--wb-skin-text) 74%,var(--wb-skin-accent));",
+            ":is(.conversation-list,.conversation-list-header,.conversation-list-content){background:transparent!important;",
+            ".conversation-list-tab-button[aria-selected=false]{background:transparent!important;",
+            ".conversation-list-tabs .conversation-list-tab-button[aria-selected=true]{background-color:var(--wb-skin-surface-strong)!important;",
+            ".conversation-section-label{min-height:28px!important;",
+            ".collapsible-section-header{min-height:32px!important;",
+            ".conversation-sidebar .conversation-list .conversation-agent-card :is(span,p){color:var(--wb-skin-text)!important;",
+            ".conversation-sidebar .wb-button--ghost{background:transparent!important;",
+        ] {
+            assert!(css.contains(expected), "missing WorkBuddy rule {expected}");
+        }
+    }
+
+    #[test]
+    fn workbuddy_sidebar_uses_airy_theme_driven_visual_rhythm() {
+        let themes = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../themes");
+        let theme = load(&themes, "gallery-whale-maid").expect("whale theme");
+        let css = theme.injected_css_for(live::TargetApp::WorkBuddy);
+
+        for expected in [
+            ".conversation-sidebar{--wb-skin-sidebar-accent:color-mix(in srgb,var(--wb-skin-text) 74%,var(--wb-skin-accent));",
+            "background-color:color-mix(in srgb,var(--wb-skin-sidebar-shell) 90%,transparent)!important;",
+            ".conversation-list-tab-button{min-height:34px!important;",
+            ".conversation-list-tabs .conversation-list-tab-button[aria-selected=true]::after{content:\"\";",
+            ".conversation-section-label::after{content:\"\";",
+            ".collapsible-section-header{min-height:32px!important;margin:5px 8px 2px!important;padding-inline:10px!important;background:transparent!important;",
+            ".daily-checkin{opacity:.88!important;border-radius:12px!important;overflow:hidden!important;",
+        ] {
+            assert!(css.contains(expected), "missing WorkBuddy rule {expected}");
+        }
+    }
+
+    #[test]
+    fn workbuddy_chrome_uses_soft_edges_instead_of_hard_outlines() {
+        let themes = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../themes");
+        let theme = load(&themes, "gallery-whale-maid").expect("whale theme");
+        let css = theme.injected_css_for(live::TargetApp::WorkBuddy);
+
+        for expected in [
+            "border-right:1px solid color-mix(in srgb,var(--wb-skin-sidebar-accent) 8%,transparent)!important;",
+            "box-shadow:0 3px 10px color-mix(in srgb,var(--wb-skin-sidebar-accent) 7%,transparent)!important;",
+            "box-shadow:0 0 0 2px color-mix(in srgb,var(--wb-skin-sidebar-accent) 6%,transparent);",
+            "box-shadow:inset 1px 0 0 color-mix(in srgb,var(--wb-skin-sidebar-accent) 10%,transparent)!important;",
+            ".wb-scene-tabs[role=tablist]{background:var(--wb-skin-control-track)!important;border:1px solid color-mix(in srgb,var(--wb-skin-accent) 12%,transparent)!important;",
+            ".quick-actions__item{background:var(--wb-skin-control)!important;border-color:color-mix(in srgb,var(--wb-skin-accent) 14%,transparent)!important;",
+        ] {
+            assert!(css.contains(expected), "missing WorkBuddy rule {expected}");
+        }
+
+        assert!(!css.contains(
+            "box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--wb-skin-sidebar-accent) 13%,transparent)"
+        ));
+    }
 
     #[test]
     fn platform_directories_keep_product_data_below_the_system_base() {
@@ -3142,12 +4170,19 @@ mod tests {
                 "description": "测试",
                 "packageUrl": "/themes/packages/custom-theme.zip",
                 "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                "thumbnailUrl": "custom-theme.card.jpg"
+                "thumbnailUrl": "custom-theme.card.jpg",
+                "schemaVersion": 3,
+                "targets": {
+                  "doubao": {"supportLevel":"shared","declaration":"explicit"},
+                  "workbuddy": {"supportLevel":"unsupported","declaration":"explicit"}
+                }
               }]
             }"#,
         )
         .unwrap();
         validate_store_catalog(&catalog).unwrap();
+        assert!(catalog.themes[0].supports_target(live::TargetApp::Doubao));
+        assert!(!catalog.themes[0].supports_target(live::TargetApp::WorkBuddy));
         assert_eq!(
             resolve_store_url(
                 "https://example.com/themes/catalog.json",
@@ -3169,10 +4204,10 @@ mod tests {
     #[test]
     fn loads_bundled_themes() {
         let themes = list(&default_themes_dir());
-        assert!(themes.len() >= 4, "expected bundled themes, got {themes:?}");
+        assert_eq!(themes.len(), 34, "expected 34 bundled themes");
         assert!(
-            themes.iter().all(|theme| theme.schema_version == 2),
-            "all bundled themes should use the v2 manifest"
+            themes.iter().all(|theme| theme.schema_version == 3),
+            "all bundled themes should use the v3 manifest"
         );
         for theme in themes.iter().filter(|theme| theme.id != "pure-dark") {
             assert!(
@@ -3180,28 +4215,27 @@ mod tests {
                     && theme.layout.chat_max_width.is_some()
                     && theme.composer.background.is_some()
                     && theme.content.assistant_message_text.is_some(),
-                "{} is missing a v2 theme section",
+                "{} is missing a v3 theme section",
                 theme.id
             );
         }
         for theme in &themes {
-            let expected_version = if theme.id == "doubao-snack-giggle" {
-                "1.1.1"
-            } else if matches!(
-                theme.id.as_str(),
-                "gugugaga-administrator" | "gugugaga-snowfield"
-            ) {
-                "1.2.0"
-            } else if matches!(
-                theme.id.as_str(),
-                "doubao-dessert-giggle" | "teyvat-dandelion-wind" | "teyvat-liyue-lanterns"
-            ) {
-                "1.1.0"
-            } else {
-                "1.0.0"
-            };
+            for target in [
+                live::TargetApp::Doubao,
+                live::TargetApp::DoubaoWork,
+                live::TargetApp::WorkBuddy,
+            ] {
+                let support = theme.target_support(target);
+                assert!(
+                    support.is_supported(),
+                    "{} should support {}",
+                    theme.id,
+                    target.id()
+                );
+                assert_eq!(support.declaration, SupportDeclaration::Explicit);
+            }
             assert_eq!(
-                theme.version, expected_version,
+                theme.version, "2.0.0",
                 "{} needs a package version",
                 theme.id
             );
@@ -3269,7 +4303,9 @@ mod tests {
             );
             let snippet = String::from_utf8(theme.snippet()).unwrap();
             assert!(snippet.contains("MODE=\"auto\""));
-            assert!(snippet.contains("html{color-scheme:light dark}"));
+            assert!(snippet.contains("__doubaoSkinByAppearance"));
+            assert!(snippet.contains("html{color-scheme:light}"));
+            assert!(snippet.contains("html{color-scheme:dark}"));
             if theme.background_spec.is_some() {
                 assert!(
                     theme.surface_opacity.is_some(),
@@ -3291,10 +4327,13 @@ mod tests {
         let snippet = String::from_utf8(violet.snippet()).unwrap();
         assert!(snippet.contains("nonce=\"argus-csp-token\""));
         assert!(snippet.contains("var SKIN=\"violet-night\",MODE=\"auto\""));
-        assert!(snippet.contains("html{color-scheme:light dark}"));
-        assert!(snippet.contains("--s-color-bg-body:#16131f"));
-        assert!(!violet.swatches(4).is_empty());
-        assert_eq!(violet.swatches(1)[0], 0x0d0b16);
+        assert!(snippet.contains("__doubaoSkinByAppearance"));
+        assert!(snippet.contains("html{color-scheme:light}"));
+        assert!(snippet.contains("html{color-scheme:dark}"));
+        assert!(snippet.contains("#16131f"));
+        let swatches = violet.swatches(64);
+        assert!(!swatches.is_empty());
+        assert!(swatches.contains(&0x16131f));
         let pv = violet.preview_colors();
         assert_eq!(pv.sidebar.rgb, 0x1f1a2c);
         assert_eq!(pv.main.rgb, 0x16131f);
@@ -3361,9 +4400,7 @@ mod tests {
         assert!(snack_preview.icons.main.is_some());
         assert!(snack_preview.icons.daily_work.is_some());
         assert!(snack_preview.icons.read_aloud.is_some());
-        assert!(snack
-            .effective_css()
-            .contains("background-image:var(--skin-bg-image)!important"));
+        assert!(snack.effective_css().contains("#doubao-skin-backdrop"));
 
         let dessert = themes
             .iter()
@@ -3470,11 +4507,10 @@ mod tests {
             ),
             "the runtime profile needs equal-or-higher specificity than appearance variants"
         );
+        assert!(css.contains("#doubao-skin-backdrop"));
         assert!(
-            css.contains(
-                "html:root[data-skin] body{background-image:var(--skin-bg-image)!important;}"
-            ),
-            "legacy background themes must not retain a second fixed dark gradient"
+            !css.contains("linear-gradient"),
+            "v3 background themes must not retain a second fixed gradient"
         );
         for expected in [
             "--s-color-bg-body:rgba(var(--s-color-bg-body-raw),0.22000001)!important",
@@ -3595,9 +4631,7 @@ mod tests {
                 "icon styling must target only the marked glyph, not its button or trailing chevron"
             );
             assert!(
-                css.contains(&format!(
-                    "html[data-skin=\"{id}\"] [data-doubao-theme-icon=new-task],html[data-skin=\"{id}\"] [data-doubao-theme-icon=scheduled]{{transform:translateY(-1px)!important;}}"
-                )),
+                css.contains("html[data-skin] [data-doubao-theme-icon=new-task]"),
                 "{id} must optically raise the two top navigation icons"
             );
         }
@@ -3652,9 +4686,7 @@ mod tests {
                 "icon styling must target only the marked glyph, not its button or trailing chevron"
             );
             assert!(
-                css.contains(&format!(
-                    "html[data-skin=\"{id}\"] [data-doubao-theme-icon=new-task],html[data-skin=\"{id}\"] [data-doubao-theme-icon=scheduled]{{transform:translateY(-1px)!important;}}"
-                )),
+                css.contains("html[data-skin] [data-doubao-theme-icon=new-task]"),
                 "{id} must optically raise the two top navigation icons"
             );
         }
@@ -3668,7 +4700,8 @@ mod tests {
         assert!(js.contains("observer.disconnect()"));
         assert!(js.contains("removeEventListener('DOMContentLoaded',start)"));
         assert!(js.contains("media.removeEventListener('change',schedule)"));
-        assert!(js.contains("MODE!=='auto'&&e.getAttribute('data-theme')"));
+        assert!(js.contains("var forceTheme=MODE!=='auto'||TARGET==='workbuddy'"));
+        assert!(js.contains("forceTheme&&e.getAttribute('data-theme')"));
         assert!(js.contains("restoreAttr(e,'data-theme'"));
         assert!(js.contains("doubao-skin-style"));
         assert!(js.contains("doubao-skin-backdrop"));
@@ -3857,6 +4890,18 @@ mod tests {
         assert!(js.contains("data-doubao-theme-composer"));
         assert!(js.contains("dataSkin:attrState(e,'data-skin')"));
         assert!(js.contains("dataSkinTarget:attrState(e,'data-skin-target')"));
+
+        let mut legacy = theme.clone();
+        legacy.css.push_str("/* WORKBUDDY_RAW_CSS_SENTINEL */");
+        let workbuddy = legacy.live_js_for(live::TargetApp::WorkBuddy);
+        let doubao_work = legacy.live_js_for(live::TargetApp::DoubaoWork);
+        assert!(workbuddy.contains("html[data-skin][data-skin-target=workbuddy]"));
+        assert!(workbuddy.contains(".conversation-list"));
+        assert!(workbuddy.contains(".wb-home-composer"));
+        assert!(!workbuddy.contains("WORKBUDDY_RAW_CSS_SENTINEL"));
+        assert!(doubao_work.contains("WORKBUDDY_RAW_CSS_SENTINEL"));
+        assert!(workbuddy.contains("if(TARGET!=='workbuddy')markIcons();"));
+        assert!(!workbuddy.contains("data:image/svg+xml"));
         assert!(js.contains("restoreAttr(e,'data-skin',original.root.dataSkin)"));
         assert!(js.contains("restoreAttr(e,'data-skin-target',original.root.dataSkinTarget)"));
         assert!(

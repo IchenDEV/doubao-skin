@@ -39,6 +39,11 @@ impl SkinApp {
             cx.stop_propagation();
             return;
         }
+        if modifiers.platform && key == "3" {
+            self.switch_target(live::TargetApp::WorkBuddy, cx);
+            cx.stop_propagation();
+            return;
+        }
 
         if self.search_active {
             match key {
@@ -97,21 +102,22 @@ impl SkinApp {
             .iter()
             .enumerate()
             .filter_map(|(index, row)| {
-                (query.is_empty()
-                    || row.theme.name.to_lowercase().contains(&query)
-                    || row.theme.id.to_lowercase().contains(&query)
-                    || row.theme.description.to_lowercase().contains(&query)
-                    || row.theme.author.to_lowercase().contains(&query)
-                    || row
-                        .theme
-                        .store_category
-                        .as_deref()
-                        .is_some_and(|category| category.to_lowercase().contains(&query))
-                    || row
-                        .theme
-                        .store_tags
-                        .iter()
-                        .any(|tag| tag.to_lowercase().contains(&query)))
+                (row.theme.supports_target(self.selected_target)
+                    && (query.is_empty()
+                        || row.theme.name.to_lowercase().contains(&query)
+                        || row.theme.id.to_lowercase().contains(&query)
+                        || row.theme.description.to_lowercase().contains(&query)
+                        || row.theme.author.to_lowercase().contains(&query)
+                        || row
+                            .theme
+                            .store_category
+                            .as_deref()
+                            .is_some_and(|category| category.to_lowercase().contains(&query))
+                        || row
+                            .theme
+                            .store_tags
+                            .iter()
+                            .any(|tag| tag.to_lowercase().contains(&query))))
                 .then_some(index)
             })
             .collect()
@@ -123,17 +129,18 @@ impl SkinApp {
             .iter()
             .enumerate()
             .filter_map(|(index, row)| {
-                (query.is_empty()
-                    || row.theme.name.to_lowercase().contains(&query)
-                    || row.theme.id.to_lowercase().contains(&query)
-                    || row.theme.description.to_lowercase().contains(&query)
-                    || row.theme.author.to_lowercase().contains(&query)
-                    || row.theme.category.to_lowercase().contains(&query)
-                    || row
-                        .theme
-                        .tags
-                        .iter()
-                        .any(|tag| tag.to_lowercase().contains(&query)))
+                (row.theme.supports_target(self.selected_target)
+                    && (query.is_empty()
+                        || row.theme.name.to_lowercase().contains(&query)
+                        || row.theme.id.to_lowercase().contains(&query)
+                        || row.theme.description.to_lowercase().contains(&query)
+                        || row.theme.author.to_lowercase().contains(&query)
+                        || row.theme.category.to_lowercase().contains(&query)
+                        || row
+                            .theme
+                            .tags
+                            .iter()
+                            .any(|tag| tag.to_lowercase().contains(&query))))
                 .then_some(index)
             })
             .collect()
@@ -148,6 +155,13 @@ impl SkinApp {
             self.selected = index;
             self.surface_opacity = self.themes[index].preview.surface_opacity;
             self.message.clear();
+        }
+    }
+
+    pub(crate) fn ensure_store_selected_match(&mut self) {
+        let indices = self.filtered_store_indices();
+        if !indices.contains(&self.store_selected) {
+            self.store_selected = indices.first().copied().unwrap_or(0);
         }
     }
 
@@ -177,6 +191,7 @@ impl SkinApp {
             self.surface_opacity = self.themes[index].preview.surface_opacity;
             self.search_active = false;
             self.message.clear();
+            self.restart_confirmation_target = None;
             cx.notify();
         }
     }

@@ -2,7 +2,7 @@
 
 use gpui::{div, prelude::*, px, rgb, Context, FontWeight, Role};
 
-use crate::app::SkinApp;
+use crate::app::{support_label, SkinApp};
 use crate::i18n::t;
 use crate::preview::preview_rgba;
 use crate::ui::shows_auto_theme_controls;
@@ -29,10 +29,24 @@ impl SkinApp {
         };
         let active = self.selected_settings_are_active(row);
         let target_installed = self.selected_target.is_installed();
+        let theme_supported = row.theme.supports_target(self.selected_target);
+        let restart_confirmation = self.restart_confirmation_target == Some(self.selected_target);
         let detail_message = if !target_installed {
             l.format_please_install(self.selected_target.display_name())
+        } else if !theme_supported {
+            format!("这个主题不支持{}", self.selected_target.display_name())
         } else if self.message == l.action_applied {
-            String::new()
+            format!(
+                "已应用 · {} · {}",
+                support_label(row.theme.target_support(self.selected_target)),
+                self.selected_target.display_name()
+            )
+        } else if self.message.is_empty() {
+            format!(
+                "{} · {}",
+                support_label(row.theme.target_support(self.selected_target)),
+                self.selected_target.display_name()
+            )
         } else {
             self.message.clone()
         };
@@ -63,6 +77,8 @@ impl SkinApp {
                 row,
                 active,
                 target_installed,
+                theme_supported,
+                restart_confirmation,
                 &detail_message,
                 compact,
                 short,
@@ -77,6 +93,8 @@ impl SkinApp {
         row: &crate::app::types::ThemeRow,
         active: bool,
         target_installed: bool,
+        theme_supported: bool,
+        restart_confirmation: bool,
         detail_message: &str,
         compact: bool,
         short: bool,
@@ -147,7 +165,16 @@ impl SkinApp {
                             .child(detail_message.to_string()),
                     ),
             )
-            .child(self.render_detail_buttons(row, active, target_installed, compact, short, cx))
+            .child(self.render_detail_buttons(
+                row,
+                active,
+                target_installed,
+                theme_supported,
+                restart_confirmation,
+                compact,
+                short,
+                cx,
+            ))
             .into_any_element()
     }
 
@@ -157,12 +184,15 @@ impl SkinApp {
         row: &crate::app::types::ThemeRow,
         active: bool,
         target_installed: bool,
+        theme_supported: bool,
+        restart_confirmation: bool,
         compact: bool,
         short: bool,
         cx: &mut Context<Self>,
     ) -> gpui::AnyElement {
         let colors = self.colors;
         let l = t();
+        let busy = self.theme_sessions.is_busy(self.selected_target);
         div()
             .flex()
             .items_center()
@@ -186,10 +216,16 @@ impl SkinApp {
                     .bg(rgb(colors.control))
                     .text_sm()
                     .text_color(rgb(colors.text))
-                    .cursor_pointer()
-                    .hover(|style| style.bg(rgb(colors.hover)))
+                    .opacity(if busy { 0.72 } else { 1.0 })
                     .child(l.action_restore_default)
-                    .on_click(cx.listener(|this, _event, _window, cx| this.restore_default(cx))),
+                    .when(!busy, |button| {
+                        button
+                            .cursor_pointer()
+                            .hover(|style| style.bg(rgb(colors.hover)))
+                            .on_click(
+                                cx.listener(|this, _event, _window, cx| this.restore_default(cx)),
+                            )
+                    }),
             )
             .child(
                 div()
@@ -197,8 +233,12 @@ impl SkinApp {
                     .role(Role::Button)
                     .aria_label(if !target_installed {
                         l.not_installed_target
+                    } else if !theme_supported {
+                        "此主题不支持当前应用"
                     } else if active {
                         l.action_in_use
+                    } else if restart_confirmation {
+                        "重启 WorkBuddy 并应用"
                     } else {
                         l.action_apply_theme
                     })
@@ -211,25 +251,34 @@ impl SkinApp {
                     .text_sm()
                     .font_weight(FontWeight::SEMIBOLD)
                     .text_color(rgb(0xffffff))
-                    .opacity(if self.applying || active || !target_installed {
+                    .opacity(if busy || active || !target_installed || !theme_supported {
                         0.72
                     } else {
                         1.0
                     })
-                    .when(!self.applying && !active && target_installed, |button| {
-                        button
-                            .cursor_pointer()
-                            .hover(|style| style.opacity(0.88))
-                            .on_click(
-                                cx.listener(|this, _event, _window, cx| this.apply_selected(cx)),
-                            )
-                    })
+                    .when(
+                        !busy && !active && target_installed && theme_supported,
+                        |button| {
+                            button
+                                .cursor_pointer()
+                                .hover(|style| style.opacity(0.88))
+                                .on_click(
+                                    cx.listener(|this, _event, _window, cx| {
+                                        this.apply_selected(cx)
+                                    }),
+                                )
+                        },
+                    )
                     .child(if !target_installed {
                         l.not_installed_target
-                    } else if self.applying {
+                    } else if !theme_supported {
+                        "主题不兼容"
+                    } else if busy {
                         l.action_applying
                     } else if active {
                         l.action_in_use
+                    } else if restart_confirmation {
+                        "重启并应用"
                     } else {
                         l.action_apply_theme
                     }),

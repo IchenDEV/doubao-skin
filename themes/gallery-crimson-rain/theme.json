@@ -1,163 +1,184 @@
 {
-  "$schema": "../../design/theme-standard/theme-v2.schema.json",
-  "schemaVersion": 2,
+  "$schema": "../../design/theme-standard/theme-v3.schema.json",
+  "author": "豆皮",
+  "description": "暗红雨夜花影，沉静又有张力",
   "id": "gallery-crimson-rain",
   "name": "雨夜花影",
-  "description": "暗红雨夜花影，沉静又有张力",
-  "version": "1.0.0",
-  "author": "豆皮",
   "preview": {
-    "image": "preview.jpg",
-    "aspectRatio": "16:9",
+    "accent": "#9d5454",
     "appearance": "dark",
-    "accent": "#9d5454"
+    "aspectRatio": "16:9",
+    "image": "preview.jpg"
+  },
+  "provenance": {
+    "artwork": "Original ImageGen background; no character artwork copied",
+    "inspiredBy": "DreamSkin 蕾塞2",
+    "sourceDownloads": 1974,
+    "sourceLicense": "Gallery value: rain; no standard license identified",
+    "sourceRank": 6,
+    "sourceSnapshot": "2026-08-28",
+    "sourceUrl": "https://dreamskin.cc/themes/ver_a8fc0e4bdbd10658071d",
+    "sourceVersion": "ver_a8fc0e4bdbd10658071d"
+  },
+  "schemaVersion": 3,
+  "shared": {
+    "appearance": "both",
+    "background": {
+      "animation": "drift",
+      "blur": 0,
+      "durationSeconds": 32,
+      "fit": "cover",
+      "opacity": 1,
+      "position": "center",
+      "src": "bg.jpg",
+      "type": "image",
+      "veil": 0.22
+    },
+    "composer": {
+      "background": "rgba(48,16,17,0.95)",
+      "border": "1px solid rgba(157,84,84,0.28)",
+      "caretColor": "rgba(157,84,84,1)",
+      "gap": 10,
+      "iconColor": "rgba(213,189,188,0.72)",
+      "iconSize": 20,
+      "maxHeight": 260,
+      "minHeight": 52,
+      "padding": 14,
+      "placeholderColor": "rgba(213,189,188,0.52)",
+      "radius": 20,
+      "sendButtonBackground": "rgba(157,84,84,1)",
+      "sendButtonIconColor": "#ffffff",
+      "textColor": "#d5bdbc"
+    },
+    "content": {
+      "assistantMessageBackground": "rgba(48,16,17,0.95)",
+      "assistantMessageText": "#d5bdbc",
+      "chatBackground": "rgba(14,3,3,0.50)",
+      "codeBackground": "#160404",
+      "codeHeaderBackground": "#21090a",
+      "scrollbarColor": "rgba(157,84,84,0.26)",
+      "scrollbarHoverColor": "rgba(157,84,84,0.42)",
+      "selectionColor": "rgba(157,84,84,0.24)",
+      "userMessageBackground": "rgba(157,84,84,1)",
+      "userMessageText": "#ffffff"
+    },
+    "effects": {
+      "blur": 14,
+      "motion": "gentle",
+      "radiusScale": 1.08,
+      "shadow": "0 12px 32px rgba(0,0,0,.28)",
+      "transitionMs": 150
+    },
+    "layout": {
+      "chatMargin": 32,
+      "chatMaxWidth": 960,
+      "composerMaxWidth": 780,
+      "density": "spacious",
+      "selfMessageMaxWidth": 420,
+      "sidebarWidth": 260
+    },
+    "typography": {
+      "body": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
+      "code": "\"SFMono-Regular\", Menlo, Monaco, monospace",
+      "lineHeight": 1.62,
+      "scale": 1,
+      "ui": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif"
+    },
+    "variants": {
+      "dark": {
+        "background": {
+          "veil": 0.58
+        },
+        "composer": {
+          "background": "rgba(48,16,17,0.95)",
+          "border": "1px solid rgba(157,84,84,0.28)",
+          "caretColor": "rgba(157,84,84,1)",
+          "gap": 10,
+          "iconColor": "rgba(213,189,188,0.72)",
+          "iconSize": 20,
+          "maxHeight": 260,
+          "minHeight": 52,
+          "padding": 14,
+          "placeholderColor": "rgba(213,189,188,0.52)",
+          "radius": 20,
+          "sendButtonBackground": "rgba(157,84,84,1)",
+          "sendButtonIconColor": "#ffffff",
+          "textColor": "#d5bdbc"
+        },
+        "content": {
+          "assistantMessageBackground": "rgba(48,16,17,0.95)",
+          "assistantMessageText": "#d5bdbc",
+          "chatBackground": "rgba(14,3,3,0.50)",
+          "codeBackground": "#160404",
+          "codeHeaderBackground": "#21090a",
+          "scrollbarColor": "rgba(157,84,84,0.26)",
+          "scrollbarHoverColor": "rgba(157,84,84,0.42)",
+          "selectionColor": "rgba(157,84,84,0.24)",
+          "userMessageBackground": "rgba(157,84,84,1)",
+          "userMessageText": "#ffffff"
+        },
+        "icons": {
+          "main": "icons/main.svg"
+        }
+      },
+      "light": {
+        "composer": {
+          "background": "rgba(255,255,255,0.96)",
+          "border": "1px solid rgba(157,84,84,0.28)",
+          "caretColor": "#9d5454",
+          "gap": 10,
+          "iconColor": "rgba(32,33,36,0.78)",
+          "iconSize": 20,
+          "maxHeight": 260,
+          "minHeight": 52,
+          "padding": 14,
+          "placeholderColor": "rgba(32,33,36,0.56)",
+          "radius": 20,
+          "sendButtonBackground": "#9d5454",
+          "sendButtonIconColor": "#ffffff",
+          "textColor": "#202124"
+        },
+        "content": {
+          "assistantMessageBackground": "rgba(255,255,255,0.94)",
+          "assistantMessageText": "#202124",
+          "chatBackground": "rgba(248,249,251,0.88)",
+          "codeBackground": "rgba(32,33,36,0.07)",
+          "codeHeaderBackground": "rgba(32,33,36,0.11)",
+          "scrollbarColor": "rgba(157,84,84,0.24)",
+          "scrollbarHoverColor": "rgba(157,84,84,0.4)",
+          "selectionColor": "rgba(157,84,84,0.22)",
+          "userMessageBackground": "#9d5454",
+          "userMessageText": "#ffffff"
+        },
+        "icons": {
+          "main": "icons/main.svg"
+        }
+      }
+    }
   },
   "store": {
     "category": "gallery",
+    "sortOrder": 12,
     "tags": [
       "深色",
       "红色",
       "雨夜"
-    ],
-    "sortOrder": 12
+    ]
   },
-  "appearance": "both",
-  "background": {
-    "type": "image",
-    "src": "bg.jpg",
-    "fit": "cover",
-    "position": "center",
-    "opacity": 1,
-    "veil": 0.22,
-    "blur": 0,
-    "animation": "drift",
-    "durationSeconds": 32
-  },
-  "veil": 0.22,
-  "typography": {
-    "ui": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
-    "body": "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Helvetica Neue\", sans-serif",
-    "code": "\"SFMono-Regular\", Menlo, Monaco, monospace",
-    "scale": 1,
-    "lineHeight": 1.62
-  },
-  "layout": {
-    "density": "spacious",
-    "sidebarWidth": 260,
-    "chatMaxWidth": 960,
-    "composerMaxWidth": 780,
-    "selfMessageMaxWidth": 420,
-    "chatMargin": 32
-  },
-  "composer": {
-    "background": "rgba(48,16,17,0.95)",
-    "border": "1px solid rgba(157,84,84,0.28)",
-    "textColor": "#d5bdbc",
-    "placeholderColor": "rgba(213,189,188,0.52)",
-    "caretColor": "rgba(157,84,84,1)",
-    "iconColor": "rgba(213,189,188,0.72)",
-    "sendButtonBackground": "rgba(157,84,84,1)",
-    "sendButtonIconColor": "#ffffff",
-    "radius": 20,
-    "minHeight": 52,
-    "maxHeight": 260,
-    "padding": 14,
-    "gap": 10,
-    "iconSize": 20
-  },
-  "content": {
-    "chatBackground": "rgba(14,3,3,0.50)",
-    "userMessageBackground": "rgba(157,84,84,1)",
-    "userMessageText": "#ffffff",
-    "assistantMessageBackground": "rgba(48,16,17,0.95)",
-    "assistantMessageText": "#d5bdbc",
-    "codeBackground": "#160404",
-    "codeHeaderBackground": "#21090a",
-    "selectionColor": "rgba(157,84,84,0.24)",
-    "scrollbarColor": "rgba(157,84,84,0.26)",
-    "scrollbarHoverColor": "rgba(157,84,84,0.42)"
-  },
-  "effects": {
-    "radiusScale": 1.08,
-    "shadow": "0 12px 32px rgba(0,0,0,.28)",
-    "blur": 14,
-    "motion": "gentle",
-    "transitionMs": 150
-  },
-  "inspiredBy": "DreamSkin 蕾塞2",
-  "sourceUrl": "https://dreamskin.cc/themes/ver_a8fc0e4bdbd10658071d",
-  "sourceVersion": "ver_a8fc0e4bdbd10658071d",
-  "sourceLicense": "Gallery value: rain; no standard license identified",
-  "sourceRank": 6,
-  "sourceDownloads": 1974,
-  "sourceSnapshot": "2026-08-28",
-  "artwork": "Original ImageGen background; no character artwork copied",
-  "variants": {
-    "light": {
-      "composer": {
-        "background": "rgba(255,255,255,0.96)",
-        "border": "1px solid rgba(157,84,84,0.28)",
-        "textColor": "#202124",
-        "placeholderColor": "rgba(32,33,36,0.56)",
-        "caretColor": "#9d5454",
-        "iconColor": "rgba(32,33,36,0.78)",
-        "sendButtonBackground": "#9d5454",
-        "sendButtonIconColor": "#ffffff",
-        "radius": 20,
-        "minHeight": 52,
-        "maxHeight": 260,
-        "padding": 14,
-        "gap": 10,
-        "iconSize": 20
-      },
-      "content": {
-        "chatBackground": "rgba(248,249,251,0.88)",
-        "userMessageBackground": "#9d5454",
-        "userMessageText": "#ffffff",
-        "assistantMessageBackground": "rgba(255,255,255,0.94)",
-        "assistantMessageText": "#202124",
-        "codeBackground": "rgba(32,33,36,0.07)",
-        "codeHeaderBackground": "rgba(32,33,36,0.11)",
-        "selectionColor": "rgba(157,84,84,0.22)",
-        "scrollbarColor": "rgba(157,84,84,0.24)",
-        "scrollbarHoverColor": "rgba(157,84,84,0.4)"
-      },
-      "icons": {
-        "main": "icons/main.svg"
-      }
+  "targets": {
+    "doubao": {
+      "css": [
+        "styles/doubao-family.css"
+      ]
     },
-    "dark": {
-      "composer": {
-        "background": "rgba(48,16,17,0.95)",
-        "border": "1px solid rgba(157,84,84,0.28)",
-        "textColor": "#d5bdbc",
-        "placeholderColor": "rgba(213,189,188,0.52)",
-        "caretColor": "rgba(157,84,84,1)",
-        "iconColor": "rgba(213,189,188,0.72)",
-        "sendButtonBackground": "rgba(157,84,84,1)",
-        "sendButtonIconColor": "#ffffff",
-        "radius": 20,
-        "minHeight": 52,
-        "maxHeight": 260,
-        "padding": 14,
-        "gap": 10,
-        "iconSize": 20
-      },
-      "content": {
-        "chatBackground": "rgba(14,3,3,0.50)",
-        "userMessageBackground": "rgba(157,84,84,1)",
-        "userMessageText": "#ffffff",
-        "assistantMessageBackground": "rgba(48,16,17,0.95)",
-        "assistantMessageText": "#d5bdbc",
-        "codeBackground": "#160404",
-        "codeHeaderBackground": "#21090a",
-        "selectionColor": "rgba(157,84,84,0.24)",
-        "scrollbarColor": "rgba(157,84,84,0.26)",
-        "scrollbarHoverColor": "rgba(157,84,84,0.42)"
-      },
-      "icons": {
-        "main": "icons/main.svg"
-      }
+    "doubao-work": {
+      "css": [
+        "styles/doubao-family.css"
+      ]
+    },
+    "workbuddy": {
+      "icons": null
     }
-  }
+  },
+  "version": "2.0.0"
 }

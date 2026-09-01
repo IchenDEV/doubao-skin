@@ -1,175 +1,203 @@
 {
-  "$schema": "../../design/theme-standard/theme-v2.schema.json",
-  "schemaVersion": 2,
+  "$schema": "../../design/theme-standard/theme-v3.schema.json",
+  "author": "豆皮",
+  "description": "非官方同人主题：熟悉的企鹅服咕嘎管理员坐镇暖金指挥室",
   "id": "gugugaga-administrator",
   "name": "咕嘎管理员",
-  "description": "非官方同人主题：熟悉的企鹅服咕嘎管理员坐镇暖金指挥室",
-  "version": "1.2.0",
-  "author": "豆皮",
   "preview": {
-    "image": "preview.jpg",
-    "aspectRatio": "16:9",
+    "accent": "#f2b827",
     "appearance": "light",
-    "accent": "#f2b827"
+    "aspectRatio": "16:9",
+    "image": "preview.jpg"
   },
-  "store": {
-    "category": "gallery",
-    "tags": ["深色", "咕咕嘎嘎", "企鹅", "工业", "彩色图标"],
-    "sortOrder": 33
+  "provenance": {
+    "artwork": "Newly generated reference-aligned unofficial fan-art character, environment, and semantic icon illustrations; no reference, official, or community pixels bundled",
+    "inspiredBy": "User-supplied Gugugaga character identity reference; unofficial fan theme",
+    "license": "Newly generated unofficial fan adaptation; no endorsement, authorization, or commercial clearance claimed",
+    "sourceAccessedAt": "2026-08-30"
   },
-  "appearance": "both",
-  "background": {
-    "type": "image",
-    "src": "bg.jpg",
-    "fit": "cover",
-    "position": "center",
-    "opacity": 1,
-    "veil": 0.10,
-    "blur": 0,
-    "animation": "none"
-  },
-  "surfaceOpacity": 0.72,
-  "typography": {
-    "ui": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
-    "body": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
-    "code": "ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace",
-    "scale": 1,
-    "lineHeight": 1.62
-  },
-  "layout": {
-    "density": "comfortable",
-    "sidebarWidth": 258,
-    "chatMaxWidth": 900,
-    "composerMaxWidth": 770,
-    "selfMessageMaxWidth": 420,
-    "chatMargin": 30
-  },
-  "icons": {
-    "main": "icons/main.png",
-    "search": "icons/knowledge.png",
-    "newTask": "icons/new-task.png",
-    "scheduled": "icons/scheduled.png",
-    "skills": "icons/skills.png",
-    "cloud": "icons/cloud.png",
-    "remote": "icons/remote.png",
-    "conversation": "icons/conversation.png",
-    "project": "icons/project.png",
-    "confirm": "icons/send.png",
-    "connector": "icons/tools.png",
-    "send": "icons/send.png",
-    "stop": "icons/scheduled.png",
-    "attach": "icons/project.png",
-    "voice": "icons/voice.png",
-    "tools": "icons/tools.png",
-    "knowledge": "icons/knowledge.png",
-    "moreSkills": "icons/skills.png",
-    "dailyWork": "icons/daily-work.png",
-    "contentCreation": "icons/content-creation.png",
-    "research": "icons/knowledge.png",
-    "design": "icons/content-creation.png",
-    "readAloud": "icons/voice.png",
-    "copy": "icons/daily-work.png",
-    "sidebar": "icons/project.png"
-  },
-  "composer": {
-    "background": "rgba(30,32,35,0.95)",
-    "border": "1px solid rgba(242,184,39,0.42)",
-    "textColor": "#f7f5ed",
-    "placeholderColor": "rgba(247,245,237,0.54)",
-    "caretColor": "#ffd45a",
-    "iconColor": "#f6d66f",
-    "sendButtonBackground": "#f2b827",
-    "sendButtonIconColor": "#202124",
-    "radius": 16,
-    "minHeight": 54,
-    "maxHeight": 240,
-    "padding": 14,
-    "gap": 10,
-    "iconSize": 20
-  },
-  "content": {
-    "chatBackground": "rgba(22,24,27,0.80)",
-    "userMessageBackground": "#d99b16",
-    "userMessageText": "#1d2022",
-    "assistantMessageBackground": "rgba(34,37,40,0.94)",
-    "assistantMessageText": "#f7f5ed",
-    "codeBackground": "#181a1c",
-    "codeHeaderBackground": "#2b2e31",
-    "selectionColor": "rgba(242,184,39,0.28)",
-    "scrollbarColor": "rgba(238,234,219,0.20)",
-    "scrollbarHoverColor": "rgba(238,234,219,0.38)"
-  },
-  "effects": {
-    "radiusScale": 0.94,
-    "shadow": "0 14px 38px rgba(0,0,0,0.34)",
-    "blur": 16,
-    "motion": "gentle",
-    "transitionMs": 160
-  },
-  "variants": {
-    "light": {
-      "composer": {
-        "background": "rgba(250,249,243,0.95)",
-        "border": "1px solid rgba(135,96,14,0.30)",
-        "textColor": "#2e3133",
-        "placeholderColor": "rgba(46,49,51,0.54)",
-        "caretColor": "#b27a0b",
-        "iconColor": "#765714",
-        "sendButtonBackground": "#d99b16",
-        "sendButtonIconColor": "#ffffff",
-        "radius": 16,
-        "minHeight": 54,
-        "maxHeight": 240,
-        "padding": 14,
-        "gap": 10,
-        "iconSize": 20
-      },
-      "content": {
-        "chatBackground": "rgba(239,237,228,0.78)",
-        "userMessageBackground": "#c58c13",
-        "userMessageText": "#ffffff",
-        "assistantMessageBackground": "rgba(250,249,243,0.95)",
-        "assistantMessageText": "#2e3133",
-        "codeBackground": "#e6e3d8",
-        "codeHeaderBackground": "#d9d5c7",
-        "selectionColor": "rgba(217,155,22,0.22)",
-        "scrollbarColor": "rgba(46,49,51,0.22)",
-        "scrollbarHoverColor": "rgba(46,49,51,0.40)"
-      }
+  "schemaVersion": 3,
+  "shared": {
+    "appearance": "both",
+    "background": {
+      "animation": "none",
+      "blur": 0,
+      "fit": "cover",
+      "opacity": 1,
+      "position": "center",
+      "src": "bg.jpg",
+      "type": "image",
+      "veil": 0.1
     },
-    "dark": {
-      "composer": {
-        "background": "rgba(30,32,35,0.95)",
-        "border": "1px solid rgba(242,184,39,0.42)",
-        "textColor": "#f7f5ed",
-        "placeholderColor": "rgba(247,245,237,0.54)",
-        "caretColor": "#ffd45a",
-        "iconColor": "#f6d66f",
-        "sendButtonBackground": "#f2b827",
-        "sendButtonIconColor": "#202124",
-        "radius": 16,
-        "minHeight": 54,
-        "maxHeight": 240,
-        "padding": 14,
-        "gap": 10,
-        "iconSize": 20
+    "composer": {
+      "background": "rgba(30,32,35,0.95)",
+      "border": "1px solid rgba(242,184,39,0.42)",
+      "caretColor": "#ffd45a",
+      "gap": 10,
+      "iconColor": "#f6d66f",
+      "iconSize": 20,
+      "maxHeight": 240,
+      "minHeight": 54,
+      "padding": 14,
+      "placeholderColor": "rgba(247,245,237,0.54)",
+      "radius": 16,
+      "sendButtonBackground": "#f2b827",
+      "sendButtonIconColor": "#202124",
+      "textColor": "#f7f5ed"
+    },
+    "content": {
+      "assistantMessageBackground": "rgba(34,37,40,0.94)",
+      "assistantMessageText": "#f7f5ed",
+      "chatBackground": "rgba(22,24,27,0.80)",
+      "codeBackground": "#181a1c",
+      "codeHeaderBackground": "#2b2e31",
+      "scrollbarColor": "rgba(238,234,219,0.20)",
+      "scrollbarHoverColor": "rgba(238,234,219,0.38)",
+      "selectionColor": "rgba(242,184,39,0.28)",
+      "userMessageBackground": "#d99b16",
+      "userMessageText": "#1d2022"
+    },
+    "effects": {
+      "blur": 16,
+      "motion": "gentle",
+      "radiusScale": 0.94,
+      "shadow": "0 14px 38px rgba(0,0,0,0.34)",
+      "transitionMs": 160
+    },
+    "icons": {
+      "attach": "icons/project.png",
+      "cloud": "icons/cloud.png",
+      "confirm": "icons/send.png",
+      "connector": "icons/tools.png",
+      "contentCreation": "icons/content-creation.png",
+      "conversation": "icons/conversation.png",
+      "copy": "icons/daily-work.png",
+      "dailyWork": "icons/daily-work.png",
+      "design": "icons/content-creation.png",
+      "knowledge": "icons/knowledge.png",
+      "main": "icons/main.png",
+      "moreSkills": "icons/skills.png",
+      "newTask": "icons/new-task.png",
+      "project": "icons/project.png",
+      "readAloud": "icons/voice.png",
+      "remote": "icons/remote.png",
+      "research": "icons/knowledge.png",
+      "scheduled": "icons/scheduled.png",
+      "search": "icons/knowledge.png",
+      "send": "icons/send.png",
+      "sidebar": "icons/project.png",
+      "skills": "icons/skills.png",
+      "stop": "icons/scheduled.png",
+      "tools": "icons/tools.png",
+      "voice": "icons/voice.png"
+    },
+    "layout": {
+      "chatMargin": 30,
+      "chatMaxWidth": 900,
+      "composerMaxWidth": 770,
+      "density": "comfortable",
+      "selfMessageMaxWidth": 420,
+      "sidebarWidth": 258
+    },
+    "surfaceOpacity": 0.72,
+    "typography": {
+      "body": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif",
+      "code": "ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace",
+      "lineHeight": 1.62,
+      "scale": 1,
+      "ui": "\"Avenir Next\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", sans-serif"
+    },
+    "variants": {
+      "dark": {
+        "background": {
+          "veil": 0.58
+        },
+        "composer": {
+          "background": "rgba(30,32,35,0.95)",
+          "border": "1px solid rgba(242,184,39,0.42)",
+          "caretColor": "#ffd45a",
+          "gap": 10,
+          "iconColor": "#f6d66f",
+          "iconSize": 20,
+          "maxHeight": 240,
+          "minHeight": 54,
+          "padding": 14,
+          "placeholderColor": "rgba(247,245,237,0.54)",
+          "radius": 16,
+          "sendButtonBackground": "#f2b827",
+          "sendButtonIconColor": "#202124",
+          "textColor": "#f7f5ed"
+        },
+        "content": {
+          "assistantMessageBackground": "rgba(34,37,40,0.94)",
+          "assistantMessageText": "#f7f5ed",
+          "chatBackground": "rgba(22,24,27,0.80)",
+          "codeBackground": "#181a1c",
+          "codeHeaderBackground": "#2b2e31",
+          "scrollbarColor": "rgba(238,234,219,0.20)",
+          "scrollbarHoverColor": "rgba(238,234,219,0.38)",
+          "selectionColor": "rgba(242,184,39,0.28)",
+          "userMessageBackground": "#d99b16",
+          "userMessageText": "#1d2022"
+        }
       },
-      "content": {
-        "chatBackground": "rgba(22,24,27,0.80)",
-        "userMessageBackground": "#d99b16",
-        "userMessageText": "#1d2022",
-        "assistantMessageBackground": "rgba(34,37,40,0.94)",
-        "assistantMessageText": "#f7f5ed",
-        "codeBackground": "#181a1c",
-        "codeHeaderBackground": "#2b2e31",
-        "selectionColor": "rgba(242,184,39,0.28)",
-        "scrollbarColor": "rgba(238,234,219,0.20)",
-        "scrollbarHoverColor": "rgba(238,234,219,0.38)"
+      "light": {
+        "composer": {
+          "background": "rgba(250,249,243,0.95)",
+          "border": "1px solid rgba(135,96,14,0.30)",
+          "caretColor": "#b27a0b",
+          "gap": 10,
+          "iconColor": "#765714",
+          "iconSize": 20,
+          "maxHeight": 240,
+          "minHeight": 54,
+          "padding": 14,
+          "placeholderColor": "rgba(46,49,51,0.54)",
+          "radius": 16,
+          "sendButtonBackground": "#d99b16",
+          "sendButtonIconColor": "#ffffff",
+          "textColor": "#2e3133"
+        },
+        "content": {
+          "assistantMessageBackground": "rgba(250,249,243,0.95)",
+          "assistantMessageText": "#2e3133",
+          "chatBackground": "rgba(239,237,228,0.78)",
+          "codeBackground": "#e6e3d8",
+          "codeHeaderBackground": "#d9d5c7",
+          "scrollbarColor": "rgba(46,49,51,0.22)",
+          "scrollbarHoverColor": "rgba(46,49,51,0.40)",
+          "selectionColor": "rgba(217,155,22,0.22)",
+          "userMessageBackground": "#c58c13",
+          "userMessageText": "#ffffff"
+        }
       }
     }
   },
-  "inspiredBy": "User-supplied Gugugaga character identity reference; unofficial fan theme",
-  "sourceAccessedAt": "2026-08-30",
-  "artwork": "Newly generated reference-aligned unofficial fan-art character, environment, and semantic icon illustrations; no reference, official, or community pixels bundled",
-  "license": "Newly generated unofficial fan adaptation; no endorsement, authorization, or commercial clearance claimed"
+  "store": {
+    "category": "gallery",
+    "sortOrder": 33,
+    "tags": [
+      "深色",
+      "咕咕嘎嘎",
+      "企鹅",
+      "工业",
+      "彩色图标"
+    ]
+  },
+  "targets": {
+    "doubao": {
+      "css": [
+        "styles/doubao-family.css"
+      ]
+    },
+    "doubao-work": {
+      "css": [
+        "styles/doubao-family.css"
+      ]
+    },
+    "workbuddy": {
+      "icons": null
+    }
+  },
+  "version": "2.0.0"
 }

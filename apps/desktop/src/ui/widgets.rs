@@ -8,8 +8,8 @@ use gpui::{
 use skin_core::live;
 
 use crate::app::types::ThemeRow;
-use crate::app::SkinApp;
 use crate::app::{auto_theme::control_state, platform::AutoThemeServiceStatus};
+use crate::app::{target_shortcut, SkinApp};
 use crate::i18n::t;
 use crate::preview::preview_rgba;
 use crate::ui::assets::local_image_source;
@@ -196,7 +196,7 @@ impl SkinApp {
         let colors = self.colors;
         let l = t();
         let mut segments = div()
-            .w(px(224.))
+            .w(px(336.))
             .h(px(36.))
             .p(px(2.))
             .rounded(px(8.))
@@ -207,11 +207,7 @@ impl SkinApp {
         for (index, target) in live::TargetApp::ALL.into_iter().enumerate() {
             let installed = target.is_installed();
             let selected = self.selected_target == target;
-            let shortcut = if target == live::TargetApp::Doubao {
-                "Command-1"
-            } else {
-                "Command-2"
-            };
+            let shortcut = target_shortcut(target);
             let label = l.format_target_label(target.display_name(), !installed);
             let aria = l.format_target_aria(target.display_name(), installed, selected, shortcut);
             segments = segments.child(

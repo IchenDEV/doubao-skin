@@ -4,16 +4,16 @@
     {
       "name": "apply-doubao-theme",
       "type": "skill-md",
-      "description": "Safely list, validate, install, apply, restore, and manage offline builds of themes for the DoubaoWork desktop app.",
+      "description": "Safely list, validate, install, apply, restore, and manage themes for Doubao, DoubaoWork, and WorkBuddy.",
       "url": "/.well-known/agent-skills/apply-doubao-theme/SKILL.md",
-      "digest": "sha256:53849129d2556fcdecde80a32f83e5e9bfb112e534bb941d34828cec7d4f8902"
+      "digest": "sha256:2fa632e1ff9c5ef5a7e877fcded6ccae3b91df6f85151ed3dda3be827e1856e6"
     },
     {
       "name": "create-doubao-theme",
       "type": "skill-md",
-      "description": "Create, refine, validate, preview, and package themes for the DoubaoWork desktop app from natural-language visual requirements.",
+      "description": "Create, migrate, refine, validate, preview, and package v3 themes for Doubao, DoubaoWork, and WorkBuddy from natural-language visual requirements.",
       "url": "/.well-known/agent-skills/create-doubao-theme/SKILL.md",
-      "digest": "sha256:e9012f2b189db6c9c6cf127c154237dc4a45159acbb5ae2c4d8d16f3ab0c56ab"
+      "digest": "sha256:ad90a626a0f14faddf8fdf2fdac287bdc0fe0dcc27419c07ceb643ca4f5675a0"
     }
   ]
 }
