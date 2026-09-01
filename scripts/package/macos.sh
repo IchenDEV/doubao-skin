@@ -21,6 +21,9 @@ APP_ICON_DIR="$REPO_DIR/assets/app-icon"
 APP_ICON_SOURCE="$APP_ICON_DIR/AppIcon.icon"
 APP_ICON_FALLBACK="$APP_ICON_DIR/AppIcon.icns"
 APP_ICON_ASSETS_FALLBACK="$APP_ICON_DIR/Assets.car"
+DMG_ASSET_DIR="$REPO_DIR/assets/dmg"
+DMG_BACKGROUND_1X="$DMG_ASSET_DIR/install-background.png"
+DMG_BACKGROUND_2X="$DMG_ASSET_DIR/install-background@2x.png"
 
 case "$BUILD_MODE" in
   host)
@@ -44,6 +47,19 @@ case "$BUILD_MODE" in
     exit 2
     ;;
 esac
+
+for dmg_asset in "$DMG_BACKGROUND_1X" "$DMG_BACKGROUND_2X"; do
+  if [ ! -f "$dmg_asset" ]; then
+    echo "missing DMG background asset: $dmg_asset" >&2
+    exit 1
+  fi
+done
+for dmg_tool in diskutil hdiutil osascript tiffutil; do
+  if ! command -v "$dmg_tool" >/dev/null 2>&1; then
+    echo "macOS DMG layout requires $dmg_tool" >&2
+    exit 1
+  fi
+done
 
 mkdir -p "$DIST_DIR"
 rm -rf "$BUNDLE" "$LEGACY_BUNDLE"
@@ -224,25 +240,111 @@ ditto -c -k --sequesterRsrc --keepParent "$BUNDLE" "$ARCHIVE"
 DMG_BASENAME="Doubao-Skin-macOS-$ARCHIVE_LABEL.dmg"
 DMG="$DIST_DIR/$DMG_BASENAME"
 DMG_TEMP="$DIST_DIR/.Doubao-Skin-macOS-$ARCHIVE_LABEL.tmp.dmg"
+DMG_RW="$DIST_DIR/.Doubao-Skin-macOS-$ARCHIVE_LABEL.rw.dmg"
 DMG_STAGING=$(mktemp -d "$DIST_DIR/.dmg-staging.XXXXXX")
+DMG_BUILD_VOLUME_NAME="$APP_NAME-DMG-$ARCHIVE_LABEL-$$"
+DMG_MOUNT="/Volumes/$DMG_BUILD_VOLUME_NAME"
+DMG_DEVICE=""
+DMG_ATTACHED=false
 cleanup_dmg() {
+  if [ "${DMG_ATTACHED:-false}" = true ]; then
+    if [ -n "${DMG_DEVICE:-}" ]; then
+      hdiutil detach "$DMG_DEVICE" -quiet 2>/dev/null || true
+    elif [ -n "${DMG_MOUNT:-}" ]; then
+      hdiutil detach "$DMG_MOUNT" -quiet 2>/dev/null || true
+    fi
+    DMG_ATTACHED=false
+  fi
   if [ -n "${DMG_STAGING:-}" ] && [ -d "$DMG_STAGING" ]; then
     rm -rf "$DMG_STAGING"
+  fi
+  if [ -n "${DMG_RW:-}" ] && [ -f "$DMG_RW" ]; then
+    rm -f "$DMG_RW"
   fi
   if [ -n "${DMG_TEMP:-}" ] && [ -f "$DMG_TEMP" ]; then
     rm -f "$DMG_TEMP"
   fi
 }
 trap cleanup_dmg EXIT HUP INT TERM
-rm -f "$DMG" "$DMG.sha256" "$DMG_TEMP"
+rm -f "$DMG" "$DMG.sha256" "$DMG_TEMP" "$DMG_RW"
 cp -R "$BUNDLE" "$DMG_STAGING/$APP_NAME.app"
 ln -s /Applications "$DMG_STAGING/Applications"
+mkdir -p "$DMG_STAGING/.background"
+tiffutil -cathidpicheck \
+  "$DMG_BACKGROUND_1X" \
+  "$DMG_BACKGROUND_2X" \
+  -out "$DMG_STAGING/.background/install-background.tiff"
 hdiutil create \
-  -volname "$APP_NAME" \
+  -volname "$DMG_BUILD_VOLUME_NAME" \
   -srcfolder "$DMG_STAGING" \
-  -format UDZO \
+  -format UDRW \
   -ov \
-  "$DMG_TEMP"
+  "$DMG_RW"
+if [ -e "$DMG_MOUNT" ]; then
+  echo "temporary DMG volume path already exists: $DMG_MOUNT" >&2
+  exit 1
+fi
+DMG_ATTACH_OUTPUT=$(hdiutil attach "$DMG_RW" -noverify -readwrite)
+printf '%s\n' "$DMG_ATTACH_OUTPUT"
+DMG_ATTACHED=true
+DMG_DEVICE=$(printf '%s\n' "$DMG_ATTACH_OUTPUT" | awk '$1 ~ /^\/dev\// && $NF ~ /^\/Volumes\// { print $1; exit }')
+if [ -z "$DMG_DEVICE" ] || [ ! -d "$DMG_MOUNT" ]; then
+  echo "could not resolve temporary DMG device or mount: $DMG_BUILD_VOLUME_NAME" >&2
+  exit 1
+fi
+
+osascript - "$DMG_BUILD_VOLUME_NAME" "$APP_NAME.app" <<'APPLESCRIPT'
+on run argv
+  set volumeName to item 1 of argv
+  set appFileName to item 2 of argv
+
+  tell application "Finder"
+    tell disk volumeName
+      open
+      set installerWindow to container window
+      set current view of installerWindow to icon view
+      set toolbar visible of installerWindow to false
+      set statusbar visible of installerWindow to false
+      set pathbar visible of installerWindow to false
+      set bounds of installerWindow to {100, 100, 760, 528}
+
+      set iconOptions to icon view options of installerWindow
+      set arrangement of iconOptions to not arranged
+      set icon size of iconOptions to 120
+      set text size of iconOptions to 14
+      set label position of iconOptions to bottom
+      set shows item info of iconOptions to false
+      set shows icon preview of iconOptions to false
+      set background picture of iconOptions to file ".background:install-background.tiff"
+
+      set position of item appFileName to {170, 220}
+      set position of item "Applications" to {490, 220}
+      set extension hidden of item appFileName to true
+      update without registering applications
+      delay 2
+      close
+    end tell
+  end tell
+end run
+APPLESCRIPT
+
+sync
+test -f "$DMG_MOUNT/.DS_Store"
+test -f "$DMG_MOUNT/.background/install-background.tiff"
+test -d "$DMG_MOUNT/$APP_NAME.app"
+test "$(readlink "$DMG_MOUNT/Applications")" = "/Applications"
+diskutil rename "$DMG_DEVICE" "$APP_NAME" >/dev/null
+hdiutil detach "$DMG_DEVICE" -quiet
+DMG_ATTACHED=false
+DMG_MOUNT=""
+DMG_DEVICE=""
+
+hdiutil convert \
+  "$DMG_RW" \
+  -format UDZO \
+  -imagekey zlib-level=9 \
+  -ov \
+  -o "$DMG_TEMP"
 hdiutil verify "$DMG_TEMP"
 
 if [ -n "$NOTARY_VALUES" ]; then
@@ -260,6 +362,8 @@ mv "$DMG_TEMP" "$DMG"
 DMG_TEMP=""
 cleanup_dmg
 DMG_STAGING=""
+DMG_MOUNT=""
+DMG_RW=""
 trap - EXIT HUP INT TERM
 (
   cd "$DIST_DIR"
