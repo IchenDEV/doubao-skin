@@ -60,6 +60,14 @@ fn main_window_is_fixed_at_the_approved_size() {
 }
 
 #[test]
+fn custom_titlebar_owns_window_dragging() {
+    let bounds = gpui::Bounds::new(point(px(20.), px(30.)), size(px(1120.), px(720.)));
+    let options = super::main_window_options(bounds);
+
+    assert!(options.app_owns_titlebar_drag);
+}
+
+#[test]
 fn windows_keeps_the_native_titlebar_controls() {
     let windows = super::titlebar_options("windows");
     assert!(!windows.appears_transparent);

@@ -28,6 +28,7 @@ fn main_window_options(bounds: Bounds<gpui::Pixels>) -> WindowOptions {
     WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(bounds)),
         window_min_size: Some(size(px(MAIN_WINDOW_WIDTH), px(MAIN_WINDOW_HEIGHT))),
+        app_owns_titlebar_drag: true,
         is_resizable: false,
         titlebar: Some(titlebar_options(std::env::consts::OS)),
         ..Default::default()

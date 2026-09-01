@@ -203,7 +203,10 @@ impl SkinApp {
             .border_1()
             .border_color(rgb(colors.border))
             .bg(rgb(colors.segmented_track))
-            .flex();
+            .flex()
+            .on_mouse_down(MouseButton::Left, |_event, _window, cx| {
+                cx.stop_propagation()
+            });
         for (index, target) in live::TargetApp::ALL.into_iter().enumerate() {
             let installed = target.is_installed();
             let selected = self.selected_target == target;
