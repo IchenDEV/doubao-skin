@@ -293,7 +293,7 @@ mod windows_startup {
     const FILE_NOT_FOUND_HRESULT: i32 = 0x8007_0002_u32 as i32;
 
     fn open_key_for_removal(path: &str) -> windows_registry::Result<windows_registry::Key> {
-        CURRENT_USER.open(path)
+        CURRENT_USER.options().write().open(path)
     }
 
     #[derive(Default)]
