@@ -56,6 +56,8 @@ pub struct SkinApp {
     pub(crate) auto_theme_last_check: Instant,
     pub(crate) generation: u64,
     pub(crate) focus_handle: FocusHandle,
+    pub(crate) about_focus_handle: FocusHandle,
+    pub(crate) about_open: bool,
     pub(crate) url_buffer: Arc<Mutex<Vec<String>>>,
 }
 
@@ -139,6 +141,7 @@ impl SkinApp {
         })
         .detach();
         let focus_handle = cx.focus_handle();
+        let about_focus_handle = cx.focus_handle();
         focus_handle.focus(window, cx);
         Self {
             colors,
@@ -168,6 +171,8 @@ impl SkinApp {
             auto_theme_last_check: Instant::now() - Duration::from_secs(1),
             generation: 0,
             focus_handle,
+            about_focus_handle,
+            about_open: false,
             url_buffer,
         }
     }

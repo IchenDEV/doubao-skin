@@ -6,6 +6,7 @@ use skin_core::live;
 
 use crate::app::types::SourceView;
 use crate::app::SkinApp;
+use crate::ui::{about_key_action, AboutKeyAction};
 
 impl SkinApp {
     pub(crate) fn key_down(
@@ -16,6 +17,19 @@ impl SkinApp {
     ) {
         let key = event.keystroke.key.as_str();
         let modifiers = event.keystroke.modifiers;
+
+        match about_key_action(self.about_open, key) {
+            AboutKeyAction::Close => {
+                self.close_about(window, cx);
+                cx.stop_propagation();
+                return;
+            }
+            AboutKeyAction::Consume => {
+                cx.stop_propagation();
+                return;
+            }
+            AboutKeyAction::Ignore => {}
+        }
 
         if modifiers.platform && key.eq_ignore_ascii_case("f") {
             self.search_active = true;
