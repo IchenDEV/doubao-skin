@@ -1,14 +1,14 @@
 ---
 id: "2026-09-02-add-open-source-notice-to-about"
 stage: verification
-status: pending
+status: passed
 owner: "codex"
 created: "2026-09-02"
 based_on: plan.md
-commit: ""
-verification_mode: "fresh-context"
-verified_by: ""
-verified_at: ""
+commit: "7a41ea5365a6526cff807cb63e61b96f617e2bbf"
+verification_mode: "human"
+verified_by: "idevlab"
+verified_at: "2026-09-02"
 ---
 
 # Verification: add open source notice to about
@@ -61,4 +61,4 @@ verified_at: ""
 
 ## Verdict
 
-Implementation self-check passed for code, tests, full local gate, macOS packaging, real macOS About interaction, accessibility readback, single-instance behavior, and exact browser destination. Status remains pending: the encrypted Windows VM must be unlocked by the user so a native Windows package and real titlebar/modal validation can be completed, followed by the required fresh-context verdict.
+Passed with human-accepted residual risk. Implementation self-check passed for code, tests, full local gate, macOS packaging, real macOS About interaction, accessibility readback, single-instance behavior, and exact browser destination. On 2026-09-02, human reviewer `idevlab` explicitly accepted the recorded evidence and the remaining Windows real-window, narrow-layout, and light/dark validation gaps as sufficient for this change; those gaps remain documented above and are not represented as completed behavior.
