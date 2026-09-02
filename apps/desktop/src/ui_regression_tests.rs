@@ -7,7 +7,7 @@ use gpui::{point, px, size, ImageSource, Resource, WindowBounds};
 use skin_core::theme_package::{SupportDeclaration, SupportLevel, TargetSupport};
 use skin_core::{live, theme};
 
-use crate::app::actions::application_menu;
+use crate::app::actions::{application_menu, OFFICIAL_REPOSITORY_URL, OPEN_SOURCE_NOTICE};
 use crate::app::helpers::target_shortcut_for_platform;
 use crate::app::theme_sessions::{TargetSession, ThemeSessions};
 use crate::app::{
@@ -18,7 +18,10 @@ use crate::i18n::t;
 use crate::preview::preview_rgba;
 use crate::ui::assets::local_image_source;
 use crate::ui::constants::*;
-use crate::ui::{header_brand_padding, shows_auto_theme_controls};
+use crate::ui::{
+    about_key_action, about_version, header_brand_padding, shows_about_entry,
+    shows_auto_theme_controls, AboutKeyAction,
+};
 
 fn assert_close(actual: f32, expected: f32) {
     assert!((actual - expected).abs() < 0.0001, "{actual} != {expected}");
@@ -85,6 +88,33 @@ fn windows_header_does_not_reserve_macos_traffic_light_space() {
     assert_close(header_brand_padding("windows", false), 0.0);
     assert_close(header_brand_padding("macos", true), WINDOW_TITLE_X - 16.0);
     assert_close(header_brand_padding("macos", false), WINDOW_TITLE_X - 24.0);
+}
+
+#[test]
+fn about_content_uses_the_approved_official_source_and_notice() {
+    assert_eq!(
+        OFFICIAL_REPOSITORY_URL,
+        "https://github.com/IchenDEV/doubao-skin"
+    );
+    assert_eq!(
+        OPEN_SOURCE_NOTICE,
+        "本软件开源，官方版本永久免费。\n\n如遇冒充官方收费，请勿购买。\n\n请从 GitHub 官方仓库核验并下载。"
+    );
+    assert_eq!(about_version(), env!("CARGO_PKG_VERSION"));
+}
+
+#[test]
+fn about_header_entry_is_windows_only() {
+    assert!(shows_about_entry("windows"));
+    assert!(!shows_about_entry("macos"));
+    assert!(!shows_about_entry("linux"));
+}
+
+#[test]
+fn open_about_consumes_keys_and_escape_closes_it() {
+    assert_eq!(about_key_action(false, "escape"), AboutKeyAction::Ignore);
+    assert_eq!(about_key_action(true, "escape"), AboutKeyAction::Close);
+    assert_eq!(about_key_action(true, "f"), AboutKeyAction::Consume);
 }
 
 #[test]

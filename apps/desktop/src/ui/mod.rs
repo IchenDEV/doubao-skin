@@ -1,5 +1,6 @@
 //! Top-level desktop layout and rendering.
 
+mod about;
 pub(crate) mod assets;
 mod composer;
 pub(crate) mod constants;
@@ -18,6 +19,10 @@ use crate::app::types::SourceView;
 use crate::app::{uses_short_compact_layout, SkinApp};
 use crate::i18n::t;
 use crate::ui::constants::{HEADER_HEIGHT, WINDOW_TITLE_X};
+
+#[cfg(test)]
+pub(crate) use about::about_version;
+pub(crate) use about::{about_key_action, shows_about_entry, AboutKeyAction};
 
 pub(crate) fn header_brand_padding(target_os: &str, compact: bool) -> f32 {
     if target_os == "macos" {
@@ -51,10 +56,14 @@ impl Render for SkinApp {
                 this.install_dropped_paths(paths.paths(), cx)
             }))
             .bg(rgb(colors.shell))
+            .relative()
             .flex()
             .flex_col()
             .child(header)
             .child(body)
+            .when(self.about_open, |root| {
+                root.child(self.render_about_modal(cx))
+            })
     }
 }
 
@@ -71,6 +80,14 @@ impl SkinApp {
             .text_color(rgb(colors.text))
             .child(l.app_name);
         let target_switch = self.render_target_switch(cx);
+        let about_entry = div()
+            .flex_1()
+            .min_w(px(0.))
+            .flex()
+            .justify_end()
+            .when(shows_about_entry(std::env::consts::OS), |right| {
+                right.child(self.render_about_entry(cx))
+            });
         if compact {
             div()
                 .h(px(HEADER_HEIGHT))
@@ -89,7 +106,7 @@ impl SkinApp {
                         .child(div().pl(px(brand_padding)).child(brand)),
                 )
                 .child(target_switch)
-                .child(div().flex_1().min_w(px(0.)))
+                .child(about_entry)
                 .into_any_element()
         } else {
             div()
@@ -109,7 +126,7 @@ impl SkinApp {
                         .child(div().pl(px(brand_padding)).child(brand)),
                 )
                 .child(target_switch)
-                .child(div().flex_1().min_w(px(0.)))
+                .child(about_entry)
                 .into_any_element()
         }
     }
