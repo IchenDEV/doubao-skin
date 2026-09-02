@@ -42,6 +42,21 @@ enum MissingPortAction {
     Stop,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RetainedSessionAction {
+    Own,
+    Missing,
+    Foreign,
+}
+
+fn retained_session_action(expected: &str, observed: Option<&str>) -> RetainedSessionAction {
+    match observed {
+        Some(value) if value == expected => RetainedSessionAction::Own,
+        None => RetainedSessionAction::Missing,
+        Some(_) => RetainedSessionAction::Foreign,
+    }
+}
+
 fn missing_port_action(once: bool, policy: PortLossPolicy, down_ticks: u32) -> MissingPortAction {
     if once || policy == PortLossPolicy::Stop {
         MissingPortAction::Stop
@@ -144,8 +159,19 @@ fn timed_out_injection_error(
 ) -> Option<String> {
     failure_elapsed
         .is_some_and(|elapsed| elapsed >= INITIAL_INJECTION_TIMEOUT)
-        .then(|| last_error.map(str::to_owned))
-        .flatten()
+        .then(|| {
+            last_error
+                .map(str::to_owned)
+                .unwrap_or_else(|| "未找到可注入页面".to_string())
+        })
+}
+
+fn should_probe_dead_target(applied_once: bool, dead_probe_tick: u32) -> bool {
+    !applied_once || dead_probe_tick >= 15
+}
+
+fn should_finish_once(once: bool, applied_once: bool) -> bool {
+    once && applied_once
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -598,9 +624,15 @@ fn run_with_options<F: FnMut(String)>(
     let mut wedge_restarted = false;
     let mut revive_attempted = false;
     let mut applied_once = false;
-    let mut first_injection_failure_at: Option<std::time::Instant> = None;
     let mut last_injection_error: Option<String> = None;
     while !stop.load(Ordering::Relaxed) {
+        if !applied_once {
+            if let Some(error) =
+                timed_out_injection_error(Some(started.elapsed()), last_injection_error.as_deref())
+            {
+                return Err(format!("{}主题注入失败：{error}", target.display_name()));
+            }
+        }
         let list = match targets(port) {
             Ok(l) => l,
             Err(_) => {
@@ -761,6 +793,7 @@ fn run_with_options<F: FnMut(String)>(
             enum SessionState {
                 Alive,
                 Reinjected,
+                Superseded,
                 Dead,
             }
             let state = match sessions.get_mut(p.id) {
@@ -774,17 +807,22 @@ fn run_with_options<F: FnMut(String)>(
                             .and_then(|href| href.as_str())
                             .is_some_and(|href| !href.contains("cross-site-support")) =>
                     {
-                        if value.get("skin").and_then(|skin| skin.as_str())
-                            == Some(theme.id.as_str())
-                        {
-                            SessionState::Alive
-                        } else if session
-                            .evaluate_with_timeout(&js, Duration::from_secs(10))
-                            .is_ok()
-                        {
-                            SessionState::Reinjected
-                        } else {
-                            SessionState::Dead
+                        match retained_session_action(
+                            &theme.id,
+                            value.get("skin").and_then(|skin| skin.as_str()),
+                        ) {
+                            RetainedSessionAction::Own => SessionState::Alive,
+                            RetainedSessionAction::Missing => {
+                                if session
+                                    .evaluate_with_timeout(&js, Duration::from_secs(10))
+                                    .is_ok()
+                                {
+                                    SessionState::Reinjected
+                                } else {
+                                    SessionState::Dead
+                                }
+                            }
+                            RetainedSessionAction::Foreign => SessionState::Superseded,
                         }
                     }
                     _ => SessionState::Dead,
@@ -797,6 +835,13 @@ fn run_with_options<F: FnMut(String)>(
                     "  re-injected after navigation: {}",
                     &p.url[..p.url.len().min(60)]
                 )),
+                SessionState::Superseded => {
+                    log("another theme took ownership — previous watcher stopped".into());
+                    for (_, session) in sessions.drain() {
+                        session.close();
+                    }
+                    return Ok(());
+                }
                 SessionState::Dead => {
                     if let Some(session) = sessions.remove(p.id) {
                         session.close();
@@ -812,10 +857,11 @@ fn run_with_options<F: FnMut(String)>(
         }
 
         // IMPORTANT: every CDP probe spins up a full DevTools session in the
-        // renderer — probing every 2s keeps renderers at 100% CPU. Probe dead
-        // targets only every 15th tick (~30s); that's plenty for recovery.
-        dead_probe_tick += 1;
-        let probe_dead_now = dead_probe_tick >= 15;
+        // renderer. Retry every tick only until the first successful injection
+        // so a cold renderer can recover without a second click; steady-state
+        // dead targets stay throttled to every 15th tick (~30s).
+        dead_probe_tick = dead_probe_tick.saturating_add(1);
+        let probe_dead_now = should_probe_dead_target(applied_once, dead_probe_tick);
         if probe_dead_now {
             dead_probe_tick = 0;
         }
@@ -843,7 +889,6 @@ fn run_with_options<F: FnMut(String)>(
                     sessions.insert(p.id.to_string(), session);
                     injected.insert(p.id.to_string());
                     applied_once = true;
-                    first_injection_failure_at = None;
                     last_injection_error = None;
                     log(format!("  injected: {}", &p.url[..p.url.len().min(70)]));
                 }
@@ -852,7 +897,6 @@ fn run_with_options<F: FnMut(String)>(
                     // retain the error until the first successful injection.
                     dead.insert(p.id.to_string());
                     if !applied_once {
-                        first_injection_failure_at.get_or_insert_with(std::time::Instant::now);
                         last_injection_error = Some(error.clone());
                     }
                     log(format!(
@@ -863,14 +907,13 @@ fn run_with_options<F: FnMut(String)>(
             }
         }
         if !applied_once {
-            let failure_elapsed = first_injection_failure_at.map(|started| started.elapsed());
             if let Some(error) =
-                timed_out_injection_error(failure_elapsed, last_injection_error.as_deref())
+                timed_out_injection_error(Some(started.elapsed()), last_injection_error.as_deref())
             {
                 return Err(format!("{}主题注入失败：{error}", target.display_name()));
             }
         }
-        if once {
+        if should_finish_once(once, applied_once) {
             log(format!("done — {} page(s) themed", injected.len()));
             return Ok(());
         }
@@ -1033,6 +1076,31 @@ mod tests {
             ),
             Some("platform random source unavailable".to_string())
         );
+        assert_eq!(
+            timed_out_injection_error(Some(Duration::from_millis(29_999)), None),
+            None
+        );
+        assert_eq!(
+            timed_out_injection_error(Some(Duration::from_secs(30)), None),
+            Some("未找到可注入页面".to_string())
+        );
+    }
+
+    #[test]
+    fn initial_dead_target_retries_before_steady_state_throttle() {
+        assert!(should_probe_dead_target(false, 1));
+        assert!(should_probe_dead_target(false, 14));
+        assert!(!should_probe_dead_target(true, 1));
+        assert!(!should_probe_dead_target(true, 14));
+        assert!(should_probe_dead_target(true, 15));
+    }
+
+    #[test]
+    fn once_mode_requires_a_successful_injection() {
+        assert!(!should_finish_once(false, false));
+        assert!(!should_finish_once(false, true));
+        assert!(!should_finish_once(true, false));
+        assert!(should_finish_once(true, true));
     }
 
     #[test]
@@ -1052,6 +1120,26 @@ mod tests {
         assert_eq!(
             missing_port_action(true, PortLossPolicy::Relaunch, 5),
             MissingPortAction::Stop
+        );
+    }
+
+    #[test]
+    fn retained_session_yields_to_foreign_theme_owner() {
+        assert_eq!(
+            retained_session_action("theme-a", Some("theme-a")),
+            RetainedSessionAction::Own
+        );
+        assert_eq!(
+            retained_session_action("theme-a", None),
+            RetainedSessionAction::Missing
+        );
+        assert_eq!(
+            retained_session_action("theme-a", Some("theme-b")),
+            RetainedSessionAction::Foreign
+        );
+        assert_eq!(
+            retained_session_action("theme-a", Some("")),
+            RetainedSessionAction::Foreign
         );
     }
 

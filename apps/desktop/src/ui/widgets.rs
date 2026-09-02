@@ -208,7 +208,7 @@ impl SkinApp {
                 cx.stop_propagation()
             });
         for (index, target) in live::TargetApp::ALL.into_iter().enumerate() {
-            let installed = target.is_installed();
+            let installed = self.target_installations.is_installed(target);
             let selected = self.selected_target == target;
             let shortcut = target_shortcut(target);
             let label = l.format_target_label(target.display_name(), !installed);

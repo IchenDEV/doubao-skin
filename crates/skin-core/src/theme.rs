@@ -1423,17 +1423,41 @@ impl Theme {
     /// Theme base color for generated host tokens and the backdrop veil.
     /// v3 themes can be entirely structured and therefore have no raw CSS.
     fn base_color(&self) -> (u8, u8, u8) {
-        let c = self
-            .css_color("--s-color-bg-body")
-            .or_else(|| {
-                self.content
-                    .chat_background
-                    .as_deref()
-                    .and_then(parse_preview_color)
-                    .map(|color| color.rgb)
-            })
-            .unwrap_or(0x121317);
+        let declared = if self.schema_version >= 3 {
+            self.preview_css_color("--s-color-bg-body")
+                .map(|color| color.rgb)
+        } else {
+            self.css_color("--s-color-bg-body")
+        };
+        let structured = self
+            .content
+            .chat_background
+            .as_deref()
+            .and_then(parse_preview_color)
+            .map(|color| color.rgb);
+        let c = declared.or(structured).unwrap_or(0x121317);
         ((c >> 16) as u8, (c >> 8) as u8, c as u8)
+    }
+
+    fn uses_dark_semantics(&self) -> bool {
+        match self.mode {
+            ThemeMode::Dark => true,
+            ThemeMode::Light => false,
+            ThemeMode::Auto => {
+                let (red, green, blue) = self.base_color();
+                let linear = |channel: u8| {
+                    let channel = channel as f32 / 255.0;
+                    if channel <= 0.04045 {
+                        channel / 12.92
+                    } else {
+                        ((channel + 0.055) / 1.055).powf(2.4)
+                    }
+                };
+                let luminance =
+                    0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue);
+                luminance < 0.179
+            }
+        }
     }
 
     /// First `n` distinct `#rrggbb` colors found in the effective author color
@@ -1508,17 +1532,7 @@ impl Theme {
         }
 
         let mut vars: Vec<(&str, String)> = Vec::new();
-        let (red, green, blue) = self.base_color();
-        let linear = |channel: u8| {
-            let channel = channel as f32 / 255.0;
-            if channel <= 0.04045 {
-                channel / 12.92
-            } else {
-                ((channel + 0.055) / 1.055).powf(2.4)
-            }
-        };
-        let luminance = 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue);
-        let dark_surface = luminance < 0.179;
+        let dark_surface = self.uses_dark_semantics();
         let (text_rgb, text_hex, tertiary_alpha, quaternary_alpha, accent_text) = if dark_surface {
             ("255,255,255", "#ffffff", "0.62", "0.55", "#77b0ff")
         } else {
@@ -2102,10 +2116,10 @@ impl Theme {
         let input = opacity.input;
         let composer_surface = color_with_alpha(
             self.composer.background.as_deref(),
-            if self.preview_mode == ThemeMode::Light {
-                "#ffffff"
-            } else {
+            if self.uses_dark_semantics() {
                 "#232528"
+            } else {
+                "#ffffff"
             },
             input,
         );
@@ -2515,7 +2529,7 @@ if(window.__doubaoSkinRuntime&&typeof window.__doubaoSkinRuntime.destroy==='func
 var SKIN=%SKIN%,MODE=%MODE%,TARGET=%TARGET%,CSS=%CSS%,BG=%BACKGROUND%,ICONS=%ICONS%;
 var CSS_SOURCE=CSS,BG_SOURCE=BG,ICONS_SOURCE=ICONS;
 var media=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)');
-var observer=null,timer=null,pending=null,original={root:null,body:null};
+var observer=null,timer=null,appearancePending=null,markerPending=null,activeMode=null,original={root:null,body:null};
 function attrState(el,name){return {had:el.hasAttribute(name),value:el.getAttribute(name)};}
 function restoreAttr(el,name,state){if(!el||!state)return;if(state.had)el.setAttribute(name,state.value);else el.removeAttribute(name);}
 function rememberOriginal(){
@@ -2592,9 +2606,10 @@ function ensureBackdrop(){
   }
   if(document.body&&!layer.parentNode)document.body.prepend(layer);
 }
-function apply(){
+function applyAppearance(){
   var selected=chosenMode(),e=document.documentElement,b=document.body;
   if(!e)return;
+  var appearanceChanged=activeMode!==null&&activeMode!==selected;activeMode=selected;
   CSS=appearanceValue(CSS_SOURCE,selected);BG=appearanceValue(BG_SOURCE,selected);ICONS=appearanceValue(ICONS_SOURCE,selected)||{};
   rememberOriginal();
   var forceTheme=MODE!=='auto'||TARGET==='workbuddy';
@@ -2603,15 +2618,29 @@ function apply(){
   if(TARGET&&e.getAttribute('data-skin-target')!==TARGET)e.setAttribute('data-skin-target',TARGET);
   if(forceTheme&&b&&b.getAttribute('theme-mode')!==selected)b.setAttribute('theme-mode',selected);
   if(CSS!==null&&document.head){var s=document.getElementById('doubao-skin-style');if(!s){s=document.createElement('style');s.id='doubao-skin-style';s.setAttribute('nonce','argus-csp-token');document.head.appendChild(s);}if(s.textContent!==CSS)s.textContent=CSS;}
-  ensureBackdrop();if(TARGET!=='workbuddy')markIcons();
+  ensureBackdrop();if(appearanceChanged)scheduleMarkers();
 }
-function schedule(){if(pending!==null)return;pending=setTimeout(function(){pending=null;apply();},0);}
-function start(){if(observer||!document.documentElement)return;apply();observer=new MutationObserver(schedule);observer.observe(document.documentElement,{attributes:true,childList:true,subtree:true,attributeFilter:['data-theme','data-skin','data-skin-target','theme-mode','aria-label','title']});}
+function refreshMarkers(){if(TARGET!=='workbuddy')markIcons();}
+function scheduleAppearance(){if(appearancePending!==null)return;appearancePending=setTimeout(function(){appearancePending=null;applyAppearance();},0);}
+function scheduleMarkers(){if(TARGET==='workbuddy')return;if(markerPending!==null)clearTimeout(markerPending);markerPending=setTimeout(function(){markerPending=null;refreshMarkers();},180);}
+function handleMutations(records){
+  var appearanceDirty=false,markersDirty=false,e=document.documentElement,b=document.body;
+  records.forEach(function(record){
+    if(record.type==='attributes'&&(record.target===e||record.target===b)&&/^(data-theme|data-skin|data-skin-target|theme-mode)$/.test(record.attributeName||''))appearanceDirty=true;
+    else markersDirty=true;
+    if(record.type==='childList'&&(!document.getElementById('doubao-skin-style')||(BG&&!document.getElementById('doubao-skin-backdrop'))))appearanceDirty=true;
+  });
+  if(appearanceDirty)scheduleAppearance();if(markersDirty)scheduleMarkers();
+}
+function maintain(){scheduleAppearance();scheduleMarkers();}
+function start(){if(observer||!document.documentElement)return;applyAppearance();refreshMarkers();observer=new MutationObserver(handleMutations);observer.observe(document.documentElement,{attributes:true,childList:true,subtree:true,attributeFilter:['data-theme','data-skin','data-skin-target','theme-mode','aria-label','title']});document.addEventListener('scroll',scheduleMarkers,{capture:true,passive:true});}
 function destroy(){
   if(observer)observer.disconnect();
   document.removeEventListener('DOMContentLoaded',start);
-  if(media&&media.removeEventListener)media.removeEventListener('change',schedule);
-  if(pending!==null)clearTimeout(pending);
+  document.removeEventListener('scroll',scheduleMarkers,true);
+  if(media&&media.removeEventListener)media.removeEventListener('change',scheduleAppearance);
+  if(appearancePending!==null)clearTimeout(appearancePending);
+  if(markerPending!==null)clearTimeout(markerPending);
   if(timer)clearInterval(timer);
   if(window.__doubaoSkinTimer===timer)window.__doubaoSkinTimer=null;
   var e=document.documentElement,b=document.body,style=document.getElementById('doubao-skin-style'),backdrop=document.getElementById('doubao-skin-backdrop');
@@ -2624,8 +2653,8 @@ function destroy(){
 }
 start();
 document.addEventListener('DOMContentLoaded',start);
-if(media&&media.addEventListener)media.addEventListener('change',schedule);
-if(window.__doubaoSkinTimer)clearInterval(window.__doubaoSkinTimer);timer=setInterval(schedule,2000);window.__doubaoSkinTimer=timer;
+if(media&&media.addEventListener)media.addEventListener('change',scheduleAppearance);
+if(window.__doubaoSkinTimer)clearInterval(window.__doubaoSkinTimer);timer=setInterval(maintain,2000);window.__doubaoSkinTimer=timer;
 window.__doubaoSkinRuntime={skin:SKIN,target:TARGET,destroy:destroy};
 })();"#;
 
@@ -3229,6 +3258,17 @@ fn flattened_v3_meta(
         .and_then(|target| target.get("preview"))
     {
         flat.insert("preview".into(), target_preview.clone());
+    }
+    if !include_variants {
+        if let Some(preview) = flat
+            .get_mut("preview")
+            .and_then(serde_json::Value::as_object_mut)
+        {
+            preview.insert(
+                "appearance".into(),
+                serde_json::Value::String(appearance.as_str().into()),
+            );
+        }
     }
     let appearances = package.appearances(target);
     let appearance_name = if !include_variants {
@@ -3945,6 +3985,53 @@ mod tests {
     }
 
     #[test]
+    fn resolved_runtime_mode_controls_text_semantic_polarity() {
+        let themes = default_themes_dir();
+        let theme = load(&themes, "doubao-dessert-giggle").expect("dessert theme");
+        let package = theme.package.as_deref().expect("validated v3 package");
+
+        for (appearance, expected_mode, expected_base, expected_text, unexpected_text) in [
+            (
+                ThemePackageAppearance::Light,
+                ThemeMode::Light,
+                (255, 245, 250),
+                "--s-color-text-primary:#000000!important",
+                "--s-color-text-primary:#ffffff!important",
+            ),
+            (
+                ThemePackageAppearance::Dark,
+                ThemeMode::Dark,
+                (18, 20, 25),
+                "--s-color-text-primary:#ffffff!important",
+                "--s-color-text-primary:#000000!important",
+            ),
+        ] {
+            let (meta, raw_css) =
+                flattened_v3_meta(package, ThemeTarget::DoubaoWork, appearance, false)
+                    .expect("resolved runtime visual");
+            let runtime = theme_from_meta(package.root().to_path_buf(), meta, raw_css, None)
+                .expect("runtime theme");
+            let css = runtime.injected_css_for(live::TargetApp::DoubaoWork);
+
+            assert_eq!(runtime.mode, expected_mode);
+            assert_eq!(runtime.preview_mode, expected_mode);
+            assert_eq!(
+                runtime.base_color(),
+                expected_base,
+                "{appearance:?} backdrop veil must use its resolved surface"
+            );
+            assert!(
+                css.contains(expected_text),
+                "{appearance:?} runtime must emit {expected_text}"
+            );
+            assert!(
+                !css.contains(unexpected_text),
+                "{appearance:?} runtime must not emit {unexpected_text}"
+            );
+        }
+    }
+
+    #[test]
     fn workbuddy_background_theme_exposes_artwork_and_surface_opacity() {
         let themes = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../themes");
         let theme = load(&themes, "gallery-whale-maid").expect("whale theme");
@@ -4290,6 +4377,24 @@ mod tests {
                 "{} needs a dark variant",
                 theme.id
             );
+            let package = theme.package.as_deref().expect("validated v3 package");
+            for (appearance, expected_mode, expected_dark) in [
+                (ThemePackageAppearance::Light, ThemeMode::Light, false),
+                (ThemePackageAppearance::Dark, ThemeMode::Dark, true),
+            ] {
+                let (meta, raw_css) =
+                    flattened_v3_meta(package, ThemeTarget::DoubaoWork, appearance, false)
+                        .expect("resolved bundled runtime");
+                let runtime = theme_from_meta(package.root().to_path_buf(), meta, raw_css, None)
+                    .expect("bundled runtime theme");
+                assert_eq!(runtime.mode, expected_mode, "{} {appearance:?}", theme.id);
+                assert_eq!(
+                    runtime.uses_dark_semantics(),
+                    expected_dark,
+                    "{} {appearance:?} text polarity must follow runtime mode",
+                    theme.id
+                );
+            }
             let effective = theme.effective_css();
             assert!(
                 effective.contains("[data-theme=light]"),
@@ -4699,7 +4804,7 @@ mod tests {
         assert!(js.contains("window.__doubaoSkinRuntime.destroy()"));
         assert!(js.contains("observer.disconnect()"));
         assert!(js.contains("removeEventListener('DOMContentLoaded',start)"));
-        assert!(js.contains("media.removeEventListener('change',schedule)"));
+        assert!(js.contains("media.removeEventListener('change',scheduleAppearance)"));
         assert!(js.contains("var forceTheme=MODE!=='auto'||TARGET==='workbuddy'"));
         assert!(js.contains("forceTheme&&e.getAttribute('data-theme')"));
         assert!(js.contains("restoreAttr(e,'data-theme'"));
@@ -4707,11 +4812,26 @@ mod tests {
         assert!(js.contains("doubao-skin-backdrop"));
         assert!(js.contains("[data-doubao-theme-icon]"));
         assert!(js.contains("[data-doubao-theme-composer]"));
-        assert!(js.contains("new MutationObserver(schedule)"));
+        assert!(js.contains("new MutationObserver(handleMutations)"));
         assert!(
             js.contains("if(!e)return;"),
             "new-document injection must wait until documentElement exists"
         );
+    }
+
+    #[test]
+    fn live_runtime_defers_expensive_markers_until_scroll_settles() {
+        let theme = load(&default_themes_dir(), "doubao-dessert-giggle").expect("dessert theme");
+        let js = theme.live_js_for(live::TargetApp::DoubaoWork);
+
+        assert!(js.contains("function scheduleAppearance()"));
+        assert!(js.contains("function scheduleMarkers()"));
+        assert!(
+            js.contains("addEventListener('scroll',scheduleMarkers,{capture:true,passive:true})")
+        );
+        assert!(js.contains("removeEventListener('scroll',scheduleMarkers,true)"));
+        assert!(!js.contains("new MutationObserver(schedule)"));
+        assert!(!js.contains("ensureBackdrop();if(TARGET!=='workbuddy')markIcons();"));
     }
 
     #[test]

@@ -10,6 +10,7 @@ use skin_core::{live, theme};
 use crate::app::actions::{application_menu, OFFICIAL_REPOSITORY_URL, OPEN_SOURCE_NOTICE};
 use crate::app::helpers::target_shortcut_for_platform;
 use crate::app::theme_sessions::{TargetSession, ThemeSessions};
+use crate::app::types::TargetInstallations;
 use crate::app::{
     auto_theme::control_state, initial_target, platform::AutoThemeServiceStatus, preview_identity,
     support_label, target_shortcut, uses_short_compact_layout,
@@ -256,6 +257,21 @@ fn target_default_respects_installation_and_saved_preference() {
         initial_target(None, false, false, false),
         live::TargetApp::DoubaoWork
     );
+}
+
+#[test]
+fn target_installations_are_detected_once_and_read_from_memory() {
+    let mut detected = Vec::new();
+    let installations = TargetInstallations::detect_with(|target| {
+        detected.push(target);
+        target != live::TargetApp::WorkBuddy
+    });
+
+    assert_eq!(detected, live::TargetApp::ALL);
+    assert!(installations.is_installed(live::TargetApp::Doubao));
+    assert!(installations.is_installed(live::TargetApp::DoubaoWork));
+    assert!(!installations.is_installed(live::TargetApp::WorkBuddy));
+    assert_eq!(detected.len(), 3, "memory reads must not re-run detection");
 }
 
 #[test]

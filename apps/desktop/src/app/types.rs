@@ -8,6 +8,27 @@ use skin_core::theme;
 
 use crate::app::platform::AutoThemeServiceStatus;
 
+#[derive(Clone, Copy)]
+pub(crate) struct TargetInstallations([bool; 3]);
+
+impl TargetInstallations {
+    pub(crate) fn detect() -> Self {
+        Self::detect_with(TargetApp::is_installed)
+    }
+
+    pub(crate) fn detect_with(mut detect: impl FnMut(TargetApp) -> bool) -> Self {
+        Self(TargetApp::ALL.map(&mut detect))
+    }
+
+    pub(crate) fn is_installed(self, target: TargetApp) -> bool {
+        self.0[match target {
+            TargetApp::Doubao => 0,
+            TargetApp::DoubaoWork => 1,
+            TargetApp::WorkBuddy => 2,
+        }]
+    }
+}
+
 pub enum Msg {
     Log(String),
     Applied {
