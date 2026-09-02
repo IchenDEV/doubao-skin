@@ -23,7 +23,7 @@ pub use self::helpers::{
     support_label, target_shortcut, uses_short_compact_layout,
 };
 use crate::app::theme_sessions::ThemeSessions;
-use crate::app::types::{Msg, SourceView, StoreRow, ThemeRow};
+use crate::app::types::{Msg, SourceView, StoreRow, TargetInstallations, ThemeRow};
 use crate::i18n::t;
 use crate::ui::constants::MAX_INTERNAL_LOGS;
 use crate::ui::palette::UiPalette;
@@ -45,6 +45,7 @@ pub struct SkinApp {
     pub(crate) internal_logs: VecDeque<String>,
     pub(crate) message: String,
     pub(crate) selected_target: live::TargetApp,
+    pub(crate) target_installations: TargetInstallations,
     pub(crate) restart_confirmation_target: Option<live::TargetApp>,
     pub(crate) surface_opacity: f32,
     pub(crate) opacity_drag_start: Option<(gpui::Pixels, f32)>,
@@ -83,11 +84,12 @@ impl SkinApp {
             }
         })
         .detach();
+        let target_installations = TargetInstallations::detect();
         let selected_target = initial_target(
             read_target_preference().as_deref(),
-            live::TargetApp::Doubao.is_installed(),
-            live::TargetApp::DoubaoWork.is_installed(),
-            live::TargetApp::WorkBuddy.is_installed(),
+            target_installations.is_installed(live::TargetApp::Doubao),
+            target_installations.is_installed(live::TargetApp::DoubaoWork),
+            target_installations.is_installed(live::TargetApp::WorkBuddy),
         );
         let themes: Vec<ThemeRow> = theme::list_installed()
             .into_iter()
@@ -160,6 +162,7 @@ impl SkinApp {
             internal_logs: VecDeque::new(),
             message: auto_theme_error.unwrap_or_default(),
             selected_target,
+            target_installations,
             restart_confirmation_target: None,
             surface_opacity,
             opacity_drag_start: None,

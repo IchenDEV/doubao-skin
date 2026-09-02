@@ -28,7 +28,7 @@ impl SkinApp {
                 .into_any_element();
         };
         let active = self.selected_settings_are_active(row);
-        let target_installed = self.selected_target.is_installed();
+        let target_installed = self.target_installations.is_installed(self.selected_target);
         let theme_supported = row.theme.supports_target(self.selected_target);
         let restart_confirmation = self.restart_confirmation_target == Some(self.selected_target);
         let detail_message = if !target_installed {
