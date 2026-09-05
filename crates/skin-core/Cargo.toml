@@ -23,7 +23,7 @@ ureq = { version = "3.4.0", default-features = false, features = ["rustls"] }
 zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows-registry = "0.5.3"
+windows-registry = "0.6.1"
 windows-sys = { version = "0.61.2", features = [
     "Win32_System_Registry",
     "Win32_System_Threading",
