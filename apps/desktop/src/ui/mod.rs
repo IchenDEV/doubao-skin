@@ -11,11 +11,15 @@ mod sidebar;
 mod widgets;
 
 use gpui::{
-    div, prelude::*, px, rgb, svg, Context, ExternalPaths, FontWeight, IntoElement, MouseButton,
-    Render, Role, Window,
+    div, prelude::*, px, rgb, svg, Context, ExternalPaths, Focusable, FontWeight, IntoElement,
+    MouseButton, Render, Role, Window,
 };
 
-use crate::app::types::SourceView;
+use skin_core::live;
+
+use crate::app::actions::{
+    FocusSearch, ImportPackage, SwitchToDoubao, SwitchToDoubaoWork, SwitchToWorkBuddy,
+};
 use crate::app::{uses_short_compact_layout, SkinApp};
 use crate::i18n::t;
 use crate::ui::constants::{HEADER_HEIGHT, WINDOW_TITLE_X};
@@ -40,6 +44,7 @@ impl Render for SkinApp {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = self.colors;
         let l = t();
+        self.sync_search_input(window, cx);
         let compact = window.viewport_size().width < px(900.);
         let short = uses_short_compact_layout(compact, window.viewport_size().height);
         let header = self.render_header(compact, cx);
@@ -51,6 +56,21 @@ impl Render for SkinApp {
             .size_full()
             .track_focus(&self.focus_handle)
             .on_key_down(cx.listener(Self::key_down))
+            .on_action(
+                cx.listener(|this, _: &FocusSearch, window, cx| this.focus_search(window, cx)),
+            )
+            .on_action(cx.listener(|this, _: &ImportPackage, window, cx| {
+                this.import_package_by_shortcut(window, cx)
+            }))
+            .on_action(cx.listener(|this, _: &SwitchToDoubao, _window, cx| {
+                this.switch_target_by_shortcut(live::TargetApp::Doubao, cx)
+            }))
+            .on_action(cx.listener(|this, _: &SwitchToDoubaoWork, _window, cx| {
+                this.switch_target_by_shortcut(live::TargetApp::DoubaoWork, cx)
+            }))
+            .on_action(cx.listener(|this, _: &SwitchToWorkBuddy, _window, cx| {
+                this.switch_target_by_shortcut(live::TargetApp::WorkBuddy, cx)
+            }))
             .drag_over::<ExternalPaths>(move |style, _, _, _| style.bg(rgb(colors.drop_hover)))
             .on_drop(cx.listener(|this, paths: &ExternalPaths, _window, cx| {
                 this.install_dropped_paths(paths.paths(), cx)
@@ -131,6 +151,28 @@ impl SkinApp {
         }
     }
 
+    /// Keep the input in step with app-driven query changes (clearing on view
+    /// switches, installs, deep links) and with the palette, and remember
+    /// whether it has focus for this frame's border.
+    fn sync_search_input(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let input_colors = self.colors.input_colors();
+        let (input_text, composing) = {
+            let input = self.search.read(cx);
+            (input.text().to_string(), input.is_composing())
+        };
+        if !composing && input_text != self.query {
+            let query = self.query.clone();
+            self.search
+                .update(cx, |input, cx| input.sync_text(&query, cx));
+        }
+        self.search.update(cx, |input, _cx| {
+            if input.colors != input_colors {
+                input.colors = input_colors;
+            }
+        });
+        self.search_focused = self.search.focus_handle(cx).is_focused(window);
+    }
+
     pub(crate) fn render_search_bar(
         &self,
         compact: bool,
@@ -138,11 +180,9 @@ impl SkinApp {
     ) -> gpui::AnyElement {
         let colors = self.colors;
         let l = t();
-        let query = self.query.clone();
-        let search_active = self.search_active;
         div()
             .id("search")
-            .role(Role::Button)
+            .role(Role::Group)
             .aria_label(l.search_placeholder)
             .when(compact, |view| view.flex_1().min_w(px(0.)))
             .when(!compact, |view| view.w_full())
@@ -153,7 +193,7 @@ impl SkinApp {
             .gap_2()
             .rounded(px(8.))
             .border_1()
-            .border_color(rgb(if search_active {
+            .border_color(rgb(if self.search_focused {
                 colors.focus_border
             } else {
                 colors.border
@@ -161,8 +201,7 @@ impl SkinApp {
             .bg(rgb(colors.control).opacity(0.92))
             .cursor_pointer()
             .on_click(cx.listener(|this, _event, window, cx| {
-                this.search_active = true;
-                this.focus_handle.focus(window, cx);
+                this.search.focus_handle(cx).focus(window, cx);
                 cx.notify();
             }))
             .child(
@@ -171,24 +210,7 @@ impl SkinApp {
                     .size(px(15.))
                     .text_color(rgb(colors.muted)),
             )
-            .child(
-                div()
-                    .flex_1()
-                    .min_w(px(0.))
-                    .text_sm()
-                    .overflow_hidden()
-                    .whitespace_nowrap()
-                    .text_color(rgb(if query.is_empty() {
-                        colors.muted
-                    } else {
-                        colors.text
-                    }))
-                    .child(if query.is_empty() {
-                        l.search_placeholder.to_string()
-                    } else {
-                        query
-                    }),
-            )
+            .child(self.search.clone())
             .when(!self.query.is_empty(), |view| {
                 view.child(
                     div()
@@ -205,10 +227,7 @@ impl SkinApp {
                         .hover(|style| style.bg(rgb(colors.hover)))
                         .child("×")
                         .on_click(cx.listener(|this, _event, _window, cx| {
-                            this.query.clear();
-                            if this.source_view == SourceView::Library {
-                                this.ensure_selected_match();
-                            }
+                            this.search.update(cx, |input, cx| input.clear(cx));
                             cx.stop_propagation();
                             cx.notify();
                         })),
@@ -216,4 +235,14 @@ impl SkinApp {
             })
             .into_any_element()
     }
+}
+
+/// Placeholder for the search box, with the platform's find shortcut.
+pub(crate) fn search_placeholder_with_shortcut() -> String {
+    let shortcut = if cfg!(target_os = "macos") {
+        "⌘F"
+    } else {
+        "Ctrl+F"
+    };
+    format!("{}  {shortcut}", t().search_placeholder)
 }

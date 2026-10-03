@@ -7,7 +7,10 @@ use gpui::{point, px, size, ImageSource, Resource, WindowBounds};
 use skin_core::theme_package::{SupportDeclaration, SupportLevel, TargetSupport};
 use skin_core::{live, theme};
 
-use crate::app::actions::{application_menu, OFFICIAL_REPOSITORY_URL, OPEN_SOURCE_NOTICE};
+use crate::app::actions::{
+    app_key_bindings, application_menu, edit_menu, file_menu, view_menu, OFFICIAL_REPOSITORY_URL,
+    OPEN_SOURCE_NOTICE,
+};
 use crate::app::helpers::target_shortcut_for_platform;
 use crate::app::theme_sessions::{TargetSession, ThemeSessions};
 use crate::app::types::TargetInstallations;
@@ -405,4 +408,94 @@ fn automatic_theme_controls_have_exactly_one_dependent_switch() {
     let state = control_state(&settings, AutoThemeServiceStatus::Enabled, false);
     assert!(!state.login_enabled);
     assert!(!state.login_requested);
+}
+
+fn action_names(menu: &gpui::Menu) -> Vec<&str> {
+    menu.items
+        .iter()
+        .filter_map(|item| match item {
+            gpui::MenuItem::Action { name, .. } => Some(name.as_ref()),
+            _ => None,
+        })
+        .collect()
+}
+
+#[test]
+fn menus_surface_the_import_find_and_target_shortcuts() {
+    let l = t();
+    let file = file_menu();
+    assert_eq!(file.name.as_ref(), l.menu_file);
+    assert_eq!(action_names(&file), [l.menu_import]);
+
+    let edit = edit_menu();
+    assert_eq!(edit.name.as_ref(), l.menu_edit);
+    assert_eq!(
+        action_names(&edit),
+        [
+            l.menu_cut,
+            l.menu_copy,
+            l.menu_paste,
+            l.menu_select_all,
+            l.menu_find
+        ]
+    );
+
+    let view = view_menu();
+    assert_eq!(view.name.as_ref(), l.menu_view);
+    assert_eq!(
+        action_names(&view),
+        [l.target_doubao, l.target_doubao_work, l.target_workbuddy]
+    );
+}
+
+#[test]
+fn menu_shortcuts_use_the_platform_secondary_key() {
+    let keys = app_key_bindings()
+        .iter()
+        .map(|binding| {
+            binding
+                .keystrokes()
+                .iter()
+                .map(|keystroke| keystroke.unparse())
+                .collect::<Vec<_>>()
+                .join(" ")
+        })
+        .collect::<Vec<_>>();
+    let modifier = if cfg!(target_os = "macos") {
+        "cmd"
+    } else {
+        "ctrl"
+    };
+    for key in ["o", "f", "1", "2", "3"] {
+        let expected = format!("{modifier}-{key}");
+        assert!(
+            keys.contains(&expected),
+            "missing binding {expected}: {keys:?}"
+        );
+    }
+}
+
+#[test]
+fn a_theme_in_use_on_any_target_cannot_be_deleted() {
+    let mut sessions = ThemeSessions::default();
+    assert!(!sessions.uses_theme("pure-dark"));
+
+    sessions.begin_applying(
+        live::TargetApp::Doubao,
+        TargetSession::for_test("pure-dark", None, 1, Arc::new(AtomicBool::new(false))),
+    );
+    assert!(
+        sessions.uses_theme("pure-dark"),
+        "a theme being applied counts as in use"
+    );
+    assert!(!sessions.uses_theme("violet-night"));
+
+    assert!(sessions.mark_applied(live::TargetApp::Doubao, 1));
+    assert!(
+        sessions.uses_theme("pure-dark"),
+        "an active theme on another target than the selected one still counts"
+    );
+
+    assert!(sessions.complete_if_generation(live::TargetApp::Doubao, 1));
+    assert!(!sessions.uses_theme("pure-dark"));
 }

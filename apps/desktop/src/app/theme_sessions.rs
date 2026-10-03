@@ -106,6 +106,16 @@ impl ThemeSessions {
         }
     }
 
+    /// Whether any target is applying or actively holding this theme.
+    pub(crate) fn uses_theme(&self, theme_id: &str) -> bool {
+        self.by_target.iter().any(|state| match state {
+            Some(TargetState::Applying(session) | TargetState::Active(session)) => {
+                session.theme_id == theme_id
+            }
+            _ => false,
+        })
+    }
+
     pub(crate) fn is_busy(&self, target: TargetApp) -> bool {
         matches!(
             self.by_target[Self::index(target)],

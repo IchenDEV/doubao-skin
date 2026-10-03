@@ -1,6 +1,6 @@
 //! Native application menu and lifecycle actions.
 
-use gpui::{actions, App, Menu, MenuItem, SystemMenuType};
+use gpui::{actions, App, KeyBinding, Menu, MenuItem, SystemMenuType};
 
 use crate::i18n::t;
 
@@ -10,8 +10,60 @@ pub const OPEN_SOURCE_NOTICE: &str =
 
 actions!(
     doubao_skin,
-    [About, HideApplication, HideOthers, ShowAll, QuitApplication]
+    [
+        About,
+        HideApplication,
+        HideOthers,
+        ShowAll,
+        QuitApplication,
+        ImportPackage,
+        FocusSearch,
+        SwitchToDoubao,
+        SwitchToDoubaoWork,
+        SwitchToWorkBuddy
+    ]
 );
+
+/// Window-level shortcuts. They are real key bindings so the menu bar shows
+/// them next to the matching items; `secondary` is Command on macOS and
+/// Control elsewhere.
+pub fn app_key_bindings() -> Vec<KeyBinding> {
+    vec![
+        KeyBinding::new("secondary-o", ImportPackage, None),
+        KeyBinding::new("secondary-f", FocusSearch, None),
+        KeyBinding::new("secondary-1", SwitchToDoubao, None),
+        KeyBinding::new("secondary-2", SwitchToDoubaoWork, None),
+        KeyBinding::new("secondary-3", SwitchToWorkBuddy, None),
+    ]
+}
+
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+pub fn file_menu() -> Menu {
+    Menu::new(t().menu_file).items([MenuItem::action(t().menu_import, ImportPackage)])
+}
+
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+pub fn edit_menu() -> Menu {
+    let l = t();
+    Menu::new(l.menu_edit).items([
+        MenuItem::action(l.menu_cut, crate::search_input::Cut),
+        MenuItem::action(l.menu_copy, crate::search_input::Copy),
+        MenuItem::action(l.menu_paste, crate::search_input::Paste),
+        MenuItem::action(l.menu_select_all, crate::search_input::SelectAll),
+        MenuItem::separator(),
+        MenuItem::action(l.menu_find, FocusSearch),
+    ])
+}
+
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+pub fn view_menu() -> Menu {
+    let l = t();
+    Menu::new(l.menu_view).items([
+        MenuItem::action(l.target_doubao, SwitchToDoubao),
+        MenuItem::action(l.target_doubao_work, SwitchToDoubaoWork),
+        MenuItem::action(l.target_workbuddy, SwitchToWorkBuddy),
+    ])
+}
 
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 pub fn application_menu() -> Menu {

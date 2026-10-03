@@ -267,6 +267,7 @@ impl SkinApp {
                 generation,
                 ok: result.is_ok(),
                 restoring: false,
+                error: result.err(),
             });
         });
         self.theme_sessions

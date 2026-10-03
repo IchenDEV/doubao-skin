@@ -73,3 +73,17 @@ impl UiPalette {
         }
     }
 }
+
+impl UiPalette {
+    pub fn input_colors(&self) -> crate::search_input::InputColors {
+        let color = |value: u32| -> gpui::Hsla { gpui::rgb(value).into() };
+        let mut selection = color(self.focus_border);
+        selection.a = 0.3;
+        crate::search_input::InputColors {
+            text: color(self.text),
+            placeholder: color(self.muted),
+            cursor: color(self.focus_border),
+            selection,
+        }
+    }
+}

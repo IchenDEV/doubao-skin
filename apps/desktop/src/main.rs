@@ -3,7 +3,10 @@
 mod app;
 mod i18n;
 mod preview;
+mod search_input;
+mod status;
 mod store;
+mod trash;
 mod ui;
 
 use std::sync::{mpsc, Arc, Mutex};
@@ -71,6 +74,8 @@ fn main() {
     app.run(move |cx: &mut App| {
         #[cfg(target_os = "macos")]
         platform::set_development_icon();
+        cx.bind_keys(search_input::key_bindings());
+        cx.bind_keys(actions::app_key_bindings());
         #[cfg(target_os = "macos")]
         {
             cx.bind_keys([
@@ -78,7 +83,12 @@ fn main() {
                 KeyBinding::new("cmd-alt-h", HideOthers, None),
                 KeyBinding::new("cmd-q", QuitApplication, None),
             ]);
-            cx.set_menus([actions::application_menu()]);
+            cx.set_menus([
+                actions::application_menu(),
+                actions::file_menu(),
+                actions::edit_menu(),
+                actions::view_menu(),
+            ]);
         }
         cx.on_action(actions::show_about);
         cx.on_action(actions::hide_application);

@@ -256,11 +256,14 @@ impl SkinApp {
         let percent = (self.surface_opacity * 100.0).round() as u32;
         let progress =
             ((self.surface_opacity - MIN_SURFACE_OPACITY) / SURFACE_OPACITY_RANGE).clamp(0.0, 1.0);
+        // The bottom margin shifts the group up so the slider track sits on the
+        // same centre line as the buttons beside it, with the label above.
         div()
             .w(px(OPACITY_TRACK_WIDTH))
             .flex()
             .flex_col()
             .gap_1()
+            .mb(px(20.))
             .child(
                 div()
                     .flex()

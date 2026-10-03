@@ -8,6 +8,7 @@ use crate::app::theme_ops::parse_store_accent;
 use crate::app::types::StoreRow;
 use crate::app::SkinApp;
 use crate::i18n::{self, t};
+use crate::status::StoreInstall;
 use crate::ui::assets::local_image_source;
 
 impl SkinApp {
@@ -71,10 +72,8 @@ impl SkinApp {
         let colors = self.colors;
         let l = t();
         let row = &self.store_rows[index];
-        let installed = self
-            .themes
-            .iter()
-            .any(|theme| theme.theme.id == row.theme.id);
+        let state = self.store_state(&row.theme);
+        let installed = state == StoreInstall::Installed;
         let installing = self.installing_store_theme.as_deref() == Some(row.theme.id.as_str());
         let accent = parse_store_accent(row.theme.accent.as_deref());
         div()
@@ -129,9 +128,7 @@ impl SkinApp {
                                 div()
                                     .id(("install-store-theme", index))
                                     .role(Role::Button)
-                                    .aria_label(
-                                        l.format_store_item_aria(&row.theme.name, installed),
-                                    )
+                                    .aria_label(l.format_store_item_aria(&row.theme.name, state))
                                     .h(px(30.))
                                     .min_w(px(78.))
                                     .px_4()
@@ -158,6 +155,8 @@ impl SkinApp {
                                         l.install_button_busy
                                     } else if installed {
                                         l.install_button_done
+                                    } else if state == StoreInstall::UpdateAvailable {
+                                        l.action_update_theme
                                     } else {
                                         l.install_button
                                     })
