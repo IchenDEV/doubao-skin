@@ -1,5 +1,11 @@
 //! A novice-friendly theme picker: choose, preview, apply, restore.
 
+mod search_input;
+mod status;
+mod trash;
+
+use search_input::{InputColors, SearchEvent, SearchInput};
+use status::{store_install_state, ApplyPhase, Finished, Notice, NoticeScope, StoreInstall, Tone};
 use std::borrow::Cow;
 use std::collections::VecDeque;
 use std::path::PathBuf;
@@ -9,10 +15,10 @@ use std::time::Duration;
 
 use gpui::{
     actions, div, img, point, prelude::*, px, rgb, size, svg, App, AssetSource, Bounds, Context,
-    ExternalPaths, FocusHandle, FontWeight, KeyBinding, KeyDownEvent, Menu, MenuItem, MouseButton,
-    MouseDownEvent, MouseMoveEvent, ObjectFit, PathPromptOptions, Pixels, QuitMode, Rgba, Role,
-    SharedString, SystemMenuType, TitlebarOptions, Window, WindowAppearance, WindowBounds,
-    WindowOptions,
+    Entity, ExternalPaths, FocusHandle, Focusable, FontWeight, KeyBinding, KeyDownEvent, Menu,
+    MenuItem, MouseButton, MouseDownEvent, MouseMoveEvent, ObjectFit, PathPromptOptions, Pixels,
+    QuitMode, Rgba, Role, SharedString, SystemMenuType, TitlebarOptions, Window, WindowAppearance,
+    WindowBounds, WindowOptions,
 };
 use gpui_platform::application;
 
@@ -40,8 +46,51 @@ const REFRESH_ICON_SVG: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" vie
 
 actions!(
     doubao_skin,
-    [About, HideApplication, HideOthers, ShowAll, QuitApplication]
+    [
+        About,
+        HideApplication,
+        HideOthers,
+        ShowAll,
+        QuitApplication,
+        ImportPackage,
+        FocusSearch,
+        SwitchToDoubao,
+        SwitchToDoubaoWork
+    ]
 );
+
+/// Window-level shortcuts. They are real key bindings so the menu bar shows
+/// them next to the matching items.
+fn app_key_bindings() -> Vec<KeyBinding> {
+    vec![
+        KeyBinding::new("cmd-o", ImportPackage, None),
+        KeyBinding::new("cmd-f", FocusSearch, None),
+        KeyBinding::new("cmd-1", SwitchToDoubao, None),
+        KeyBinding::new("cmd-2", SwitchToDoubaoWork, None),
+    ]
+}
+
+fn file_menu() -> Menu {
+    Menu::new("文件").items([MenuItem::action("导入主题包…", ImportPackage)])
+}
+
+fn edit_menu() -> Menu {
+    Menu::new("编辑").items([
+        MenuItem::action("剪切", search_input::Cut),
+        MenuItem::action("拷贝", search_input::Copy),
+        MenuItem::action("粘贴", search_input::Paste),
+        MenuItem::action("全选", search_input::SelectAll),
+        MenuItem::separator(),
+        MenuItem::action("查找主题", FocusSearch),
+    ])
+}
+
+fn view_menu() -> Menu {
+    Menu::new("视图").items([
+        MenuItem::action("豆包", SwitchToDoubao),
+        MenuItem::action("豆包工作", SwitchToDoubaoWork),
+    ])
+}
 
 fn application_menu() -> Menu {
     Menu::new("豆皮").items([
@@ -124,15 +173,6 @@ fn preview_identity(target: live::TargetApp) -> (&'static str, &'static str) {
     }
 }
 
-fn theme_is_active(
-    active_target: Option<live::TargetApp>,
-    active_theme: Option<&str>,
-    selected_target: live::TargetApp,
-    theme_id: &str,
-) -> bool {
-    active_target == Some(selected_target) && active_theme == Some(theme_id)
-}
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct UiPalette {
     shell: u32,
@@ -157,6 +197,18 @@ struct UiPalette {
 }
 
 impl UiPalette {
+    fn input_colors(&self) -> InputColors {
+        let color = |value: u32| -> gpui::Hsla { rgb(value).into() };
+        let mut selection = color(self.focus_border);
+        selection.a = 0.3;
+        InputColors {
+            text: color(self.text),
+            placeholder: color(self.muted),
+            cursor: color(self.focus_border),
+            selection,
+        }
+    }
+
     fn for_appearance(appearance: WindowAppearance) -> Self {
         match appearance {
             WindowAppearance::Dark | WindowAppearance::VibrantDark => Self {
@@ -380,6 +432,7 @@ enum Msg {
         generation: Option<u64>,
         ok: bool,
         restoring: bool,
+        error: Option<String>,
     },
     StoreLoaded(Result<Vec<StoreRow>, String>),
     InstallStarted,
@@ -419,15 +472,15 @@ struct SkinApp {
     installing_store_theme: Option<String>,
     selected: usize,
     store_selected: usize,
+    /// Committed search text; mirrors `search` except while composing.
     query: String,
-    search_active: bool,
+    search: Entity<SearchInput>,
     internal_logs: VecDeque<String>,
-    message: String,
-    applying: bool,
     selected_target: live::TargetApp,
-    active_target: Option<live::TargetApp>,
-    active_theme: Option<String>,
-    active_surface_opacity: Option<f32>,
+    phase: ApplyPhase,
+    notice: Option<Notice>,
+    /// Theme id awaiting the second click of the delete confirmation.
+    confirm_delete: Option<String>,
     surface_opacity: f32,
     opacity_drag_start: Option<(Pixels, f32)>,
     live_stop: Option<Arc<AtomicBool>>,
@@ -506,6 +559,16 @@ impl SkinApp {
         .detach();
         let focus_handle = cx.focus_handle();
         focus_handle.focus(window, cx);
+        let search = cx.new(|cx| SearchInput::new("搜索主题  ⌘F", colors.input_colors(), cx));
+        cx.subscribe(&search, |this, _search, event: &SearchEvent, cx| {
+            let SearchEvent::Changed(text) = event;
+            this.query = text.clone();
+            if this.source_view == SourceView::Library {
+                this.ensure_selected_match();
+            }
+            cx.notify();
+        })
+        .detach();
         Self {
             colors,
             tx,
@@ -519,14 +582,12 @@ impl SkinApp {
             selected: 0,
             store_selected: 0,
             query: String::new(),
-            search_active: false,
+            search,
             internal_logs: VecDeque::new(),
-            message: String::new(),
-            applying: false,
             selected_target,
-            active_target: None,
-            active_theme: None,
-            active_surface_opacity: None,
+            phase: ApplyPhase::Idle,
+            notice: None,
+            confirm_delete: None,
             surface_opacity,
             opacity_drag_start: None,
             live_stop: None,
@@ -539,63 +600,27 @@ impl SkinApp {
 
     fn key_down(&mut self, event: &KeyDownEvent, window: &mut Window, cx: &mut Context<Self>) {
         let key = event.keystroke.key.as_str();
-        let modifiers = event.keystroke.modifiers;
 
-        if modifiers.platform && key.eq_ignore_ascii_case("f") {
-            self.search_active = true;
-            self.focus_handle.focus(window, cx);
+        if key == "escape" && self.confirm_delete.is_some() {
+            self.confirm_delete = None;
             cx.notify();
             cx.stop_propagation();
             return;
         }
-        if modifiers.platform && key.eq_ignore_ascii_case("o") {
-            self.choose_package(window, cx);
-            cx.stop_propagation();
-            return;
-        }
-        if modifiers.platform && key == "1" {
-            self.switch_target(live::TargetApp::Doubao, cx);
-            cx.stop_propagation();
-            return;
-        }
-        if modifiers.platform && key == "2" {
-            self.switch_target(live::TargetApp::DoubaoWork, cx);
-            cx.stop_propagation();
-            return;
-        }
 
-        if self.search_active {
+        // Text entry, cursor movement and clipboard shortcuts belong to the
+        // search input (key bindings + input handler); only list navigation
+        // and leaving the box are handled here.
+        if self.search.focus_handle(cx).is_focused(window) {
             match key {
-                "escape" => {
-                    self.search_active = false;
-                    cx.notify();
-                }
-                "backspace" => {
-                    self.query.pop();
-                    if self.source_view == SourceView::Library {
-                        self.ensure_selected_match();
-                    }
+                "escape" | "tab" => {
+                    self.focus_handle.focus(window, cx);
                     cx.notify();
                 }
                 "up" if self.source_view == SourceView::Library => self.select_filtered(-1, cx),
                 "down" if self.source_view == SourceView::Library => self.select_filtered(1, cx),
                 "enter" | "return" if self.source_view == SourceView::Library => {
                     self.apply_selected(cx)
-                }
-                "tab" => {
-                    self.search_active = false;
-                    cx.notify();
-                }
-                _ if !modifiers.platform && !modifiers.control && !modifiers.function => {
-                    if let Some(text) = event.keystroke.key_char.as_deref() {
-                        if !text.chars().any(char::is_control) {
-                            self.query.push_str(text);
-                            if self.source_view == SourceView::Library {
-                                self.ensure_selected_match();
-                            }
-                            cx.notify();
-                        }
-                    }
                 }
                 _ => return,
             }
@@ -671,7 +696,8 @@ impl SkinApp {
         if let Some(index) = indices.first().copied() {
             self.selected = index;
             self.surface_opacity = self.themes[index].preview.surface_opacity;
-            self.message.clear();
+            self.confirm_delete = None;
+            self.notice = None;
         }
     }
 
@@ -691,7 +717,8 @@ impl SkinApp {
         };
         self.selected = indices[next];
         self.surface_opacity = self.themes[self.selected].preview.surface_opacity;
-        self.message.clear();
+        self.confirm_delete = None;
+        self.notice = None;
         cx.notify();
     }
 
@@ -702,26 +729,37 @@ impl SkinApp {
                 self.internal_logs.truncate(MAX_INTERNAL_LOGS);
             }
             Msg::Applied(generation) if generation == self.generation => {
-                self.applying = false;
-                self.message = "已应用".into();
+                self.phase.confirm_applied();
+                self.notice = None;
             }
             Msg::Applied(_) => {}
             Msg::Done {
                 generation,
                 ok,
                 restoring,
+                error,
             } => {
                 if generation.is_none() || generation == Some(self.generation) {
-                    self.applying = false;
-                    if restoring && ok {
-                        self.message = "已恢复默认".into();
-                    } else if !ok {
-                        self.message = "应用失败，请再试一次".into();
-                        self.active_target = None;
-                        self.active_theme = None;
-                        self.active_surface_opacity = None;
+                    let (target, theme_id) = self
+                        .phase
+                        .target_and_theme()
+                        .map(|(target, theme_id)| (target, theme_id.to_string()))
+                        .unwrap_or((self.selected_target, String::new()));
+                    let reason = error.unwrap_or_default();
+                    if !ok && !reason.is_empty() {
+                        self.internal_logs.push_front(format!("failed: {reason}"));
+                        self.internal_logs.truncate(MAX_INTERNAL_LOGS);
+                    }
+                    let outcome = match (restoring, ok) {
+                        (true, true) => Finished::Restored,
+                        (true, false) => Finished::RestoreFailed(&reason),
+                        (false, false) => Finished::ApplyFailed(&reason),
+                        (false, true) => Finished::WatchEnded,
+                    };
+                    if !restoring {
                         self.live_stop = None;
                     }
+                    self.notice = self.phase.finish(outcome, target, &theme_id);
                 }
             }
             Msg::StoreLoaded(result) => {
@@ -739,7 +777,7 @@ impl SkinApp {
             }
             Msg::InstallStarted => {
                 self.installing_package = true;
-                self.message = "正在安装主题…".into();
+                self.notice = Some(Notice::global(Tone::Info, "正在安装主题…"));
             }
             Msg::Installed {
                 ids,
@@ -754,17 +792,17 @@ impl SkinApp {
                     self.source_view = SourceView::Library;
                     self.query.clear();
                 }
-                self.message = if let Some(error) = error {
+                self.notice = Some(if let Some(error) = error {
                     if ids.is_empty() {
-                        format!("安装失败：{error}")
+                        Notice::global(Tone::Error, format!("安装失败：{error}"))
                     } else {
-                        format!("已安装 {} 个主题；{error}", ids.len())
+                        Notice::global(Tone::Error, format!("已安装 {} 个主题；{error}", ids.len()))
                     }
                 } else if ids.len() == 1 {
-                    "主题已安装".into()
+                    Notice::global(Tone::Success, "主题已安装")
                 } else {
-                    format!("已安装 {} 个主题", ids.len())
-                };
+                    Notice::global(Tone::Success, format!("已安装 {} 个主题", ids.len()))
+                });
             }
             Msg::OpenUrl(url) => {
                 if let Ok(mut buf) = self.url_buffer.lock() {
@@ -802,7 +840,10 @@ impl SkinApp {
         }
         let id_owned = theme_id.to_string();
         let tx = self.tx.clone();
-        self.message = format!("正在查找主题「{id_owned}」…");
+        self.notice = Some(Notice::global(
+            Tone::Info,
+            format!("正在查找主题「{id_owned}」…"),
+        ));
         std::thread::spawn(move || {
             let catalog_url = theme::theme_store_url();
             match theme::fetch_store_catalog(&catalog_url) {
@@ -862,7 +903,6 @@ impl SkinApp {
         }
         self.source_view = source;
         self.query.clear();
-        self.search_active = false;
         if source == SourceView::Store && self.store_rows.is_empty() && !self.store_loading {
             self.load_store(cx);
         }
@@ -929,7 +969,7 @@ impl SkinApp {
             return;
         }
         self.installing_package = true;
-        self.message = "正在安装主题…".into();
+        self.notice = Some(Notice::global(Tone::Info, "正在安装主题…"));
         let tx = self.tx.clone();
         let paths = paths.to_vec();
         std::thread::spawn(move || install_paths(paths, true, tx));
@@ -941,10 +981,7 @@ impl SkinApp {
             return;
         };
         if self.installing_store_theme.is_some()
-            || self
-                .themes
-                .iter()
-                .any(|theme| theme.theme.id == row.theme.id)
+            || self.store_state(&row.theme) == StoreInstall::Installed
         {
             return;
         }
@@ -981,8 +1018,8 @@ impl SkinApp {
         if index < self.themes.len() {
             self.selected = index;
             self.surface_opacity = self.themes[index].preview.surface_opacity;
-            self.search_active = false;
-            self.message.clear();
+            self.confirm_delete = None;
+            self.notice = None;
             cx.notify();
         }
     }
@@ -992,7 +1029,10 @@ impl SkinApp {
             return;
         }
         if !target.is_installed() {
-            self.message = format!("尚未安装{}", target.display_name());
+            self.notice = Some(Notice::global(
+                Tone::Error,
+                format!("尚未安装{}", target.display_name()),
+            ));
             cx.notify();
             return;
         }
@@ -1000,13 +1040,11 @@ impl SkinApp {
             stop.store(true, Ordering::Relaxed);
         }
         self.generation += 1;
-        self.applying = false;
-        let old_target = self.active_target.take();
-        self.active_theme = None;
-        self.active_surface_opacity = None;
+        let old_target = self.phase.stop();
         self.selected_target = target;
         save_target_preference(target);
-        self.message.clear();
+        self.confirm_delete = None;
+        self.notice = None;
         let previous_thread = self.live_thread.take();
         if previous_thread.is_some() || old_target.is_some() {
             let tx = self.tx.clone();
@@ -1028,7 +1066,7 @@ impl SkinApp {
     }
 
     fn apply_selected(&mut self, cx: &mut Context<Self>) {
-        if self.applying {
+        if self.phase.is_busy() {
             return;
         }
         let Some(row) = self.themes.get(self.selected) else {
@@ -1036,20 +1074,16 @@ impl SkinApp {
         };
         let target = self.selected_target;
         if !target.is_installed() {
-            self.message = format!("请先安装{}", target.display_name());
+            self.notice = Some(Notice::for_theme(
+                &row.theme.id,
+                target,
+                Tone::Error,
+                format!("请先安装{}", target.display_name()),
+            ));
             cx.notify();
             return;
         }
-        let active = theme_is_active(
-            self.active_target,
-            self.active_theme.as_deref(),
-            target,
-            row.theme.id.as_str(),
-        ) && (!row.preview.has_background
-            || self
-                .active_surface_opacity
-                .is_some_and(|value| (value - self.surface_opacity).abs() < 0.001));
-        if active {
+        if self.selected_settings_are_active(row) {
             return;
         }
         if let Some(stop) = self.live_stop.take() {
@@ -1063,11 +1097,9 @@ impl SkinApp {
         let generation = self.generation;
         let stop = Arc::new(AtomicBool::new(false));
         self.live_stop = Some(stop.clone());
-        self.active_target = Some(target);
-        self.active_theme = Some(theme.id.clone());
-        self.active_surface_opacity = theme.surface_opacity;
-        self.applying = true;
-        self.message = "正在应用…".into();
+        self.phase
+            .begin_apply(target, &theme.id, theme.surface_opacity);
+        self.notice = None;
         let tx = self.tx.clone();
         let previous_thread = self.live_thread.take();
         self.live_thread = Some(std::thread::spawn(move || {
@@ -1087,23 +1119,24 @@ impl SkinApp {
                 generation: Some(generation),
                 ok: result.is_ok(),
                 restoring: false,
+                error: result.err(),
             });
         }));
         cx.notify();
     }
 
     fn restore_default(&mut self, cx: &mut Context<Self>) {
+        if self.phase.is_restoring() {
+            return;
+        }
         if let Some(stop) = self.live_stop.take() {
             stop.store(true, Ordering::Relaxed);
         }
         self.generation += 1;
         let generation = self.generation;
         let target = self.selected_target;
-        self.active_target = None;
-        self.active_theme = None;
-        self.active_surface_opacity = None;
-        self.applying = true;
-        self.message = "正在恢复…".into();
+        self.phase.begin_restore(target);
+        self.notice = None;
         let tx = self.tx.clone();
         let previous_thread = self.live_thread.take();
         self.live_thread = Some(std::thread::spawn(move || {
@@ -1118,8 +1151,102 @@ impl SkinApp {
                 generation: Some(generation),
                 ok: result.is_ok(),
                 restoring: true,
+                error: result.err(),
             });
         }));
+        cx.notify();
+    }
+
+    fn selected_theme_is_user_installed(&self) -> bool {
+        self.themes
+            .get(self.selected)
+            .is_some_and(|row| theme::is_user_theme(&row.theme, &theme::user_themes_dir()))
+    }
+
+    fn reveal_selected_theme(&mut self, cx: &mut Context<Self>) {
+        if let Some(row) = self.themes.get(self.selected) {
+            cx.reveal_path(&row.theme.path);
+        }
+    }
+
+    fn request_delete_selected(&mut self, cx: &mut Context<Self>) {
+        let Some(row) = self.themes.get(self.selected) else {
+            return;
+        };
+        let id = row.theme.id.clone();
+        if !self.selected_theme_is_user_installed() {
+            return;
+        }
+        if self.phase.is_applying(self.selected_target, &id)
+            || self.phase.is_active(self.selected_target, &id)
+        {
+            self.notice = Some(Notice::for_theme(
+                &id,
+                self.selected_target,
+                Tone::Error,
+                "请先恢复默认，再删除正在使用的主题",
+            ));
+        } else {
+            self.confirm_delete = Some(id);
+        }
+        cx.notify();
+    }
+
+    fn cancel_delete(&mut self, cx: &mut Context<Self>) {
+        self.confirm_delete = None;
+        cx.notify();
+    }
+
+    fn delete_selected(&mut self, cx: &mut Context<Self>) {
+        let Some(row) = self.themes.get(self.selected) else {
+            return;
+        };
+        let id = row.theme.id.clone();
+        if self.confirm_delete.as_deref() != Some(id.as_str()) {
+            return;
+        }
+        self.confirm_delete = None;
+        let neighbor_id = self
+            .themes
+            .get(self.selected + 1)
+            .or_else(|| {
+                self.selected
+                    .checked_sub(1)
+                    .and_then(|i| self.themes.get(i))
+            })
+            .map(|row| row.theme.id.clone());
+        let installed_dir = theme::user_themes_dir();
+        let result = theme::resolve_user_theme_dir(&id, &installed_dir)
+            .and_then(|path| trash::move_to_trash(&path));
+        match result {
+            Ok(_) => {
+                self.reload_themes(Some(&id));
+                if self
+                    .themes
+                    .get(self.selected)
+                    .is_none_or(|row| row.theme.id != id)
+                {
+                    self.reload_themes(neighbor_id.as_deref());
+                }
+                let restored_bundled = self.themes.iter().any(|row| row.theme.id == id);
+                self.notice = Some(Notice::global(
+                    Tone::Success,
+                    if restored_bundled {
+                        "已移入废纸篓，已恢复为内置版本"
+                    } else {
+                        "已移入废纸篓"
+                    },
+                ));
+            }
+            Err(error) => {
+                self.notice = Some(Notice::for_theme(
+                    &id,
+                    self.selected_target,
+                    Tone::Error,
+                    format!("删除失败：{error}"),
+                ));
+            }
+        }
         cx.notify();
     }
 
@@ -1129,20 +1256,18 @@ impl SkinApp {
             return;
         }
         self.surface_opacity = next;
-        self.message.clear();
+        self.notice = None;
         cx.notify();
     }
 
     fn selected_settings_are_active(&self, row: &ThemeRow) -> bool {
-        theme_is_active(
-            self.active_target,
-            self.active_theme.as_deref(),
-            self.selected_target,
-            row.theme.id.as_str(),
-        ) && (!row.preview.has_background
-            || self
-                .active_surface_opacity
-                .is_some_and(|value| (value - self.surface_opacity).abs() < 0.001))
+        self.phase
+            .is_active(self.selected_target, row.theme.id.as_str())
+            && (!row.preview.has_background
+                || self
+                    .phase
+                    .active_opacity()
+                    .is_some_and(|value| (value - self.surface_opacity).abs() < 0.001))
     }
 
     fn render_target_switch(&self, cx: &mut Context<Self>) -> gpui::AnyElement {
@@ -1287,6 +1412,69 @@ impl SkinApp {
                     })),
             )
             .into_any_element()
+    }
+
+    /// Low-key text actions on the detail info line: reveal in Finder for
+    /// every theme, delete (with inline confirmation) for user-installed ones.
+    fn render_theme_actions(&self, theme_id: &str, cx: &mut Context<Self>) -> gpui::AnyElement {
+        let colors = self.colors;
+        let target = self.selected_target;
+        let user_installed = self.selected_theme_is_user_installed();
+        let confirming = self.confirm_delete.as_deref() == Some(theme_id);
+        let delete_blocked =
+            self.phase.is_applying(target, theme_id) || self.phase.is_active(target, theme_id);
+        let busy = self.phase.is_busy();
+        let action = |id: &'static str, label: &'static str, color: u32, enabled: bool| {
+            div()
+                .id(id)
+                .role(Role::Button)
+                .aria_label(label)
+                .text_xs()
+                .whitespace_nowrap()
+                .text_color(rgb(color))
+                .when(enabled, |view| {
+                    view.cursor_pointer().hover(|style| style.opacity(0.72))
+                })
+                .child(label)
+        };
+        let mut row = div().flex().items_center().gap_3();
+        if confirming {
+            row = row
+                .child(
+                    div()
+                        .text_xs()
+                        .whitespace_nowrap()
+                        .text_color(rgb(colors.muted))
+                        .child("移入废纸篓？"),
+                )
+                .child(
+                    action("delete-confirm", "确认", colors.danger, !busy).on_click(
+                        cx.listener(|this, _event, _window, cx| this.delete_selected(cx)),
+                    ),
+                )
+                .child(
+                    action("delete-cancel", "取消", colors.link, true)
+                        .on_click(cx.listener(|this, _event, _window, cx| this.cancel_delete(cx))),
+                );
+            return row.into_any_element();
+        }
+        row = row.child(
+            action("reveal-theme", "在 Finder 中显示", colors.link, true)
+                .on_click(cx.listener(|this, _event, _window, cx| this.reveal_selected_theme(cx))),
+        );
+        if user_installed {
+            row = row.child(if delete_blocked {
+                action("delete-theme", "删除（请先恢复默认）", colors.muted, false)
+                    .into_any_element()
+            } else {
+                action("delete-theme", "删除", colors.link, true)
+                    .on_click(
+                        cx.listener(|this, _event, _window, cx| this.request_delete_selected(cx)),
+                    )
+                    .into_any_element()
+            });
+        }
+        row.into_any_element()
     }
 
     fn render_opacity_control(&self, cx: &mut Context<Self>) -> gpui::AnyElement {
@@ -1528,7 +1716,7 @@ impl SkinApp {
         let colors = self.colors;
         let row = &self.themes[index];
         let selected = index == self.selected;
-        let active = self.active_theme.as_deref() == Some(row.theme.id.as_str());
+        let active = self.phase.active_theme_id() == Some(row.theme.id.as_str());
         let accent = row.preview.colors.accent;
         let item = div()
             .id(("theme", index))
@@ -1610,14 +1798,20 @@ impl SkinApp {
         list.into_any_element()
     }
 
+    fn store_state(&self, store: &theme::StoreTheme) -> StoreInstall {
+        let installed = self
+            .themes
+            .iter()
+            .find(|row| row.theme.id == store.id)
+            .map(|row| row.theme.version.as_str());
+        store_install_state(installed, &store.version)
+    }
+
     fn render_store_sidebar_item(&self, index: usize, cx: &mut Context<Self>) -> gpui::AnyElement {
         let colors = self.colors;
         let row = &self.store_rows[index];
         let selected = index == self.store_selected;
-        let installed = self
-            .themes
-            .iter()
-            .any(|theme| theme.theme.id == row.theme.id);
+        let state = self.store_state(&row.theme);
         let accent = parse_store_accent(row.theme.accent.as_deref());
         div()
             .id(("store-sidebar", index))
@@ -1666,14 +1860,50 @@ impl SkinApp {
                     .text_color(rgb(colors.text))
                     .child(row.theme.name.clone()),
             )
-            .when(installed, |item| {
+            .when(state != StoreInstall::NotInstalled, |item| {
                 item.child(
                     div()
                         .text_xs()
-                        .text_color(rgb(colors.muted))
-                        .child("已安装"),
+                        .text_color(rgb(if state == StoreInstall::UpdateAvailable {
+                            accent
+                        } else {
+                            colors.muted
+                        }))
+                        .child(if state == StoreInstall::UpdateAvailable {
+                            "有更新"
+                        } else {
+                            "已安装"
+                        }),
                 )
             })
+            .into_any_element()
+    }
+
+    fn render_retry_store_button(
+        &self,
+        id: &'static str,
+        cx: &mut Context<Self>,
+    ) -> gpui::AnyElement {
+        let colors = self.colors;
+        div()
+            .id(id)
+            .role(Role::Button)
+            .aria_label("重试连接主题商店")
+            .mt_2()
+            .h(px(32.))
+            .px_4()
+            .rounded(px(7.))
+            .border_1()
+            .border_color(rgb(colors.border))
+            .bg(rgb(colors.control))
+            .flex()
+            .items_center()
+            .text_sm()
+            .text_color(rgb(colors.text))
+            .cursor_pointer()
+            .hover(|style| style.bg(rgb(colors.hover)))
+            .child("重试")
+            .on_click(cx.listener(|this, _event, _window, cx| this.load_store(cx)))
             .into_any_element()
     }
 
@@ -1713,7 +1943,8 @@ impl SkinApp {
                         .text_sm()
                         .text_color(rgb(colors.muted))
                         .child("暂时无法连接")
-                        .child(div().text_xs().child(error.clone())),
+                        .child(div().text_xs().child(error.clone()))
+                        .child(self.render_retry_store_button("retry-store-sidebar", cx)),
                 )
                 .into_any_element();
         }
@@ -1799,10 +2030,8 @@ impl SkinApp {
     ) -> gpui::AnyElement {
         let colors = self.colors;
         let row = &self.store_rows[index];
-        let installed = self
-            .themes
-            .iter()
-            .any(|theme| theme.theme.id == row.theme.id);
+        let state = self.store_state(&row.theme);
+        let installed = state == StoreInstall::Installed;
         let installing = self.installing_store_theme.as_deref() == Some(row.theme.id.as_str());
         let accent = parse_store_accent(row.theme.accent.as_deref());
         div()
@@ -1857,10 +2086,16 @@ impl SkinApp {
                                 div()
                                     .id(("install-store-theme", index))
                                     .role(Role::Button)
-                                    .aria_label(if installed {
-                                        format!("{} 已安装", row.theme.name)
-                                    } else {
-                                        format!("安装 {}", row.theme.name)
+                                    .aria_label(match state {
+                                        StoreInstall::Installed => {
+                                            format!("{} 已安装", row.theme.name)
+                                        }
+                                        StoreInstall::UpdateAvailable => {
+                                            format!("更新 {}", row.theme.name)
+                                        }
+                                        StoreInstall::NotInstalled => {
+                                            format!("安装 {}", row.theme.name)
+                                        }
                                     })
                                     .h(px(30.))
                                     .min_w(px(78.))
@@ -1888,6 +2123,8 @@ impl SkinApp {
                                         "正在安装…"
                                     } else if installed {
                                         "已安装"
+                                    } else if state == StoreInstall::UpdateAvailable {
+                                        "更新"
                                     } else {
                                         "安装"
                                     })
@@ -1927,18 +2164,23 @@ impl SkinApp {
                                 .flex()
                                 .items_center()
                                 .gap_3()
-                                .when(!self.message.is_empty(), |view| {
-                                    view.child(
-                                        div()
-                                            .text_xs()
-                                            .text_color(rgb(if self.message.contains("失败") {
-                                                colors.danger
-                                            } else {
-                                                colors.muted
-                                            }))
-                                            .child(self.message.clone()),
-                                    )
-                                })
+                                .when_some(
+                                    self.notice
+                                        .as_ref()
+                                        .filter(|notice| notice.scope == NoticeScope::Global),
+                                    |view, notice| {
+                                        view.child(
+                                            div()
+                                                .text_xs()
+                                                .text_color(rgb(if notice.tone == Tone::Error {
+                                                    colors.danger
+                                                } else {
+                                                    colors.muted
+                                                }))
+                                                .child(notice.text.clone()),
+                                        )
+                                    },
+                                )
                                 .child(
                                     div()
                                         .id("refresh-store")
@@ -1997,7 +2239,8 @@ impl SkinApp {
                         .text_sm()
                         .text_color(rgb(colors.muted))
                         .child("暂时无法打开主题商店")
-                        .child(div().text_xs().child(error.clone())),
+                        .child(div().text_xs().child(error.clone()))
+                        .child(self.render_retry_store_button("retry-store", cx)),
                 )
                 .into_any_element();
         }
@@ -2053,10 +2296,8 @@ impl SkinApp {
                 .child("选择一个主题以查看详情")
                 .into_any_element();
         };
-        let installed = self
-            .themes
-            .iter()
-            .any(|theme| theme.theme.id == row.theme.id);
+        let state = self.store_state(&row.theme);
+        let installed = state == StoreInstall::Installed;
         let installing = self.installing_store_theme.as_deref() == Some(row.theme.id.as_str());
         let accent = parse_store_accent(row.theme.accent.as_deref());
         let store_selected = self.store_selected;
@@ -2170,7 +2411,11 @@ impl SkinApp {
                                 btn.bg(rgb(accent))
                                     .text_color(rgb(0xffffff))
                                     .hover(|style| style.opacity(0.88))
-                                    .child("安装主题")
+                                    .child(if state == StoreInstall::UpdateAvailable {
+                                        "更新主题"
+                                    } else {
+                                        "安装主题"
+                                    })
                                     .on_click(cx.listener(move |this, _event, _window, cx| {
                                         this.install_store_theme(store_selected, cx)
                                     }))
@@ -2643,13 +2888,25 @@ impl Render for SkinApp {
         let content = if let Some(row) = self.themes.get(self.selected) {
             let active = self.selected_settings_are_active(row);
             let target_installed = self.selected_target.is_installed();
+            let detail_notice = self.notice.as_ref().filter(|notice| {
+                notice.visible_for(Some(row.theme.id.as_str()), self.selected_target)
+            });
+            let detail_is_error = detail_notice.is_some_and(|notice| notice.tone == Tone::Error);
             let detail_message = if !target_installed {
-                format!("请先安装{}", self.selected_target.display_name())
-            } else if self.message == "已应用" {
                 String::new()
             } else {
-                self.message.clone()
+                detail_notice
+                    .map(|notice| notice.text.clone())
+                    .unwrap_or_default()
             };
+            let missing_target_hint = (!target_installed).then(|| {
+                format!(
+                    "未检测到{}。请先安装并打开一次，再回来应用主题。",
+                    self.selected_target.display_name()
+                )
+            });
+            let applying = self.phase.is_busy();
+            let restoring = self.phase.is_restoring();
             div()
                 .flex_1()
                 .min_w(px(0.))
@@ -2670,6 +2927,24 @@ impl Render for SkinApp {
                     px(20.)
                 })
                 .child(self.render_preview(row, compact, short))
+                .when_some(missing_target_hint, |view, hint| {
+                    view.child(
+                        div()
+                            .id("missing-target-hint")
+                            .role(Role::Alert)
+                            .min_h(px(36.))
+                            .px_3()
+                            .rounded(px(8.))
+                            .border_1()
+                            .border_color(rgb(colors.danger).opacity(0.4))
+                            .bg(rgb(colors.danger).opacity(0.08))
+                            .flex()
+                            .items_center()
+                            .text_sm()
+                            .text_color(rgb(colors.text))
+                            .child(hint),
+                    )
+                })
                 .child(
                     div()
                         .min_h(if short || !compact { px(72.) } else { px(80.) })
@@ -2732,15 +3007,26 @@ impl Render for SkinApp {
                                 .child(
                                     div()
                                         .h(px(16.))
-                                        .overflow_hidden()
-                                        .whitespace_nowrap()
-                                        .text_xs()
-                                        .text_color(rgb(if detail_message.contains("失败") {
-                                            colors.danger
-                                        } else {
-                                            colors.muted
-                                        }))
-                                        .child(detail_message),
+                                        .flex()
+                                        .items_center()
+                                        .gap_3()
+                                        .child(
+                                            div()
+                                                .flex_1()
+                                                .min_w(px(0.))
+                                                .overflow_hidden()
+                                                .whitespace_nowrap()
+                                                .text_xs()
+                                                .text_color(rgb(if detail_is_error {
+                                                    colors.danger
+                                                } else {
+                                                    colors.muted
+                                                }))
+                                                .child(detail_message),
+                                        )
+                                        .child(
+                                            self.render_theme_actions(row.theme.id.as_str(), cx),
+                                        ),
                                 ),
                         )
                         .child(
@@ -2767,12 +3053,22 @@ impl Render for SkinApp {
                                         .bg(rgb(colors.control))
                                         .text_sm()
                                         .text_color(rgb(colors.text))
-                                        .cursor_pointer()
-                                        .hover(|style| style.bg(rgb(colors.hover)))
-                                        .child("恢复默认")
-                                        .on_click(cx.listener(|this, _event, _window, cx| {
-                                            this.restore_default(cx)
-                                        })),
+                                        .opacity(if restoring { 0.6 } else { 1.0 })
+                                        .when(!restoring, |button| {
+                                            button
+                                                .cursor_pointer()
+                                                .hover(|style| style.bg(rgb(colors.hover)))
+                                                .on_click(cx.listener(
+                                                    |this, _event, _window, cx| {
+                                                        this.restore_default(cx)
+                                                    },
+                                                ))
+                                        })
+                                        .child(if restoring {
+                                            "正在恢复…"
+                                        } else {
+                                            "恢复默认"
+                                        }),
                                 )
                                 .child(
                                     div()
@@ -2794,27 +3090,26 @@ impl Render for SkinApp {
                                         .text_sm()
                                         .font_weight(FontWeight::SEMIBOLD)
                                         .text_color(rgb(0xffffff))
-                                        .opacity(if self.applying || active || !target_installed {
+                                        .opacity(if applying || active || !target_installed {
                                             0.72
                                         } else {
                                             1.0
                                         })
-                                        .when(
-                                            !self.applying && !active && target_installed,
-                                            |button| {
-                                                button
-                                                    .cursor_pointer()
-                                                    .hover(|style| style.opacity(0.88))
-                                                    .on_click(cx.listener(
-                                                        |this, _event, _window, cx| {
-                                                            this.apply_selected(cx)
-                                                        },
-                                                    ))
-                                            },
-                                        )
+                                        .when(!applying && !active && target_installed, |button| {
+                                            button
+                                                .cursor_pointer()
+                                                .hover(|style| style.opacity(0.88))
+                                                .on_click(cx.listener(
+                                                    |this, _event, _window, cx| {
+                                                        this.apply_selected(cx)
+                                                    },
+                                                ))
+                                        })
                                         .child(if !target_installed {
                                             "尚未安装"
-                                        } else if self.applying {
+                                        } else if restoring {
+                                            "请稍候…"
+                                        } else if applying {
                                             "正在应用…"
                                         } else if active {
                                             "正在使用"
@@ -2826,19 +3121,96 @@ impl Render for SkinApp {
                 )
                 .into_any_element()
         } else {
+            let empty_button = |id: &'static str, label: &'static str, primary: bool| {
+                div()
+                    .id(id)
+                    .role(Role::Button)
+                    .aria_label(label)
+                    .h(px(36.))
+                    .px_5()
+                    .rounded(px(7.))
+                    .flex()
+                    .items_center()
+                    .text_sm()
+                    .font_weight(FontWeight::SEMIBOLD)
+                    .cursor_pointer()
+                    .when(primary, |button| {
+                        button
+                            .bg(rgb(colors.focus_border))
+                            .text_color(rgb(0xffffff))
+                            .hover(|style| style.opacity(0.88))
+                    })
+                    .when(!primary, |button| {
+                        button
+                            .border_1()
+                            .border_color(rgb(colors.border))
+                            .bg(rgb(colors.control))
+                            .text_color(rgb(colors.text))
+                            .hover(|style| style.bg(rgb(colors.hover)))
+                    })
+                    .child(label)
+            };
             div()
                 .flex_1()
                 .flex()
+                .flex_col()
                 .items_center()
                 .justify_center()
-                .text_sm()
-                .text_color(rgb(colors.muted))
-                .child("还没有可用主题")
+                .gap_3()
+                .child(
+                    div()
+                        .text_size(px(18.))
+                        .font_weight(FontWeight::BOLD)
+                        .text_color(rgb(colors.text))
+                        .child("还没有主题"),
+                )
+                .child(
+                    div()
+                        .text_sm()
+                        .text_color(rgb(colors.muted))
+                        .child("从主题商店挑一个，或导入已有的主题包。"),
+                )
+                .child(
+                    div()
+                        .mt_2()
+                        .flex()
+                        .gap_3()
+                        .child(
+                            empty_button("empty-browse-store", "浏览主题商店", true).on_click(
+                                cx.listener(|this, _event, _window, cx| {
+                                    this.switch_source(SourceView::Store, cx)
+                                }),
+                            ),
+                        )
+                        .child(
+                            empty_button("empty-choose-package", "选择主题包…", false).on_click(
+                                cx.listener(|this, _event, window, cx| {
+                                    this.choose_package(window, cx)
+                                }),
+                            ),
+                        ),
+                )
                 .into_any_element()
         };
 
-        let query = self.query.clone();
-        let search_active = self.search_active;
+        // Keep the input in step with app-driven query changes (clearing on
+        // view switches, installs, deep links) and with the palette.
+        let input_colors = colors.input_colors();
+        let (input_text, composing) = {
+            let input = self.search.read(cx);
+            (input.text().to_string(), input.is_composing())
+        };
+        if !composing && input_text != self.query {
+            let query = self.query.clone();
+            self.search
+                .update(cx, |input, cx| input.sync_text(&query, cx));
+        }
+        self.search.update(cx, |input, _cx| {
+            if input.colors != input_colors {
+                input.colors = input_colors;
+            }
+        });
+        let search_active = self.search.focus_handle(cx).is_focused(window);
         let search = div()
             .id("search")
             .role(Role::Button)
@@ -2860,8 +3232,7 @@ impl Render for SkinApp {
             .bg(rgb(colors.control).opacity(0.92))
             .cursor_pointer()
             .on_click(cx.listener(|this, _event, window, cx| {
-                this.search_active = true;
-                this.focus_handle.focus(window, cx);
+                this.search.focus_handle(cx).focus(window, cx);
                 cx.notify();
             }))
             .child(
@@ -2870,24 +3241,7 @@ impl Render for SkinApp {
                     .size(px(15.))
                     .text_color(rgb(colors.muted)),
             )
-            .child(
-                div()
-                    .flex_1()
-                    .min_w(px(0.))
-                    .text_sm()
-                    .overflow_hidden()
-                    .whitespace_nowrap()
-                    .text_color(rgb(if query.is_empty() {
-                        colors.muted
-                    } else {
-                        colors.text
-                    }))
-                    .child(if query.is_empty() {
-                        "搜索主题".to_string()
-                    } else {
-                        query
-                    }),
-            )
+            .child(self.search.clone())
             .when(!self.query.is_empty(), |view| {
                 view.child(
                     div()
@@ -2904,10 +3258,7 @@ impl Render for SkinApp {
                         .hover(|style| style.bg(rgb(colors.hover)))
                         .child("×")
                         .on_click(cx.listener(|this, _event, _window, cx| {
-                            this.query.clear();
-                            if this.source_view == SourceView::Library {
-                                this.ensure_selected_match();
-                            }
+                            this.search.update(cx, |input, cx| input.clear(cx));
                             cx.stop_propagation();
                             cx.notify();
                         })),
@@ -3098,6 +3449,19 @@ impl Render for SkinApp {
             .size_full()
             .track_focus(&self.focus_handle)
             .on_key_down(cx.listener(Self::key_down))
+            .on_action(
+                cx.listener(|this, _: &ImportPackage, window, cx| this.choose_package(window, cx)),
+            )
+            .on_action(cx.listener(|this, _: &FocusSearch, window, cx| {
+                this.search.focus_handle(cx).focus(window, cx);
+                cx.notify();
+            }))
+            .on_action(cx.listener(|this, _: &SwitchToDoubao, _window, cx| {
+                this.switch_target(live::TargetApp::Doubao, cx)
+            }))
+            .on_action(cx.listener(|this, _: &SwitchToDoubaoWork, _window, cx| {
+                this.switch_target(live::TargetApp::DoubaoWork, cx)
+            }))
             .drag_over::<ExternalPaths>(move |style, _, _, _| style.bg(rgb(colors.drop_hover)))
             .on_drop(cx.listener(|this, paths: &ExternalPaths, _window, cx| {
                 this.install_dropped_paths(paths.paths(), cx)
@@ -3270,6 +3634,8 @@ fn main() {
     app.run(move |cx: &mut App| {
         #[cfg(target_os = "macos")]
         set_development_icon();
+        cx.bind_keys(search_input::key_bindings());
+        cx.bind_keys(app_key_bindings());
         cx.bind_keys([
             KeyBinding::new("cmd-h", HideApplication, None),
             KeyBinding::new("cmd-alt-h", HideOthers, None),
@@ -3280,7 +3646,7 @@ fn main() {
         cx.on_action(hide_others);
         cx.on_action(show_all);
         cx.on_action(quit_application);
-        cx.set_menus([application_menu()]);
+        cx.set_menus([application_menu(), file_menu(), edit_menu(), view_menu()]);
         let (tx, rx) = mpsc::channel();
         let bounds = Bounds::centered(
             None,
@@ -3299,7 +3665,7 @@ fn main() {
                     view.selected = index;
                     view.apply_selected(cx);
                 } else {
-                    view.message = "这个主题暂时不可用".into();
+                    view.notice = Some(Notice::global(Tone::Error, "这个主题暂时不可用"));
                     cx.notify();
                 }
             });
@@ -3374,6 +3740,56 @@ mod ui_regression_tests {
         )));
     }
 
+    fn action_names(menu: &Menu) -> Vec<&str> {
+        menu.items
+            .iter()
+            .filter_map(|item| match item {
+                gpui::MenuItem::Action { name, .. } => Some(name.as_ref()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn menus_surface_the_import_find_and_target_shortcuts() {
+        let file = file_menu();
+        assert_eq!(file.name.as_ref(), "文件");
+        assert_eq!(action_names(&file), ["导入主题包…"]);
+
+        let edit = edit_menu();
+        assert_eq!(edit.name.as_ref(), "编辑");
+        assert_eq!(
+            action_names(&edit),
+            ["剪切", "拷贝", "粘贴", "全选", "查找主题"]
+        );
+
+        let view = view_menu();
+        assert_eq!(view.name.as_ref(), "视图");
+        assert_eq!(action_names(&view), ["豆包", "豆包工作"]);
+    }
+
+    #[test]
+    fn menu_shortcuts_are_bound_to_their_actions() {
+        let bindings = app_key_bindings();
+        let keys = bindings
+            .iter()
+            .map(|binding| {
+                binding
+                    .keystrokes()
+                    .iter()
+                    .map(|keystroke| keystroke.unparse())
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
+            .collect::<Vec<_>>();
+        for expected in ["cmd-o", "cmd-f", "cmd-1", "cmd-2"] {
+            assert!(
+                keys.iter().any(|key| key == expected),
+                "missing binding {expected}: {keys:?}"
+            );
+        }
+    }
+
     #[test]
     fn traffic_lights_leave_the_default_corner_and_align_with_custom_header() {
         assert_eq!(TRAFFIC_LIGHT_X, 14.0);
@@ -3419,18 +3835,11 @@ mod ui_regression_tests {
 
     #[test]
     fn active_theme_is_scoped_to_its_target() {
-        assert!(theme_is_active(
-            Some(live::TargetApp::Doubao),
-            Some("violet-night"),
-            live::TargetApp::Doubao,
-            "violet-night"
-        ));
-        assert!(!theme_is_active(
-            Some(live::TargetApp::DoubaoWork),
-            Some("violet-night"),
-            live::TargetApp::Doubao,
-            "violet-night"
-        ));
+        let mut phase = ApplyPhase::Idle;
+        phase.begin_apply(live::TargetApp::Doubao, "violet-night", None);
+        phase.confirm_applied();
+        assert!(phase.is_active(live::TargetApp::Doubao, "violet-night"));
+        assert!(!phase.is_active(live::TargetApp::DoubaoWork, "violet-night"));
     }
 
     #[test]

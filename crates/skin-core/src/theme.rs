@@ -2977,6 +2977,78 @@ fn valid_package_version(value: &str) -> bool {
             .all(|part| !part.is_empty() && part.chars().all(|ch| ch.is_ascii_digit()))
 }
 
+/// Whether `theme` lives in the user-installed directory (as opposed to the
+/// app bundle or the repository's `themes/`). Only such themes can be removed.
+pub fn is_user_theme(theme: &Theme, installed_dir: &Path) -> bool {
+    let (Ok(parent), Ok(installed)) = (
+        theme
+            .path
+            .parent()
+            .map(Path::to_path_buf)
+            .ok_or(())
+            .and_then(|parent| parent.canonicalize().map_err(|_| ())),
+        installed_dir.canonicalize(),
+    ) else {
+        return false;
+    };
+    parent == installed
+}
+
+/// Resolves the on-disk directory of a user-installed theme for removal.
+///
+/// Rejects ids that are not plain theme ids, missing themes, symlinks and any
+/// path whose canonical parent is not `installed_dir`, so callers can hand the
+/// result to the trash without risking files outside the user theme directory.
+pub fn resolve_user_theme_dir(id: &str, installed_dir: &Path) -> Result<PathBuf, String> {
+    validate_theme_id(id)?;
+    if id.starts_with('.') {
+        return Err("主题 ID 不合法".into());
+    }
+    let candidate = installed_dir.join(id);
+    let metadata =
+        fs::symlink_metadata(&candidate).map_err(|_| "没有找到这个已安装的主题".to_string())?;
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return Err("只能删除由本工具安装的主题目录".into());
+    }
+    let resolved = candidate
+        .canonicalize()
+        .map_err(|_| "无法读取主题目录".to_string())?;
+    let installed = installed_dir
+        .canonicalize()
+        .map_err(|_| "无法读取主题安装目录".to_string())?;
+    if resolved.parent() != Some(installed.as_path()) {
+        return Err("主题不在用户主题目录内，已拒绝删除".into());
+    }
+    Ok(resolved)
+}
+
+/// True when `candidate` is a strictly newer dotted-numeric version than
+/// `installed`. Anything that does not parse as `N(.N)*` is never "newer".
+pub fn is_newer_version(candidate: &str, installed: &str) -> bool {
+    fn parse(value: &str) -> Option<Vec<u64>> {
+        let core = value.trim().split(['-', '+']).next()?;
+        if core.is_empty() {
+            return None;
+        }
+        core.split('.')
+            .map(|part| {
+                if part.is_empty() || !part.chars().all(|ch| ch.is_ascii_digit()) {
+                    None
+                } else {
+                    part.parse::<u64>().ok()
+                }
+            })
+            .collect()
+    }
+    let (Some(mut left), Some(mut right)) = (parse(candidate), parse(installed)) else {
+        return false;
+    };
+    let len = left.len().max(right.len());
+    left.resize(len, 0);
+    right.resize(len, 0);
+    left > right
+}
+
 fn unique_stamp() -> u128 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -3011,6 +3083,82 @@ mod tests {
             std::env::remove_var(key);
         }
         assert_eq!(actual, expected_override);
+    }
+
+    fn make_user_theme_dir(root: &Path, id: &str) -> PathBuf {
+        let dir = root.join(id);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("theme.json"), "{}").unwrap();
+        dir
+    }
+
+    #[test]
+    fn resolve_user_theme_dir_accepts_a_real_user_theme() {
+        let root = temporary_test_dir("resolve-ok");
+        let dir = make_user_theme_dir(&root, "aurora");
+        let resolved = resolve_user_theme_dir("aurora", &root).unwrap();
+        assert_eq!(resolved, dir.canonicalize().unwrap());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn resolve_user_theme_dir_rejects_escapes_and_missing_themes() {
+        let root = temporary_test_dir("resolve-bad");
+        make_user_theme_dir(&root, "aurora");
+        for id in ["../aurora", "/etc", "", "a/b", ".hidden"] {
+            assert!(
+                resolve_user_theme_dir(id, &root).is_err(),
+                "id {id:?} must be rejected"
+            );
+        }
+        assert!(resolve_user_theme_dir("missing", &root).is_err());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn resolve_user_theme_dir_rejects_symlinked_themes() {
+        let root = temporary_test_dir("resolve-link");
+        let outside = temporary_test_dir("resolve-outside");
+        make_user_theme_dir(&outside, "victim");
+        std::os::unix::fs::symlink(outside.join("victim"), root.join("victim")).unwrap();
+        assert!(resolve_user_theme_dir("victim", &root).is_err());
+        assert!(outside.join("victim/theme.json").exists());
+        let _ = fs::remove_dir_all(&root);
+        let _ = fs::remove_dir_all(&outside);
+    }
+
+    #[test]
+    fn is_user_theme_distinguishes_bundled_from_installed() {
+        let bundled = temporary_test_dir("user-flag-bundled");
+        let installed = temporary_test_dir("user-flag-installed");
+        for (root, id) in [(&bundled, "builtin"), (&installed, "mine")] {
+            let dir = make_user_theme_dir(root, id);
+            fs::write(
+                dir.join("theme.json"),
+                format!(r#"{{"id":"{id}","name":"{id}"}}"#),
+            )
+            .unwrap();
+            fs::write(dir.join("theme.css"), "").unwrap();
+        }
+        let builtin = load(&bundled, "builtin").unwrap();
+        let mine = load(&installed, "mine").unwrap();
+        assert!(!is_user_theme(&builtin, &installed));
+        assert!(is_user_theme(&mine, &installed));
+        let _ = fs::remove_dir_all(&bundled);
+        let _ = fs::remove_dir_all(&installed);
+    }
+
+    #[test]
+    fn newer_version_compares_numeric_segments() {
+        assert!(is_newer_version("1.2.0", "1.1.9"));
+        assert!(is_newer_version("1.10.0", "1.9.0"));
+        assert!(is_newer_version("2.0.0", "1.99.99"));
+        assert!(!is_newer_version("1.2.0", "1.2.0"));
+        assert!(!is_newer_version("1.1.9", "1.2.0"));
+        assert!(!is_newer_version("", "1.0.0"));
+        assert!(!is_newer_version("abc", "1.0.0"));
+        assert!(!is_newer_version("1.0.0", "abc"));
     }
 
     fn temporary_test_dir(label: &str) -> PathBuf {
