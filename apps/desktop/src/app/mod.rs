@@ -6,6 +6,7 @@ pub(crate) mod helpers;
 mod input;
 mod install;
 pub(crate) mod platform;
+pub(crate) mod theme_manage;
 pub(crate) mod theme_ops;
 pub(crate) mod theme_sessions;
 pub(crate) mod types;
@@ -14,7 +15,7 @@ use std::collections::VecDeque;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use gpui::{Context, FocusHandle, Window};
+use gpui::{prelude::*, Context, Entity, FocusHandle, Window};
 
 use skin_core::{auto_theme as core_auto_theme, live, theme};
 
@@ -25,6 +26,8 @@ pub use self::helpers::{
 use crate::app::theme_sessions::ThemeSessions;
 use crate::app::types::{Msg, SourceView, StoreRow, TargetInstallations, ThemeRow};
 use crate::i18n::t;
+use crate::search_input::{SearchEvent, SearchInput};
+use crate::status::describe_failure;
 use crate::ui::constants::MAX_INTERNAL_LOGS;
 use crate::ui::palette::UiPalette;
 
@@ -41,7 +44,9 @@ pub struct SkinApp {
     pub(crate) selected: usize,
     pub(crate) store_selected: usize,
     pub(crate) query: String,
-    pub(crate) search_active: bool,
+    pub(crate) search: Entity<SearchInput>,
+    pub(crate) search_focused: bool,
+    pub(crate) confirm_delete: Option<String>,
     pub(crate) internal_logs: VecDeque<String>,
     pub(crate) message: String,
     pub(crate) selected_target: live::TargetApp,
@@ -145,6 +150,22 @@ impl SkinApp {
         let focus_handle = cx.focus_handle();
         let about_focus_handle = cx.focus_handle();
         focus_handle.focus(window, cx);
+        let search = cx.new(|cx| {
+            SearchInput::new(
+                crate::ui::search_placeholder_with_shortcut(),
+                colors.input_colors(),
+                cx,
+            )
+        });
+        cx.subscribe(&search, |this, _search, event: &SearchEvent, cx| {
+            let SearchEvent::Changed(text) = event;
+            this.query = text.clone();
+            if this.source_view == SourceView::Library {
+                this.ensure_selected_match();
+            }
+            cx.notify();
+        })
+        .detach();
         Self {
             colors,
             tx,
@@ -158,7 +179,9 @@ impl SkinApp {
             selected: 0,
             store_selected: 0,
             query: String::new(),
-            search_active: false,
+            search,
+            search_focused: false,
+            confirm_delete: None,
             internal_logs: VecDeque::new(),
             message: auto_theme_error.unwrap_or_default(),
             selected_target,
@@ -200,6 +223,7 @@ impl SkinApp {
                 generation,
                 ok,
                 restoring,
+                error,
             } => {
                 let current_operation = self
                     .theme_sessions
@@ -213,7 +237,12 @@ impl SkinApp {
                     if ok && target == live::TargetApp::WorkBuddy {
                         self.message = "WorkBuddy 已退出，主题监听已停止".into();
                     } else if !ok {
-                        self.message = l.action_apply_failed.into();
+                        let reason = describe_failure(error.as_deref().unwrap_or_default(), target);
+                        self.message = if restoring {
+                            l.format_restore_failed(&reason)
+                        } else {
+                            l.format_apply_failed(&reason)
+                        };
                     }
                 }
             }

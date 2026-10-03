@@ -5,6 +5,7 @@ use gpui::{div, prelude::*, px, rgb, Context, FontWeight, Role};
 use crate::app::theme_ops::parse_store_accent;
 use crate::app::SkinApp;
 use crate::i18n::{self, t};
+use crate::status::StoreInstall;
 
 impl SkinApp {
     pub(crate) fn render_store_detail(&self, cx: &mut Context<Self>) -> gpui::AnyElement {
@@ -22,10 +23,9 @@ impl SkinApp {
                 .child(l.store_select_hint)
                 .into_any_element();
         };
-        let installed = self
-            .themes
-            .iter()
-            .any(|theme| theme.theme.id == row.theme.id);
+        let state = self.store_state(&row.theme);
+        let installed = state == StoreInstall::Installed;
+        let update = state == StoreInstall::UpdateAvailable;
         let installing = self.installing_store_theme.as_deref() == Some(row.theme.id.as_str());
         let accent = parse_store_accent(row.theme.accent.as_deref());
         let store_selected = self.store_selected;
@@ -119,6 +119,8 @@ impl SkinApp {
                                 l.install_button_done
                             } else if installing {
                                 l.install_button_busy
+                            } else if update {
+                                l.action_update_theme
                             } else {
                                 l.action_apply_theme
                             })
@@ -141,7 +143,11 @@ impl SkinApp {
                                 btn.bg(rgb(accent))
                                     .text_color(rgb(0xffffff))
                                     .hover(|style| style.opacity(0.88))
-                                    .child(l.action_apply_theme)
+                                    .child(if update {
+                                        l.action_update_theme
+                                    } else {
+                                        l.action_apply_theme
+                                    })
                                     .on_click(cx.listener(move |this, _event, _window, cx| {
                                         this.install_store_theme(store_selected, cx)
                                     }))

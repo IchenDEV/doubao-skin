@@ -10,6 +10,7 @@ use skin_core::theme;
 use crate::app::types::{Msg, SourceView, StoreRow};
 use crate::app::SkinApp;
 use crate::i18n::t;
+use crate::status::{store_install_state, StoreInstall};
 
 impl SkinApp {
     pub(crate) fn handle_open_url(&mut self, url: &str, cx: &mut Context<Self>) {
@@ -76,7 +77,6 @@ impl SkinApp {
         }
         self.source_view = source;
         self.query.clear();
-        self.search_active = false;
         if source == SourceView::Store && self.store_rows.is_empty() && !self.store_loading {
             self.load_store(cx);
         }
@@ -155,10 +155,7 @@ impl SkinApp {
             return;
         };
         if self.installing_store_theme.is_some()
-            || self
-                .themes
-                .iter()
-                .any(|theme| theme.theme.id == row.theme.id)
+            || self.store_state(&row.theme) == StoreInstall::Installed
         {
             return;
         }
@@ -215,4 +212,16 @@ pub fn install_paths(paths: Vec<PathBuf>, open_library: bool, tx: mpsc::Sender<M
         error,
         open_library,
     });
+}
+
+impl SkinApp {
+    /// How a store theme relates to the copy installed locally.
+    pub(crate) fn store_state(&self, store: &theme::StoreTheme) -> StoreInstall {
+        let installed = self
+            .themes
+            .iter()
+            .find(|row| row.theme.id == store.id)
+            .map(|row| row.theme.version.as_str());
+        store_install_state(installed, &store.version)
+    }
 }

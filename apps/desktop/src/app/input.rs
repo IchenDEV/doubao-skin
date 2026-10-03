@@ -1,6 +1,6 @@
 //! Keyboard input handling.
 
-use gpui::{Context, KeyDownEvent, Window};
+use gpui::{Context, Focusable, KeyDownEvent, Window};
 
 use skin_core::live;
 
@@ -16,7 +16,6 @@ impl SkinApp {
         cx: &mut Context<Self>,
     ) {
         let key = event.keystroke.key.as_str();
-        let modifiers = event.keystroke.modifiers;
 
         match about_key_action(self.about_open, key) {
             AboutKeyAction::Close => {
@@ -31,66 +30,26 @@ impl SkinApp {
             AboutKeyAction::Ignore => {}
         }
 
-        if modifiers.platform && key.eq_ignore_ascii_case("f") {
-            self.search_active = true;
-            self.focus_handle.focus(window, cx);
+        if key == "escape" && self.confirm_delete.is_some() {
+            self.confirm_delete = None;
             cx.notify();
             cx.stop_propagation();
             return;
         }
-        if modifiers.platform && key.eq_ignore_ascii_case("o") {
-            self.choose_package(window, cx);
-            cx.stop_propagation();
-            return;
-        }
-        if modifiers.platform && key == "1" {
-            self.switch_target(live::TargetApp::Doubao, cx);
-            cx.stop_propagation();
-            return;
-        }
-        if modifiers.platform && key == "2" {
-            self.switch_target(live::TargetApp::DoubaoWork, cx);
-            cx.stop_propagation();
-            return;
-        }
-        if modifiers.platform && key == "3" {
-            self.switch_target(live::TargetApp::WorkBuddy, cx);
-            cx.stop_propagation();
-            return;
-        }
 
-        if self.search_active {
+        // Text entry, cursor movement and clipboard shortcuts belong to the
+        // search input (key bindings + input handler); only list navigation
+        // and leaving the box are handled here.
+        if self.search.focus_handle(cx).is_focused(window) {
             match key {
-                "escape" => {
-                    self.search_active = false;
-                    cx.notify();
-                }
-                "backspace" => {
-                    self.query.pop();
-                    if self.source_view == SourceView::Library {
-                        self.ensure_selected_match();
-                    }
+                "escape" | "tab" => {
+                    self.focus_handle.focus(window, cx);
                     cx.notify();
                 }
                 "up" if self.source_view == SourceView::Library => self.select_filtered(-1, cx),
                 "down" if self.source_view == SourceView::Library => self.select_filtered(1, cx),
                 "enter" | "return" if self.source_view == SourceView::Library => {
                     self.apply_selected(cx)
-                }
-                "tab" => {
-                    self.search_active = false;
-                    cx.notify();
-                }
-                _ if !modifiers.platform && !modifiers.control && !modifiers.function => {
-                    if let Some(text) = event.keystroke.key_char.as_deref() {
-                        if !text.chars().any(char::is_control) {
-                            self.query.push_str(text);
-                            if self.source_view == SourceView::Library {
-                                self.ensure_selected_match();
-                            }
-                            cx.notify();
-                        }
-                    }
                 }
                 _ => return,
             }
@@ -108,6 +67,36 @@ impl SkinApp {
             _ => return,
         }
         cx.stop_propagation();
+    }
+
+    /// Window-level shortcuts arrive as real actions so the menu bar can show
+    /// them; the About modal swallows them like every other key.
+    pub(crate) fn focus_search(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.about_open {
+            return;
+        }
+        self.search.focus_handle(cx).focus(window, cx);
+        cx.notify();
+    }
+
+    pub(crate) fn switch_target_by_shortcut(
+        &mut self,
+        target: live::TargetApp,
+        cx: &mut Context<Self>,
+    ) {
+        if !self.about_open {
+            self.switch_target(target, cx);
+        }
+    }
+
+    pub(crate) fn import_package_by_shortcut(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if !self.about_open {
+            self.choose_package(window, cx);
+        }
     }
 
     pub(crate) fn filtered_indices(&self) -> Vec<usize> {
@@ -169,6 +158,7 @@ impl SkinApp {
             self.selected = index;
             self.surface_opacity = self.themes[index].preview.surface_opacity;
             self.message.clear();
+            self.confirm_delete = None;
         }
     }
 
@@ -196,6 +186,7 @@ impl SkinApp {
         self.selected = indices[next];
         self.surface_opacity = self.themes[self.selected].preview.surface_opacity;
         self.message.clear();
+        self.confirm_delete = None;
         cx.notify();
     }
 
@@ -203,7 +194,7 @@ impl SkinApp {
         if index < self.themes.len() {
             self.selected = index;
             self.surface_opacity = self.themes[index].preview.surface_opacity;
-            self.search_active = false;
+            self.confirm_delete = None;
             self.message.clear();
             self.restart_confirmation_target = None;
             cx.notify();

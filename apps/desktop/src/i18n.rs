@@ -1,3 +1,5 @@
+use crate::status::StoreInstall;
+
 pub struct Locale {
     pub app_name: &'static str,
 
@@ -8,6 +10,15 @@ pub struct Locale {
     pub menu_hide_others: &'static str,
     pub menu_show_all: &'static str,
     pub menu_quit: &'static str,
+    pub menu_file: &'static str,
+    pub menu_edit: &'static str,
+    pub menu_view: &'static str,
+    pub menu_import: &'static str,
+    pub menu_cut: &'static str,
+    pub menu_copy: &'static str,
+    pub menu_paste: &'static str,
+    pub menu_select_all: &'static str,
+    pub menu_find: &'static str,
     pub about_open: &'static str,
     pub about_version: &'static str,
     pub about_github: &'static str,
@@ -27,12 +38,27 @@ pub struct Locale {
     // Theme actions
     pub action_applied: &'static str,
     pub action_restored: &'static str,
-    pub action_apply_failed: &'static str,
     pub action_applying: &'static str,
     pub action_restoring: &'static str,
     pub action_apply_theme: &'static str,
     pub action_in_use: &'static str,
     pub action_restore_default: &'static str,
+    pub action_reveal_finder: &'static str,
+    pub action_reveal_explorer: &'static str,
+    pub action_delete: &'static str,
+    pub action_delete_blocked: &'static str,
+    pub action_confirm: &'static str,
+    pub action_cancel: &'static str,
+    pub delete_prompt: &'static str,
+    pub delete_in_use: &'static str,
+    pub delete_done: &'static str,
+    pub delete_done_bundled: &'static str,
+    pub action_update_theme: &'static str,
+    pub store_update_available: &'static str,
+    pub store_retry: &'static str,
+    pub store_retry_label: &'static str,
+    pub empty_browse_store: &'static str,
+    pub empty_choose_package: &'static str,
 
     // Automatic theme lifecycle
     pub auto_theme_keep_title: &'static str,
@@ -130,6 +156,25 @@ impl Locale {
     pub fn format_install_count(&self, n: usize) -> String {
         format!("已安装 {n} 个主题")
     }
+    pub fn format_apply_failed(&self, reason: &str) -> String {
+        format!("应用失败：{reason}")
+    }
+    pub fn format_restore_failed(&self, reason: &str) -> String {
+        format!("恢复失败：{reason}")
+    }
+    pub fn format_delete_failed(&self, reason: &str) -> String {
+        format!("删除失败：{reason}")
+    }
+    pub fn format_cannot_connect(&self, name: &str) -> String {
+        format!("无法连接到{name}，请确认应用已打开后重试")
+    }
+    pub fn reveal_in_file_manager(&self) -> &'static str {
+        if cfg!(target_os = "macos") {
+            self.action_reveal_finder
+        } else {
+            self.action_reveal_explorer
+        }
+    }
     pub fn format_not_installed(&self, name: &str) -> String {
         format!("尚未安装{name}")
     }
@@ -175,11 +220,11 @@ impl Locale {
             format!("{title}，不可用")
         }
     }
-    pub fn format_store_item_aria(&self, name: &str, installed: bool) -> String {
-        if installed {
-            format!("{name} 已安装")
-        } else {
-            format!("安装 {name}")
+    pub fn format_store_item_aria(&self, name: &str, state: StoreInstall) -> String {
+        match state {
+            StoreInstall::Installed => format!("{name} 已安装"),
+            StoreInstall::UpdateAvailable => format!("更新 {name}"),
+            StoreInstall::NotInstalled => format!("安装 {name}"),
         }
     }
 }
@@ -193,6 +238,15 @@ pub static ZH_CN: Locale = Locale {
     menu_hide_others: "隐藏其他",
     menu_show_all: "全部显示",
     menu_quit: "退出豆皮",
+    menu_file: "文件",
+    menu_edit: "编辑",
+    menu_view: "视图",
+    menu_import: "导入主题包…",
+    menu_cut: "剪切",
+    menu_copy: "拷贝",
+    menu_paste: "粘贴",
+    menu_select_all: "全选",
+    menu_find: "查找主题",
     about_open: "关于",
     about_version: "版本",
     about_github: "GitHub 官方仓库",
@@ -211,12 +265,27 @@ pub static ZH_CN: Locale = Locale {
 
     action_applied: "已应用",
     action_restored: "已恢复默认",
-    action_apply_failed: "应用失败，请再试一次",
     action_applying: "正在应用…",
     action_restoring: "正在恢复…",
     action_apply_theme: "应用主题",
     action_in_use: "正在使用",
     action_restore_default: "恢复默认",
+    action_reveal_finder: "在 Finder 中显示",
+    action_reveal_explorer: "在资源管理器中显示",
+    action_delete: "删除",
+    action_delete_blocked: "删除（请先恢复默认）",
+    action_confirm: "确认",
+    action_cancel: "取消",
+    delete_prompt: "移入废纸篓？",
+    delete_in_use: "请先恢复默认，再删除正在使用的主题",
+    delete_done: "已移入废纸篓",
+    delete_done_bundled: "已移入废纸篓，已恢复为内置版本",
+    action_update_theme: "更新",
+    store_update_available: "有更新",
+    store_retry: "重试",
+    store_retry_label: "重试连接主题商店",
+    empty_browse_store: "浏览主题商店",
+    empty_choose_package: "选择主题包…",
 
     auto_theme_keep_title: "自动保持上次主题",
     auto_theme_keep_description: "关闭豆皮后，下次打开仍会恢复当前主题",

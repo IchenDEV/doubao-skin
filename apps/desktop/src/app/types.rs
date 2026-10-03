@@ -40,6 +40,7 @@ pub enum Msg {
         generation: u64,
         ok: bool,
         restoring: bool,
+        error: Option<String>,
     },
     StoreLoaded(Result<Vec<StoreRow>, String>),
     InstallStarted,

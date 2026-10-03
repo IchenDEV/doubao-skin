@@ -48,7 +48,8 @@ impl SkinApp {
                         .text_sm()
                         .text_color(rgb(colors.muted))
                         .child(l.store_connect_full_failed)
-                        .child(div().text_xs().child(error.clone())),
+                        .child(div().text_xs().child(error.clone()))
+                        .child(self.render_retry_store_button("retry-store", cx)),
                 )
                 .into_any_element();
         }

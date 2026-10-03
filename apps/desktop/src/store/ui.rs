@@ -5,8 +5,38 @@ use gpui::{div, prelude::*, px, rgb, Context, FontWeight, Role};
 use crate::app::theme_ops::parse_store_accent;
 use crate::app::SkinApp;
 use crate::i18n::t;
+use crate::status::StoreInstall;
 
 impl SkinApp {
+    pub(crate) fn render_retry_store_button(
+        &self,
+        id: &'static str,
+        cx: &mut Context<Self>,
+    ) -> gpui::AnyElement {
+        let colors = self.colors;
+        let l = t();
+        div()
+            .id(id)
+            .role(Role::Button)
+            .aria_label(l.store_retry_label)
+            .mt_2()
+            .h(px(32.))
+            .px_4()
+            .rounded(px(7.))
+            .border_1()
+            .border_color(rgb(colors.border))
+            .bg(rgb(colors.control))
+            .flex()
+            .items_center()
+            .text_sm()
+            .text_color(rgb(colors.text))
+            .cursor_pointer()
+            .hover(|style| style.bg(rgb(colors.hover)))
+            .child(l.store_retry)
+            .on_click(cx.listener(|this, _event, _window, cx| this.load_store(cx)))
+            .into_any_element()
+    }
+
     pub(crate) fn render_store_sidebar_item(
         &self,
         index: usize,
@@ -16,10 +46,7 @@ impl SkinApp {
         let l = t();
         let row = &self.store_rows[index];
         let selected = index == self.store_selected;
-        let installed = self
-            .themes
-            .iter()
-            .any(|theme| theme.theme.id == row.theme.id);
+        let state = self.store_state(&row.theme);
         let accent = parse_store_accent(row.theme.accent.as_deref());
         div()
             .id(("store-sidebar", index))
@@ -68,12 +95,17 @@ impl SkinApp {
                     .text_color(rgb(colors.text))
                     .child(row.theme.name.clone()),
             )
-            .when(installed, |item| {
+            .when(state != StoreInstall::NotInstalled, |item| {
+                let update = state == StoreInstall::UpdateAvailable;
                 item.child(
                     div()
                         .text_xs()
-                        .text_color(rgb(colors.muted))
-                        .child(l.install_button_done),
+                        .text_color(rgb(if update { accent } else { colors.muted }))
+                        .child(if update {
+                            l.store_update_available
+                        } else {
+                            l.install_button_done
+                        }),
                 )
             })
             .into_any_element()
@@ -116,7 +148,8 @@ impl SkinApp {
                         .text_sm()
                         .text_color(rgb(colors.muted))
                         .child(l.store_connect_failed)
-                        .child(div().text_xs().child(error.clone())),
+                        .child(div().text_xs().child(error.clone()))
+                        .child(self.render_retry_store_button("retry-store-sidebar", cx)),
                 )
                 .into_any_element();
         }

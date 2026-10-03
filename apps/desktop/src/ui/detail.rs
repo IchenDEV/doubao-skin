@@ -2,6 +2,7 @@
 
 use gpui::{div, prelude::*, px, rgb, Context, FontWeight, Role};
 
+use crate::app::types::SourceView;
 use crate::app::{support_label, SkinApp};
 use crate::i18n::t;
 use crate::preview::preview_rgba;
@@ -17,14 +18,52 @@ impl SkinApp {
         let colors = self.colors;
         let l = t();
         let Some(row) = self.themes.get(self.selected) else {
+            let button = |id: &'static str, label: &'static str| {
+                div()
+                    .id(id)
+                    .role(Role::Button)
+                    .aria_label(label)
+                    .h(px(32.))
+                    .px_4()
+                    .rounded(px(7.))
+                    .border_1()
+                    .border_color(rgb(colors.border))
+                    .bg(rgb(colors.control))
+                    .flex()
+                    .items_center()
+                    .text_sm()
+                    .text_color(rgb(colors.text))
+                    .cursor_pointer()
+                    .hover(|style| style.bg(rgb(colors.hover)))
+                    .child(label)
+            };
             return div()
                 .flex_1()
                 .flex()
+                .flex_col()
+                .gap_3()
                 .items_center()
                 .justify_center()
                 .text_sm()
                 .text_color(rgb(colors.muted))
                 .child(l.empty_library)
+                .child(
+                    div()
+                        .flex()
+                        .gap_3()
+                        .child(button("empty-browse-store", l.empty_browse_store).on_click(
+                            cx.listener(|this, _event, _window, cx| {
+                                this.switch_source(SourceView::Store, cx)
+                            }),
+                        ))
+                        .child(
+                            button("empty-choose-package", l.empty_choose_package).on_click(
+                                cx.listener(|this, _event, window, cx| {
+                                    this.choose_package(window, cx)
+                                }),
+                            ),
+                        ),
+                )
                 .into_any_element();
         };
         let active = self.selected_settings_are_active(row);
@@ -154,15 +193,30 @@ impl SkinApp {
                     .child(
                         div()
                             .h(px(16.))
-                            .overflow_hidden()
-                            .whitespace_nowrap()
-                            .text_xs()
-                            .text_color(rgb(if detail_message.contains(l.error_keyword) {
-                                colors.danger
-                            } else {
-                                colors.muted
-                            }))
-                            .child(detail_message.to_string()),
+                            .flex()
+                            .items_center()
+                            .gap_3()
+                            .child(
+                                // Not `flex_1`: the actions follow the message
+                                // directly instead of floating at the far edge.
+                                div()
+                                    .min_w(px(0.))
+                                    .overflow_hidden()
+                                    .whitespace_nowrap()
+                                    .text_xs()
+                                    .text_color(rgb(
+                                        if !target_installed
+                                            || !theme_supported
+                                            || detail_message.contains(l.error_keyword)
+                                        {
+                                            colors.danger
+                                        } else {
+                                            colors.muted
+                                        },
+                                    ))
+                                    .child(detail_message.to_string()),
+                            )
+                            .child(self.render_theme_actions(row.theme.id.as_str(), cx)),
                     ),
             )
             .child(self.render_detail_buttons(
@@ -176,6 +230,75 @@ impl SkinApp {
                 cx,
             ))
             .into_any_element()
+    }
+
+    /// Low-key text actions on the info line: reveal in the file manager for
+    /// every theme, delete (with inline confirmation) for user-installed ones.
+    fn render_theme_actions(&self, theme_id: &str, cx: &mut Context<Self>) -> gpui::AnyElement {
+        let colors = self.colors;
+        let l = t();
+        let confirming = self.confirm_delete.as_deref() == Some(theme_id);
+        let busy = self.theme_sessions.is_busy(self.selected_target);
+        let action = |id: &'static str, label: &'static str, color: u32, enabled: bool| {
+            div()
+                .id(id)
+                .role(Role::Button)
+                .aria_label(label)
+                .flex_shrink_0()
+                .text_xs()
+                .whitespace_nowrap()
+                .text_color(rgb(color))
+                .when(enabled, |view| {
+                    view.cursor_pointer().hover(|style| style.opacity(0.72))
+                })
+                .child(label)
+        };
+        if confirming {
+            return div()
+                .flex()
+                .flex_shrink_0()
+                .items_center()
+                .gap_3()
+                .child(
+                    div()
+                        .text_xs()
+                        .whitespace_nowrap()
+                        .text_color(rgb(colors.muted))
+                        .child(l.delete_prompt),
+                )
+                .child(
+                    action("delete-confirm", l.action_confirm, colors.danger, !busy).on_click(
+                        cx.listener(|this, _event, _window, cx| this.delete_selected(cx)),
+                    ),
+                )
+                .child(
+                    action("delete-cancel", l.action_cancel, colors.link, true)
+                        .on_click(cx.listener(|this, _event, _window, cx| this.cancel_delete(cx))),
+                )
+                .into_any_element();
+        }
+        let mut row = div().flex().flex_shrink_0().items_center().gap_3().child(
+            action(
+                "reveal-theme",
+                l.reveal_in_file_manager(),
+                colors.link,
+                true,
+            )
+            .on_click(cx.listener(|this, _event, _window, cx| this.reveal_selected_theme(cx))),
+        );
+        if self.can_delete_selected() {
+            row = row.child(if self.selected_theme_in_use() {
+                action("delete-theme", l.action_delete_blocked, colors.muted, false)
+                    .into_any_element()
+            } else {
+                action("delete-theme", l.action_delete, colors.link, true)
+                    .on_click(
+                        cx.listener(|this, _event, _window, cx| this.request_delete_selected(cx)),
+                    )
+                    .into_any_element()
+            });
+        }
+        row.into_any_element()
     }
 
     #[allow(clippy::too_many_arguments)]
