@@ -22,6 +22,10 @@
 
 > macOS and Windows are supported. This is an independent project, not an official Doubao or WorkBuddy product, and it does not modify official app bundles.
 
+## Introduction
+
+Doubao Skin is a macOS/Windows desktop tool that themes the official Doubao and Doubao Work clients: browse, preview, install, apply, and restore themes while the official app bundle stays untouched. WorkBuddy is supported experimentally as well. The repository also provides 34 built-in themes, the online gallery, the Rust CLI, and the Codex and Claude Code plugins.
+
 ## Real transformed pages
 
 These screenshots were captured from a real local Doubao Work window with themes applied in live mode. Only the author's avatar and identity, company name, and computer device name are redacted; the rest of the interface and content is unchanged. The unredacted captures are not included in the repository.
@@ -51,7 +55,7 @@ These screenshots were captured from a real local Doubao Work window with themes
 - Responsive website with compound filters, dark mode, theme details, guides, and contribution documentation.
 - One layered yuba identity shared by the desktop app and website, with default, dark, and monochrome system appearances.
 
-## Download and use
+## Installation
 
 Download the latest build from [GitHub Releases](https://github.com/IchenDEV/doubao-skin/releases/latest):
 
@@ -65,6 +69,8 @@ Download the latest build from [GitHub Releases](https://github.com/IchenDEV/dou
 If macOS blocks the first launch, go to **System Settings → Privacy & Security**, scroll down to “Security”, click **Open Anyway**, and enter your admin password.
 
 Release packages use one continuous community self-signed certificate. They are not Apple-notarized; future versions retain this signing identity unless an announced security rotation is required.
+
+## Running
 
 1. Open Doubao Skin.
 2. Choose Doubao, Doubao Work, or experimental `WorkBuddy` (`Command-1`, `Command-2`, and `Command-3` also switch targets).
