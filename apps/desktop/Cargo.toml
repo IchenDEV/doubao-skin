@@ -23,7 +23,7 @@ gpui = { git = "https://github.com/zed-industries/zed", rev = "c8e44cfa7bda9b2e2
 gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "c8e44cfa7bda9b2e22c8d6934d78969352e7f61a", features = ["runtime_shaders", "font-kit"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-cocoa = "=0.26.0"
+cocoa = "=0.27.0"
 objc = "0.2.7"
 
 [target.'cfg(target_os = "windows")'.dependencies]
